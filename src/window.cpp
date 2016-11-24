@@ -32,20 +32,6 @@ GLFWwindow* Window::create_window(int width, int height, const char *window_titl
 
     // Get the width and height of the framebuffer to properly resize the window
     glfwGetFramebufferSize(window, &width, &height);
-    // Call the resize callback to make sure things get drawn immediately
-    Window::resize_callback(window, width, height);
 
-    return window;
-}
-
-void Window::resize_callback(GLFWwindow* window, int width, int height)
-{
-    // Set the viewport size. This is the only matrix that OpenGL maintains for us in modern OpenGL!
-    glViewport(0, 0, width, height);
-
-    if (height > 0)
-    {
-        //Camera::P = glm::perspective(45.0f, (float)width / (float)height, 0.1f, 1000.0f);
-        //Camera::V = glm::lookAt(cam_pos, cam_look_at, cam_up);
-    }
+	return window;
 }

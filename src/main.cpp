@@ -2,14 +2,31 @@
 #include "window.h"
 #include "input_manager.h"
 #include "shader_manager.h"
+#include "geometry_generator.h"
+#include "scene_model.h"
+#include "scene_transform.h"
+#include "scene_camera.h"
 
 GLFWwindow *window;
 ShaderManager *shader_manager;
-// Scene *scene;
+SceneGroup *world;
+SceneCamera *camera;
 
 void error_callback(int error, const char* description)
 {
 	fputs(description, stderr);
+}
+
+void resize_callback(GLFWwindow* window, int width, int height)
+{
+	// Set the viewport size. This is the only matrix that OpenGL maintains for us in modern OpenGL!
+	glViewport(0, 0, width, height);
+
+	if (height > 0)
+	{
+		//P = glm::perspective(45.0f, (float)width / (float)height, 0.1f, 1000.0f);
+		//V = glm::lookAt(cam_pos, cam_look_at, cam_up);
+	}
 }
 
 void setup_callbacks()
@@ -19,7 +36,7 @@ void setup_callbacks()
 	glfwSetCursorPosCallback(window, InputManager::cursor_position_callback);
 	glfwSetMouseButtonCallback(window, InputManager::mouse_button_callback);
 	glfwSetScrollCallback(window, InputManager::scroll_callback);
-	glfwSetFramebufferSizeCallback(window, Window::resize_callback);
+	glfwSetFramebufferSizeCallback(window, resize_callback);
 }
 
 void setup_glew()
@@ -47,6 +64,7 @@ void destroy()
 {
 	// Free memory here.
 	delete(shader_manager);
+	delete(world);
 
 	glfwDestroyWindow(window);
 	glfwTerminate();
@@ -54,9 +72,26 @@ void destroy()
 
 void setup_scene()
 {
+	world = new SceneGroup();
+
 	// Load shaders via a shader manager.
 	shader_manager->create_shader_program("basic");
 	shader_manager->create_shader_program("skybox");
+	shader_manager->set_default("basic");
+
+	// Generate geometry and create Mesh + SceneModel.
+	Geometry *cube_geometry = GeometryGenerator::generate_cube(1.f);
+	Material cube_material;
+	cube_material.diffuse = { 1.f, 0.f, 0.f };
+	Mesh cube_mesh = { cube_geometry, cube_material, shader_manager->get_default() };
+	SceneModel *cube_model = new SceneModel();
+	cube_model->add_mesh(cube_mesh);
+
+	world->add_child(cube_model);
+
+	// Setup camera
+	camera = new SceneCamera(glm::mat4(1.f));
+	world->add_child(camera);
 }
 
 int main()
@@ -73,7 +108,7 @@ int main()
 		glfwPollEvents();
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// scene->render();
+		// world->render();
 		glfwSwapBuffers(window);
 	}
 

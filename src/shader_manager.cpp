@@ -105,3 +105,13 @@ GLuint ShaderManager::get_shader_program(const char *type)
 	}
 	return shaders[type];
 }
+
+void ShaderManager::set_default(const char *type)
+{
+	default_shader = get_shader_program(type);
+}
+
+GLuint ShaderManager::get_default()
+{
+	return default_shader;
+}

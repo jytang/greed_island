@@ -16,10 +16,13 @@ class ShaderManager
 {
 private:
 	std::map<const char*, GLuint> shaders;
+	GLuint default_shader;
 public:
 	ShaderManager();
 	~ShaderManager();
 	void create_shader_program(const char *type);
 	GLuint get_shader_program(const char *type);
+	void set_default(const char *type);
+	GLuint get_default();
 };
 

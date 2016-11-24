@@ -122,8 +122,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\geometry.cpp" />
+    <ClCompile Include="src\geometry_generator.cpp" />
     <ClCompile Include="src\input_manager.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\scene_camera.cpp" />
+    <ClCompile Include="src\scene_group.cpp" />
+    <ClCompile Include="src\scene_model.cpp" />
+    <ClCompile Include="src\scene_transform.cpp" />
     <ClCompile Include="src\shader_manager.cpp" />
     <ClCompile Include="src\skybox.cpp" />
     <ClCompile Include="src\window.cpp" />
@@ -132,8 +138,17 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="inc\geometry.h" />
+    <ClInclude Include="inc\material.h" />
+    <ClInclude Include="inc\geometry_generator.h" />
     <ClInclude Include="inc\input_manager.h" />
     <ClInclude Include="inc\main.h" />
+    <ClInclude Include="inc\mesh.h" />
+    <ClInclude Include="inc\scene_camera.h" />
+    <ClInclude Include="inc\scene_group.h" />
+    <ClInclude Include="inc\scene_model.h" />
+    <ClInclude Include="inc\scene_node.h" />
+    <ClInclude Include="inc\scene_transform.h" />
     <ClInclude Include="inc\shader_manager.h" />
     <ClInclude Include="inc\skybox.h" />
     <ClInclude Include="inc\window.h" />
