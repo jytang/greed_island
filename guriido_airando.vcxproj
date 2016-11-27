@@ -126,12 +126,14 @@
     <ClCompile Include="src\geometry_generator.cpp" />
     <ClCompile Include="src\input_manager.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\scene.cpp" />
     <ClCompile Include="src\scene_camera.cpp" />
     <ClCompile Include="src\scene_group.cpp" />
     <ClCompile Include="src\scene_model.cpp" />
     <ClCompile Include="src\scene_transform.cpp" />
     <ClCompile Include="src\shader_manager.cpp" />
     <ClCompile Include="src\skybox.cpp" />
+    <ClCompile Include="src\util.cpp" />
     <ClCompile Include="src\window.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -144,6 +146,7 @@
     <ClInclude Include="inc\input_manager.h" />
     <ClInclude Include="inc\main.h" />
     <ClInclude Include="inc\mesh.h" />
+    <ClInclude Include="inc\scene.h" />
     <ClInclude Include="inc\scene_camera.h" />
     <ClInclude Include="inc\scene_group.h" />
     <ClInclude Include="inc\scene_model.h" />
@@ -151,6 +154,7 @@
     <ClInclude Include="inc\scene_transform.h" />
     <ClInclude Include="inc\shader_manager.h" />
     <ClInclude Include="inc\skybox.h" />
+    <ClInclude Include="inc\util.h" />
     <ClInclude Include="inc\window.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

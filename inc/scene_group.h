@@ -13,6 +13,7 @@ protected:
 	std::list<SceneNode *> children;
 public:
 	SceneGroup();
+	SceneGroup(Scene *);
 	~SceneGroup();
 	void add_child(SceneNode *node);
 	void remove_child(SceneNode *node);

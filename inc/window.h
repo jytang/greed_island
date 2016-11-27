@@ -12,7 +12,6 @@ class Window
 {
     public:
         static GLFWwindow* create_window(int width, int height, const char *window_title);
-        static void resize_callback(GLFWwindow* window, int width, int height);
 };
 
 #endif

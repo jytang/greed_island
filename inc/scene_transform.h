@@ -11,7 +11,7 @@ class SceneTransform :
 public:
 	glm::mat4 transformation;
 
-	SceneTransform(glm::mat4 m);
+	SceneTransform(Scene *, glm::mat4 m);
 	~SceneTransform();
 	void draw(glm::mat4 m);
 	void update();

@@ -5,12 +5,12 @@
 #include "geometry_generator.h"
 #include "scene_model.h"
 #include "scene_transform.h"
-#include "scene_camera.h"
+#include "scene.h"
+#include "util.h"
 
 GLFWwindow *window;
 ShaderManager *shader_manager;
-SceneGroup *world;
-SceneCamera *camera;
+Scene *scene;
 
 void error_callback(int error, const char* description)
 {
@@ -23,10 +23,7 @@ void resize_callback(GLFWwindow* window, int width, int height)
 	glViewport(0, 0, width, height);
 
 	if (height > 0)
-	{
-		//P = glm::perspective(45.0f, (float)width / (float)height, 0.1f, 1000.0f);
-		//V = glm::lookAt(cam_pos, cam_look_at, cam_up);
-	}
+		scene->P = glm::perspective(45.0f, (float)width / (float)height, 0.1f, 1000.0f);
 }
 
 void setup_callbacks()
@@ -64,7 +61,7 @@ void destroy()
 {
 	// Free memory here.
 	delete(shader_manager);
-	delete(world);
+	delete(scene);
 
 	glfwDestroyWindow(window);
 	glfwTerminate();
@@ -72,7 +69,7 @@ void destroy()
 
 void setup_scene()
 {
-	world = new SceneGroup();
+	scene = new Scene();
 
 	// Load shaders via a shader manager.
 	shader_manager->create_shader_program("basic");
@@ -84,31 +81,37 @@ void setup_scene()
 	Material cube_material;
 	cube_material.diffuse = { 1.f, 0.f, 0.f };
 	Mesh cube_mesh = { cube_geometry, cube_material, shader_manager->get_default() };
-	SceneModel *cube_model = new SceneModel();
+	SceneModel *cube_model = new SceneModel(scene);
 	cube_model->add_mesh(cube_mesh);
 
-	world->add_child(cube_model);
+	// Get root node
+	SceneGroup *root = scene->root;
+	root->add_child(cube_model);
 
 	// Setup camera
-	camera = new SceneCamera(glm::mat4(1.f));
-	world->add_child(camera);
+	SceneCamera *camera = scene->camera;
 }
 
 int main()
 {
-	window = Window::create_window(1600, 900, "Test");
+	window = Window::create_window(1280, 720, "Greed Island");
 	shader_manager = new ShaderManager();
 	setup_callbacks();
 	setup_opengl_settings();
 	setup_scene();
 	// Setup VR.
 
+	// Send height/width of window
+	int width, height;
+	glfwGetFramebufferSize(window, &width, &height);
+	resize_callback(window, width, height);
+
 	while (!glfwWindowShouldClose(window))
 	{
 		glfwPollEvents();
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// world->render();
+		// scene->render();
 		glfwSwapBuffers(window);
 	}
 
