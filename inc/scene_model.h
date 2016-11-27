@@ -11,7 +11,7 @@ public:
 	std::vector<Mesh> meshes;
 	glm::mat4 model_mat;
 
-	SceneModel();
+	SceneModel(Scene *);
 	~SceneModel();
 	void add_mesh(Mesh m);
 	void draw(glm::mat4);

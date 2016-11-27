@@ -2,6 +2,11 @@
 
 SceneGroup::SceneGroup() {}
 
+SceneGroup::SceneGroup(Scene *scene)
+{
+	this->scene = scene;
+}
+
 SceneGroup::~SceneGroup()
 {
 	for (auto it = children.begin(); it != children.end(); ++it)

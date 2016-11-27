@@ -44,6 +44,12 @@
     <ClCompile Include="src\geometry.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\scene.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\util.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -89,6 +95,12 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="inc\mesh.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\scene.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\util.h">
       <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>

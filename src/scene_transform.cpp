@@ -1,7 +1,8 @@
 #include "scene_transform.h"
 
-SceneTransform::SceneTransform(glm::mat4 m)
+SceneTransform::SceneTransform(Scene *scene, glm::mat4 m)
 {
+	this->scene = scene;
 	transformation = m;
 }
 
