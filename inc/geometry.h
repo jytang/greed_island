@@ -7,6 +7,7 @@ class Geometry
 {
 public:
 	bool has_texture = false;
+	bool has_normals = false;
 	std::vector<glm::vec3> vertices;
 	std::vector<glm::vec3> normals;
 	std::vector<glm::vec2> tex_coords;
@@ -15,8 +16,9 @@ public:
 
 	Geometry();
 	~Geometry();
-
 	void populate_buffers();
+	void draw();
+	void bind();
 private:
 	GLuint VAO, VBO, NBO, TBO, EBO;
 };

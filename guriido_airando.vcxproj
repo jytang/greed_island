@@ -75,6 +75,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(ProjectDir)\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>opengl32.lib;glu32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -86,6 +87,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(ProjectDir)\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>opengl32.lib;glu32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -99,6 +101,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(ProjectDir)\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -114,6 +117,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(ProjectDir)\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -122,17 +126,19 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\basic_shader.cpp" />
     <ClCompile Include="src\geometry.cpp" />
     <ClCompile Include="src\geometry_generator.cpp" />
-    <ClCompile Include="src\input_manager.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\scene.cpp" />
     <ClCompile Include="src\scene_camera.cpp" />
     <ClCompile Include="src\scene_group.cpp" />
     <ClCompile Include="src\scene_model.cpp" />
     <ClCompile Include="src\scene_transform.cpp" />
+    <ClCompile Include="src\shader.cpp" />
     <ClCompile Include="src\shader_manager.cpp" />
     <ClCompile Include="src\skybox.cpp" />
+    <ClCompile Include="src\skybox_shader.cpp" />
     <ClCompile Include="src\util.cpp" />
     <ClCompile Include="src\window.cpp" />
   </ItemGroup>
@@ -140,10 +146,10 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="inc\basic_shader.h" />
     <ClInclude Include="inc\geometry.h" />
     <ClInclude Include="inc\material.h" />
     <ClInclude Include="inc\geometry_generator.h" />
-    <ClInclude Include="inc\input_manager.h" />
     <ClInclude Include="inc\main.h" />
     <ClInclude Include="inc\mesh.h" />
     <ClInclude Include="inc\scene.h" />
@@ -152,8 +158,10 @@
     <ClInclude Include="inc\scene_model.h" />
     <ClInclude Include="inc\scene_node.h" />
     <ClInclude Include="inc\scene_transform.h" />
+    <ClInclude Include="inc\shader.h" />
     <ClInclude Include="inc\shader_manager.h" />
     <ClInclude Include="inc\skybox.h" />
+    <ClInclude Include="inc\skybox_shader.h" />
     <ClInclude Include="inc\util.h" />
     <ClInclude Include="inc\window.h" />
   </ItemGroup>

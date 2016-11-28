@@ -3,8 +3,8 @@
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 
-#include "scene_group.h"
 #include "scene_camera.h"
+#include "scene_group.h"
 
 class Scene
 {

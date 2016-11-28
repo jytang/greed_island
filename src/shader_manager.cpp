@@ -1,4 +1,6 @@
 #include "shader_manager.h"
+#include "skybox_shader.h"
+#include "basic_shader.h"
 
 ShaderManager::ShaderManager()
 {

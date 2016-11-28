@@ -1,10 +1,14 @@
 #include "geometry_generator.h"
 
-GeometryGenerator::GeometryGenerator() {}
+std::vector<Geometry *> GeometryGenerator::geometries;
 
-GeometryGenerator::~GeometryGenerator() {}
+void GeometryGenerator::clean_up()
+{
+	for (auto it = geometries.begin(); it != geometries.end(); ++it)
+		delete(*it);
+}
 
-Geometry * GeometryGenerator::generate_cube(GLfloat scale)
+Geometry * GeometryGenerator::generate_cube(GLfloat scale, bool has_normals)
 {
 	Geometry *cube = new Geometry();
 	
@@ -18,21 +22,25 @@ Geometry * GeometryGenerator::generate_cube(GLfloat scale)
 	glm::vec3 v7 = { -scale, -scale, -scale };
 
 	cube->vertices.push_back(v0);
-	cube->normals.push_back(glm::normalize(v0));
 	cube->vertices.push_back(v1);
-	cube->normals.push_back(glm::normalize(v1));
 	cube->vertices.push_back(v2);
-	cube->normals.push_back(glm::normalize(v2));
 	cube->vertices.push_back(v3);
-	cube->normals.push_back(glm::normalize(v3));
 	cube->vertices.push_back(v4);
-	cube->normals.push_back(glm::normalize(v4));
 	cube->vertices.push_back(v5);
-	cube->normals.push_back(glm::normalize(v5));
 	cube->vertices.push_back(v6);
-	cube->normals.push_back(glm::normalize(v6));
 	cube->vertices.push_back(v7);
-	cube->normals.push_back(glm::normalize(v7));
+
+	if (has_normals)
+	{
+		cube->normals.push_back(glm::normalize(v0));
+		cube->normals.push_back(glm::normalize(v1));
+		cube->normals.push_back(glm::normalize(v2));
+		cube->normals.push_back(glm::normalize(v3));
+		cube->normals.push_back(glm::normalize(v4));
+		cube->normals.push_back(glm::normalize(v5));
+		cube->normals.push_back(glm::normalize(v6));
+		cube->normals.push_back(glm::normalize(v7));
+	}
 
 	// TOP
 	cube->indices.push_back(0);
@@ -82,6 +90,9 @@ Geometry * GeometryGenerator::generate_cube(GLfloat scale)
 	cube->indices.push_back(7);
 	cube->indices.push_back(6);
 
+	cube->has_normals = has_normals;
+	cube->populate_buffers();
+	geometries.push_back(cube);
 	return cube;
 }
 
