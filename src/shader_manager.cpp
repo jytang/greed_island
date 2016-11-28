@@ -6,6 +6,8 @@ ShaderManager::ShaderManager()
 
 ShaderManager::~ShaderManager()
 {
+    for (auto it = shaders.begin(); it != shaders.end(); ++it)
+        delete(it->second);
 }
 
 void ShaderManager::create_shader_program(const char *type)
@@ -93,10 +95,21 @@ void ShaderManager::create_shader_program(const char *type)
 	glDeleteShader(FragmentShaderID);
 
 	printf("Compiled and linked shader: %s\n", type);
-	shaders[type] = ProgramID;
+
+    Shader *s;
+    std::string name = std::string(type);
+    if (name == "basic")
+        s = new BasicShader(ProgramID);
+    else if (name == "skybox")
+        s = new SkyboxShader(ProgramID);
+    else {
+	    printf("Unregistered shader: %s\n", type);
+        return;
+    }
+	shaders[type] = s;
 }
 
-GLuint ShaderManager::get_shader_program(const char *type)
+Shader* ShaderManager::get_shader_program(const char *type)
 {
 	if (shaders.find(type) == shaders.end())
 	{
@@ -111,7 +124,7 @@ void ShaderManager::set_default(const char *type)
 	default_shader = get_shader_program(type);
 }
 
-GLuint ShaderManager::get_default()
+Shader* ShaderManager::get_default()
 {
 	return default_shader;
 }
