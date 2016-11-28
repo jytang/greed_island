@@ -1,5 +1,7 @@
 #include "scene_model.h"
 
+#include "util.h"
+
 SceneModel::SceneModel(Scene *scene)
 {
 	this->scene = scene;
@@ -19,6 +21,8 @@ void SceneModel::draw(glm::mat4 m)
 	{
         mesh.shader->use();
         mesh.shader->set_VP(scene->camera->V, scene->P);
+		mesh.shader->send_cam_pos(scene->camera->cam_pos);
+
         mesh.shader->set_material(mesh.material);
         mesh.shader->draw(mesh.geometry, m);
 	}

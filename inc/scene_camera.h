@@ -16,5 +16,6 @@ public:
 	~SceneCamera();
 	void draw(glm::mat4 m);
 	void update();
+	void recalculate_camera();
 };
 

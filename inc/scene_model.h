@@ -4,6 +4,8 @@
 
 #include <vector>
 
+#include "scene.h"
+
 class SceneModel :
 	public SceneNode
 {
