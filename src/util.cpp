@@ -1,4 +1,4 @@
-#include "Util.h"
+#include "util.h"
 
 void Util::print_vec3(glm::vec3 v)
 {
