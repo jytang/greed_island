@@ -17,7 +17,10 @@ void SceneModel::draw(glm::mat4 m)
 	// Loop over meshes and their respective shader programs.
 	for (Mesh mesh : meshes)
 	{
-
+        mesh.shader->use();
+        mesh.shader->set_VP(scene->camera->V, scene->P);
+        mesh.shader->set_material(mesh.material);
+        mesh.shader->draw(mesh.geometry, m);
 	}
 }
 
