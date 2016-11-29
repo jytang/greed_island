@@ -108,5 +108,40 @@ Geometry * GeometryGenerator::generate_cylinder(GLfloat radius, GLfloat height, 
 
 Geometry * GeometryGenerator::generate_plane(GLfloat scale)
 {
-	return nullptr;
+	Geometry *plane = new Geometry();
+
+	//Setting Y-Offset as 0, change by Rotating World
+	glm::vec3 v0 = { scale, 0, scale };
+	glm::vec3 v1 = { -scale, 0, scale };
+	glm::vec3 v2 = { scale, 0, -scale };
+	glm::vec3 v3 = { -scale, 0, -scale };
+
+	glm::vec3 n = {0, 1.0f, 0};
+
+	plane->vertices.push_back(v0);
+	plane->vertices.push_back(v1);
+	plane->vertices.push_back(v2);
+	plane->vertices.push_back(v3);
+
+	for (int i = 0; i < 4; i++)
+		plane->normals.push_back(n);
+
+	plane->indices.push_back(0);
+	plane->indices.push_back(2);
+	plane->indices.push_back(1);
+	plane->indices.push_back(1);
+	plane->indices.push_back(2);
+	plane->indices.push_back(3);
+
+	plane->has_normals = true;
+	plane->populate_buffers();
+	geometries.push_back(plane);
+
+	return plane;
 }
+/*
+Geometry * GeometryGenerator::generate_patch(GLfloat scale)
+{
+
+}
+*/
