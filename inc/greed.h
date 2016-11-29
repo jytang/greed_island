@@ -16,13 +16,16 @@ class Greed
 private:
 	GLFWwindow *window;
 	ShaderManager *shader_manager;
-	bool vr_on = false;
 
 	static Scene *scene;
+	static SceneCamera *camera;
 	static bool lmb_down;
 	static bool rmb_down;
+	static bool vr_on;
 	static glm::vec3 last_cursor_pos;
+	static bool keys[1024];
 
+	void handle_movement();
 	void vr_render();
 	void setup_scene();
 	void setup_callbacks();

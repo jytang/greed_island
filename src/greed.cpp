@@ -11,11 +11,15 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-/* static var declarations */
+/* static var definitions */
 Scene* Greed::scene;
-bool Greed::lmb_down;
-bool Greed::rmb_down;
+SceneCamera* Greed::camera;
 glm::vec3 Greed::last_cursor_pos;
+vr_vars GreedVR::vars;
+bool Greed::lmb_down = false;
+bool Greed::rmb_down = false;
+bool Greed::vr_on = false;
+bool Greed::keys[1024];
 
 Greed::Greed() {}
 
@@ -43,6 +47,7 @@ void Greed::setup_shaders()
 void Greed::setup_scene()
 {
 	scene = new Scene();
+	camera = scene->camera;
 	SceneGroup *root = scene->root;
 
 	// Do skybox.
@@ -118,6 +123,7 @@ void Greed::go()
 	while (!glfwWindowShouldClose(window))
 	{
 		glfwPollEvents();
+		handle_movement();
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		if (vr_on)
@@ -169,7 +175,7 @@ void Greed::vr_render()
 		glm::mat4 head = glm::inverse(eyeToHead[eye]) * glm::inverse(headToBodyMatrix);
 
 		scene->P = proj;
-		scene->camera->V = head;
+		camera->V = head;
 		scene->render();
 
 		//RenderControllerAxes(trackedDevicePose);
@@ -191,6 +197,20 @@ void Greed::vr_render()
 	{
 		GreedVR::ProcessVREvent(event);
 	}
+}
+
+void Greed::handle_movement()
+{
+	const GLfloat cam_step = 0.01f;
+	if (keys[GLFW_KEY_W])
+		camera->cam_pos += cam_step * camera->cam_front;
+	if (keys[GLFW_KEY_S])
+		camera->cam_pos -= cam_step * camera->cam_front;
+	if (keys[GLFW_KEY_A])
+		camera->cam_pos -= glm::normalize(glm::cross(camera->cam_front, camera->cam_up)) * cam_step;
+	if (keys[GLFW_KEY_D])
+		camera->cam_pos += glm::normalize(glm::cross(camera->cam_front, camera->cam_up)) * cam_step;
+	camera->recalculate();
 }
 
 void Greed::setup_callbacks()
@@ -238,15 +258,26 @@ void Greed::key_callback(GLFWwindow* window, int key, int scancode, int action, 
 	// Check for a key press
 	if (action == GLFW_PRESS)
 	{
+		keys[key] = true;
 		switch (key) {
 			// Check if escape was pressed
 		case GLFW_KEY_ESCAPE:
 			// Close the window. This causes the program to also terminate.
 			glfwSetWindowShouldClose(window, GL_TRUE);
 			break;
+		case GLFW_KEY_V:
+			//vr_on = !vr_on;
+			break;
+		case GLFW_KEY_R:
+			camera->reset();
+			break;
 		default:
 			break;
 		}
+	}
+	else if (action == GLFW_RELEASE)
+	{
+		keys[key] = false;
 	}
 }
 
@@ -259,16 +290,17 @@ void Greed::cursor_position_callback(GLFWwindow* window, double x_pos, double y_
 
 		// Horizontal rotation
 		angle = (float)(cursor_delta.x) / 100.f;
-		scene->camera->cam_pos = glm::vec3(glm::rotate(glm::mat4(1.f), angle, glm::vec3(0.f, 1.f, 0.f)) * glm::vec4(scene->camera->cam_pos, 1.f));
-		scene->camera->cam_up = glm::vec3(glm::rotate(glm::mat4(1.f), angle, glm::vec3(0.f, 1.f, 0.f)) * glm::vec4(scene->camera->cam_up, 1.f));
+		camera->cam_pos = glm::vec3(glm::rotate(glm::mat4(1.f), angle, glm::vec3(0.f, 1.f, 0.f)) * glm::vec4(camera->cam_pos, 1.f));
+		camera->cam_up = glm::vec3(glm::rotate(glm::mat4(1.f), angle, glm::vec3(0.f, 1.f, 0.f)) * glm::vec4(camera->cam_up, 1.f));
 
 		// Vertical rotation
 		angle = (float)(-cursor_delta.y) / 100.f;
-		glm::vec3 axis = glm::cross((scene->camera->cam_pos - scene->camera->cam_look_at), scene->camera->cam_up);
-		scene->camera->cam_pos = glm::vec3(glm::rotate(glm::mat4(1.f), angle, axis) * glm::vec4(scene->camera->cam_pos, 1.f));
-		scene->camera->cam_up = glm::vec3(glm::rotate(glm::mat4(1.f), angle, axis) * glm::vec4(scene->camera->cam_up, 1.f));
+		glm::vec3 axis = glm::cross((camera->cam_pos - (camera->cam_pos + camera->cam_front)), camera->cam_up);
+		camera->cam_pos = glm::vec3(glm::rotate(glm::mat4(1.f), angle, axis) * glm::vec4(camera->cam_pos, 1.f));
+		camera->cam_up = glm::vec3(glm::rotate(glm::mat4(1.f), angle, axis) * glm::vec4(camera->cam_up, 1.f));
+		camera->cam_front = glm::normalize(-camera->cam_pos);
 
-		scene->camera->recalculate_camera();
+		camera->recalculate();
 	}
 
 	last_cursor_pos = current_cursor_pos;
@@ -305,8 +337,8 @@ void Greed::mouse_button_callback(GLFWwindow* window, int button, int action, in
 
 void Greed::scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-	glm::vec3 trans_vec = (float)yoffset * glm::normalize(scene->camera->cam_look_at - scene->camera->cam_pos);
+	glm::vec3 trans_vec = (float)yoffset * glm::normalize(camera->cam_front);
 	// Only y is relevant here, -1 is down, +1 is up
-	scene->camera->cam_pos = glm::vec3(glm::translate(glm::mat4(1.0f), trans_vec) * glm::vec4(scene->camera->cam_pos, 1.0f));
-	scene->camera->recalculate_camera();
+	camera->cam_pos = glm::vec3(glm::translate(glm::mat4(1.0f), trans_vec) * glm::vec4(camera->cam_pos, 1.0f));
+	camera->recalculate();
 }
