@@ -13,7 +13,7 @@ void BasicShader::set_material(Material m)
 
 	// Basic lighting
 	glUniform1i(glGetUniformLocation(shader_id, "dir_light.on"), true);
-	glUniform3f(glGetUniformLocation(shader_id, "dir_light.direction"), 0.f, -1.f, 0.f);
+	glUniform3f(glGetUniformLocation(shader_id, "dir_light.direction"), 0.f, -2.f, 1.f);
 	glUniform3f(glGetUniformLocation(shader_id, "dir_light.color"), 1.f, 1.f, 1.f);
 	glUniform1f(glGetUniformLocation(shader_id, "dir_light.ambient_coeff"), 0.2f);
 }
