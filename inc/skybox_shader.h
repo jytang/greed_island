@@ -7,6 +7,7 @@ class SkyboxShader :
 {
 public:
 	GLuint texture_id;
+	GLuint VAO, VBO;
 
 	SkyboxShader(GLuint shader_id);
 	void load_cubemap();

@@ -52,7 +52,7 @@ unsigned char* Util::loadPPM(const char * filename, int& width, int& height)
 
 	// Read image data:
 	rawData = new unsigned char[width * height * 3];
-	read = fread(rawData, width * height * 3, 1, fp);
+	read = (unsigned int) fread(rawData, width * height * 3, 1, fp);
 	fclose(fp);
 	if (read != 1) {
 		std::cerr << "error parsing ppm file, incomplete data" << std::endl;

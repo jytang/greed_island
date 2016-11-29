@@ -3,8 +3,6 @@
 
 #include <vector>
 
-GLuint VAO, VBO;
-
 const GLfloat skybox_vertices[] = {
 	// Positions
 	-1.0f,  1.0f, -1.0f,

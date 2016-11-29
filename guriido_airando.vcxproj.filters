@@ -17,9 +17,6 @@
     <ClCompile Include="src\window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\skybox.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\shader_manager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -67,9 +64,6 @@
     <ClInclude Include="inc\window.h">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClInclude Include="inc\skybox.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
     <ClInclude Include="inc\shader_manager.h">
       <Filter>Headers</Filter>
     </ClInclude>
@@ -113,6 +107,9 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="inc\skybox_shader.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\minimalOpenVR.h">
       <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>

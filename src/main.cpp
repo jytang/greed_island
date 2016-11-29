@@ -8,6 +8,24 @@
 #include "scene.h"
 #include "util.h"
 
+#define VR_ON false
+
+#ifdef VR_ON
+	#include "minimalOpenVR.h"
+#endif
+
+struct vr_vars {
+	int numEyes = 2;
+	vr::TrackedDevicePose_t trackedDevicePose[vr::k_unMaxTrackedDeviceCount];
+	GLuint framebuffer[2];
+	GLuint colorRenderTarget[2];
+	GLuint depthRenderTarget[2];
+	uint32_t framebufferWidth = 1280, framebufferHeight = 720;
+	vr::IVRSystem* hmd = nullptr;
+};
+
+vr_vars my_vr;
+
 GLFWwindow *window;
 ShaderManager *shader_manager;
 Scene *scene;
@@ -149,6 +167,36 @@ void destroy()
 	glfwTerminate();
 }
 
+void setup_VR()
+{
+	my_vr.hmd = initOpenVR(my_vr.framebufferWidth, my_vr.framebufferHeight);
+
+	glGenFramebuffers(2, my_vr.framebuffer);
+
+	glGenTextures(my_vr.numEyes, my_vr.colorRenderTarget);
+	glGenTextures(my_vr.numEyes, my_vr.depthRenderTarget);
+	for (int eye = 0; eye < my_vr.numEyes; ++eye) {
+		glBindTexture(GL_TEXTURE_2D, my_vr.colorRenderTarget[eye]);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, my_vr.framebufferWidth, my_vr.framebufferHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+
+		glBindTexture(GL_TEXTURE_2D, my_vr.depthRenderTarget[eye]);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, my_vr.framebufferWidth, my_vr.framebufferHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, nullptr);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, my_vr.framebuffer[eye]);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, my_vr.colorRenderTarget[eye], 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, my_vr.depthRenderTarget[eye], 0);
+	}
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
 void setup_shaders()
 {
 	// Load shaders via a shader manager.
@@ -186,9 +234,10 @@ int main()
 	shader_manager = new ShaderManager();
 	setup_callbacks();
 	setup_opengl_settings();
+	if (VR_ON) setup_VR();
+
 	setup_shaders();
 	setup_scene();
-	// Setup VR.
 
 	// Send height/width of window
 	int width, height;
@@ -200,8 +249,77 @@ int main()
 		glfwPollEvents();
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		scene->render();
+		if (VR_ON)
+		{
+			std::vector<glm::mat4> eyeToHead, projectionMatrix;
+			glm::mat4 headToBodyMatrix;
+			eyeToHead.push_back(glm::mat4(1.0f));
+			eyeToHead.push_back(glm::mat4(1.0f));
+			projectionMatrix.push_back(glm::mat4(1.0f));
+			projectionMatrix.push_back(glm::mat4(1.0f));
+
+			vr::VRCompositor()->WaitGetPoses(my_vr.trackedDevicePose, vr::k_unMaxTrackedDeviceCount, nullptr, 0);
+
+			const vr::HmdMatrix34_t headMatrix = my_vr.trackedDevicePose[vr::k_unTrackedDeviceIndex_Hmd].mDeviceToAbsoluteTracking;
+			const vr::HmdMatrix34_t& ltMatrix = my_vr.hmd->GetEyeToHeadTransform(vr::Eye_Left);
+			const vr::HmdMatrix34_t& rtMatrix = my_vr.hmd->GetEyeToHeadTransform(vr::Eye_Right);
+			const vr::HmdMatrix44_t& ltProj = my_vr.hmd->GetProjectionMatrix(vr::Eye_Left, 0.01f, 1000.f, vr::API_OpenGL);
+			const vr::HmdMatrix44_t& rtProj = my_vr.hmd->GetProjectionMatrix(vr::Eye_Right, 0.01f, 1000.f, vr::API_OpenGL);
+
+			for (int r = 0; r < 3; ++r) {
+				for (int c = 0; c < 4; ++c) {
+					eyeToHead[0][c][r] = ltMatrix.m[r][c];
+					eyeToHead[1][c][r] = rtMatrix.m[r][c];
+					headToBodyMatrix[c][r] = headMatrix.m[r][c];
+				}
+			}
+
+			for (int r = 0; r < 4; ++r) {
+				for (int c = 0; c < 4; ++c) {
+					projectionMatrix[0][c][r] = ltProj.m[r][c];
+					projectionMatrix[1][c][r] = rtProj.m[r][c];
+				}
+			}
+
+			for (int eye = 0; eye < my_vr.numEyes; ++eye) {
+				glBindFramebuffer(GL_FRAMEBUFFER, my_vr.framebuffer[eye]);
+				glViewport(0, 0, my_vr.framebufferWidth, my_vr.framebufferHeight);
+
+				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+				glm::mat4 proj = projectionMatrix[eye];
+				glm::mat4 head = glm::inverse(eyeToHead[eye]) * glm::inverse(headToBodyMatrix);
+				
+				scene->P = proj;
+				scene->camera->V = head;
+				scene->render();
+
+				//RenderControllerAxes(trackedDevicePose);
+
+				const vr::Texture_t tex = { reinterpret_cast<void*>(intptr_t(my_vr.colorRenderTarget[eye])), vr::API_OpenGL, vr::ColorSpace_Gamma };
+				vr::VRCompositor()->Submit(vr::EVREye(eye), &tex);
+			}
+
+			// Mirror to the window
+			/*glBindFramebuffer(GL_DRAW_FRAMEBUFFER, GL_NONE);
+			glViewport(0, 0, Window::width, Window::height);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			glBlitFramebuffer(0, 0, framebufferWidth, framebufferHeight, 0, 0, Window::width, Window::height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, GL_NONE);*/
+
+			//Process VR Event
+			vr::VREvent_t event;
+			while (my_vr.hmd->PollNextEvent(&event, sizeof(event)))
+			{
+				ProcessVREvent(event);
+			}
+		}
+		else {
+			scene->render();
+		}
+
 		glfwSwapBuffers(window);
+
 	}
 
 	destroy();
