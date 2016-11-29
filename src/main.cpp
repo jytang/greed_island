@@ -226,6 +226,33 @@ void setup_scene()
 	SceneModel *cube_model = new SceneModel(scene);
 	cube_model->add_mesh(cube_mesh);
 	root->add_child(cube_model);
+
+	// Water Plane
+	Geometry *plane_geo = GeometryGenerator::generate_plane(1.f);
+	Material water_material;
+	water_material.diffuse = { 0.5f, 0.6f, 0.95f };
+	water_material.ambient = { 0.5f, 0.6f, 0.95f };
+	Mesh water_mesh = { plane_geo, water_material, shader_manager->get_default() };
+	SceneModel *water_model = new SceneModel(scene);
+	water_model->add_mesh(water_mesh);
+	SceneTransform *water_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(1000.0f, 1.0f, 1000.0f)));
+	SceneTransform *water_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, -30.0f, 0.0f)));
+	water_scale->add_child(water_model);
+	water_translate->add_child(water_scale);
+	root->add_child(water_translate);
+
+	// Island Plane (Temporary)
+	Material land_material;
+	land_material.diffuse = { 0.01f, 0.8f, 0.45f };
+	land_material.ambient = { 0.01f, 0.8f, 0.45f };
+	Mesh land_mesh = { plane_geo, land_material, shader_manager->get_default() };
+	SceneModel *land_model = new SceneModel(scene);
+	land_model->add_mesh(land_mesh);
+	SceneTransform *land_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(10.0f, 1.0f, 10.0f)));
+	SceneTransform *land_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, -5.0f, 0.0f)));
+	land_scale->add_child(land_model);
+	land_translate->add_child(land_scale);
+	root->add_child(land_translate);
 }
 
 int main()
