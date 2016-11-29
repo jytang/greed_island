@@ -6,9 +6,14 @@
 class SceneCamera :
 	public SceneNode
 {
+private:
+	const glm::vec3 DEFAULT_CAM_POS = glm::vec3(0.0f, 0.0f, 20.0f);
+	const glm::vec3 DEFAULT_CAM_FRONT = glm::vec3(0.0f, 0.0f, -1.0f);
+	const glm::vec3 DEFAULT_CAM_UP = glm::vec3(0.0f, 1.0f, 0.0f);
+
 public:
 	glm::vec3 cam_pos;
-	glm::vec3 cam_look_at;
+	glm::vec3 cam_front;
 	glm::vec3 cam_up;
 	glm::mat4 V;
 
@@ -16,6 +21,7 @@ public:
 	~SceneCamera();
 	void draw(glm::mat4 m);
 	void update();
-	void recalculate_camera();
+	void recalculate();
+	void reset();
 };
 

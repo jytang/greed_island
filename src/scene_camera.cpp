@@ -3,11 +3,7 @@
 SceneCamera::SceneCamera(Scene *scene)
 {
 	this->scene = scene;
-	// Default camera
-	cam_pos = glm::vec3(0.0f, 20.0f, 20.0f);
-	cam_look_at = glm::vec3(0.0f, 0.0f, 0.0f);
-	cam_up = glm::vec3(0.0f, 1.0f, 0.0f);
-	V = glm::lookAt(cam_pos, cam_look_at, cam_up);
+	reset();
 }
 
 SceneCamera::~SceneCamera() {}
@@ -20,7 +16,15 @@ void SceneCamera::update()
 {
 }
 
-void SceneCamera::recalculate_camera()
+void SceneCamera::recalculate()
 {
-	V = glm::lookAt(cam_pos, cam_look_at, cam_up);
+	V = glm::lookAt(cam_pos, cam_pos + cam_front, cam_up);
+}
+
+void SceneCamera::reset()
+{
+	cam_pos = DEFAULT_CAM_POS;
+	cam_front = DEFAULT_CAM_FRONT;
+	cam_up = DEFAULT_CAM_UP;
+	recalculate();
 }
