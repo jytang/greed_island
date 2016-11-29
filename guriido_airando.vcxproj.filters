@@ -53,14 +53,17 @@
     <ClCompile Include="src\skybox_shader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\greed.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\greed_vr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="inc\main.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
     <ClInclude Include="inc\window.h">
       <Filter>Headers</Filter>
     </ClInclude>
@@ -109,7 +112,13 @@
     <ClInclude Include="inc\skybox_shader.h">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClInclude Include="inc\minimalOpenVR.h">
+    <ClInclude Include="inc\colors.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\greed.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\greed_vr.h">
       <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>

@@ -79,7 +79,8 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>$(ProjectDir)\lib\openvr\lib\win32\openvr_api.lib;opengl32.lib;glu32.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(ProjectDir)\lib\openvr\bin\win32</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>
+      </AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -92,7 +93,8 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>$(ProjectDir)\lib\openvr\lib\win64\openvr_api.lib;opengl32.lib;glu32.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(ProjectDir)\lib\openvr\bin\win64</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>
+      </AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -109,7 +111,8 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>$(ProjectDir)\lib\openvr\lib\win32\openvr_api.lib;opengl32.lib;glu32.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(ProjectDir)\lib\openvr\bin\win32</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>
+      </AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -126,13 +129,15 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>$(ProjectDir)\lib\openvr\lib\win64\openvr_api.lib;opengl32.lib;glu32.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(ProjectDir)\lib\openvr\bin\win64</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>
+      </AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\basic_shader.cpp" />
     <ClCompile Include="src\geometry.cpp" />
     <ClCompile Include="src\geometry_generator.cpp" />
+    <ClCompile Include="src\greed.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\scene.cpp" />
     <ClCompile Include="src\scene_camera.cpp" />
@@ -143,6 +148,7 @@
     <ClCompile Include="src\shader_manager.cpp" />
     <ClCompile Include="src\skybox_shader.cpp" />
     <ClCompile Include="src\util.cpp" />
+    <ClCompile Include="src\greed_vr.cpp" />
     <ClCompile Include="src\window.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -150,12 +156,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\basic_shader.h" />
+    <ClInclude Include="inc\colors.h" />
     <ClInclude Include="inc\geometry.h" />
+    <ClInclude Include="inc\greed.h" />
     <ClInclude Include="inc\material.h" />
     <ClInclude Include="inc\geometry_generator.h" />
-    <ClInclude Include="inc\main.h" />
     <ClInclude Include="inc\mesh.h" />
-    <ClInclude Include="inc\minimalOpenVR.h" />
     <ClInclude Include="inc\scene.h" />
     <ClInclude Include="inc\scene_camera.h" />
     <ClInclude Include="inc\scene_group.h" />
@@ -166,6 +172,7 @@
     <ClInclude Include="inc\shader_manager.h" />
     <ClInclude Include="inc\skybox_shader.h" />
     <ClInclude Include="inc\util.h" />
+    <ClInclude Include="inc\greed_vr.h" />
     <ClInclude Include="inc\window.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
