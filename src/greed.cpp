@@ -57,6 +57,7 @@ void Greed::setup_scene()
 	skybox_model->add_mesh(skybox_mesh);
 	root->add_child(skybox_model);
 
+	/*
 	// Generate geometry and create Mesh + SceneModel.
 	Geometry *cube_geometry = GeometryGenerator::generate_cube(1.f, true);
 	Material cube_material;
@@ -65,7 +66,9 @@ void Greed::setup_scene()
 	SceneModel *cube_model = new SceneModel(scene);
 	cube_model->add_mesh(cube_mesh);
 	root->add_child(cube_model);
+	*/
 
+	/*
 	// Water Plane
 	Geometry *plane_geo = GeometryGenerator::generate_plane(1.f);
 	Material water_material;
@@ -78,7 +81,9 @@ void Greed::setup_scene()
 	water_scale->add_child(water_model);
 	water_translate->add_child(water_scale);
 	root->add_child(water_translate);
+	*/
 
+	/*
 	// Beach Plane (Temporary)
 	Geometry *bez_plane_geo = GeometryGenerator::generate_bezier_plane(10.f, 50, 150, 0.1f, 0);
 	Material beach_material;
@@ -100,6 +105,20 @@ void Greed::setup_scene()
 	land_model->add_mesh(land_mesh);
 	SceneTransform *land_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(8.0f, 1.0f, 8.0f)));
 	SceneTransform *land_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, -1.0f, 0.0f)));
+	land_scale->add_child(land_model);
+	land_translate->add_child(land_scale);
+	root->add_child(land_translate);
+	*/
+
+	//Island Land Grid
+	Geometry *grid_geo = GeometryGenerator::generate_grid(7, 100.f, 30, 10);
+	Material land_material;
+	land_material.diffuse = land_material.ambient = color::windwaker_green;
+	Mesh land_mesh = { grid_geo, land_material, shader_manager->get_default() };
+	SceneModel *land_model = new SceneModel(scene);
+	land_model->add_mesh(land_mesh);
+	SceneTransform *land_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(0.1f, 0.1f, 0.1f)));
+	SceneTransform *land_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 0.0f, 0.0f)));
 	land_scale->add_child(land_model);
 	land_translate->add_child(land_scale);
 	root->add_child(land_translate);
