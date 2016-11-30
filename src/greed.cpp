@@ -83,7 +83,7 @@ void Greed::setup_scene()
 	root->add_child(water_translate);
 	*/
 
-	/*
+
 	// Beach Plane (Temporary)
 	Geometry *bez_plane_geo = GeometryGenerator::generate_bezier_plane(10.f, 50, 150, 0.1f, 0);
 	Material beach_material;
@@ -97,6 +97,7 @@ void Greed::setup_scene()
 	beach_translate->add_child(beach_scale);
 	root->add_child(beach_translate);
 
+	/*
 	// Island Plane (Temporary)
 	Material land_material;
 	land_material.diffuse = land_material.ambient = color::windwaker_green;
@@ -117,7 +118,7 @@ void Greed::setup_scene()
 	Mesh land_mesh = { grid_geo, land_material, shader_manager->get_default() };
 	SceneModel *land_model = new SceneModel(scene);
 	land_model->add_mesh(land_mesh);
-	SceneTransform *land_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(0.1f, 0.1f, 0.1f)));
+	SceneTransform *land_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(1.f, 1.f, 1.f)));
 	SceneTransform *land_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 0.0f, 0.0f)));
 	land_scale->add_child(land_model);
 	land_translate->add_child(land_scale);
