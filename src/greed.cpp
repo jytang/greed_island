@@ -74,19 +74,20 @@ void Greed::setup_scene()
 	SceneModel *water_model = new SceneModel(scene);
 	water_model->add_mesh(water_mesh);
 	SceneTransform *water_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(1000.0f, 1.0f, 1000.0f)));
-	SceneTransform *water_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, -1.02f, 0.0f)));
+	SceneTransform *water_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, -1.2f, 0.0f)));
 	water_scale->add_child(water_model);
 	water_translate->add_child(water_scale);
 	root->add_child(water_translate);
 
 	// Beach Plane (Temporary)
+	Geometry *bez_plane_geo = GeometryGenerator::generate_bezier_plane(10.f, 50, 150, 0.1f, 0);
 	Material beach_material;
 	beach_material.diffuse = beach_material.ambient = color::windwaker_sand;
-	Mesh beach_mesh = { plane_geo, beach_material, shader_manager->get_default() };
+	Mesh beach_mesh = { bez_plane_geo, beach_material, shader_manager->get_default() };
 	SceneModel *beach_model = new SceneModel(scene);
 	beach_model->add_mesh(beach_mesh);
 	SceneTransform *beach_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(10.0f, 1.0f, 10.0f)));
-	SceneTransform *beach_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, -1.01f, 0.0f)));
+	SceneTransform *beach_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, -1.1f, 0.0f)));
 	beach_scale->add_child(beach_model);
 	beach_translate->add_child(beach_scale);
 	root->add_child(beach_translate);

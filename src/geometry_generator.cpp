@@ -142,9 +142,67 @@ Geometry * GeometryGenerator::generate_plane(GLfloat scale)
 
 	return plane;
 }
+
 /*
 Geometry * GeometryGenerator::generate_patch(GLfloat scale)
 {
 
 }
 */
+
+Geometry * GeometryGenerator::generate_bezier_plane(GLfloat radius, GLuint num_curves, GLuint segmentation, GLfloat waviness, unsigned int seed = 0)
+{
+	Geometry *bez_plane = new Geometry();
+	bez_plane->draw_type = GL_TRIANGLE_FAN;
+
+	// Make bezier curves
+	if (seed == 0)
+		srand((unsigned int)time(NULL));
+	else
+		srand(seed);
+	int num_points = num_curves * 3;
+	std::vector<glm::vec3> control_points(num_points);
+	for (int i = 0; i < num_points; ++i)
+	{
+		if (i % 3 == 0) continue; // do interpolated points later
+		float offset = ((float)rand()/(float)RAND_MAX) * (radius / (1/waviness)) - (radius / (2/waviness));
+		float x = radius * glm::cos(glm::radians(i * 360.f / num_points)) + offset;
+		offset = ((float)rand() / (float)RAND_MAX) * (radius / (1/waviness)) - (radius / (2/waviness));
+		float z = radius * glm::sin(glm::radians(i * 360.f / num_points)) + offset;
+		float y = 0;
+		control_points[i] = glm::vec3(x, y, -z);
+	}
+	// Interpolated points as midpoints
+	for (int i = 0; i < num_points; i += 3)
+		control_points[i] = 0.5f * (control_points[i - 1 > 0 ? i - 1 : num_points - 1] + control_points[i + 1]);
+
+	// Calculate vertices
+	bez_plane->vertices.push_back(glm::vec3(0.f)); // centered at origin
+	for (unsigned int i = 0; i < num_curves; ++i)
+	{
+		int off = 3 * i;
+		glm::mat4 bezier_mat = Util::calc_bezier_mat(control_points[off],
+			control_points[off + 1],
+			control_points[off + 2],
+			control_points[(off + 3) % num_points]);
+
+		for (unsigned int j = 0; j <= segmentation; ++j)
+		{
+			float t = (float) j / (float) segmentation;
+			bez_plane->vertices.push_back(glm::vec3(bezier_mat * glm::vec4(t*t*t, t*t, t, 1.f)));
+		}
+	}
+
+	// Normals
+	for (int i = 0; i < bez_plane->vertices.size(); ++i)
+		bez_plane->normals.push_back(glm::vec3(0.f, 1.f, 0.f));
+
+	// Indices
+	for (int i = 0; i < bez_plane->vertices.size(); ++i)
+		bez_plane->indices.push_back(i);
+
+	bez_plane->has_normals = true;
+	bez_plane->populate_buffers();
+	geometries.push_back(bez_plane);
+	return bez_plane;
+}
