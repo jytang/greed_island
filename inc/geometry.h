@@ -6,8 +6,8 @@
 class Geometry
 {
 public:
-	bool has_texture = false;
-	bool has_normals = false;
+	bool has_texture;
+	bool has_normals;
 	std::vector<glm::vec3> vertices;
 	std::vector<glm::vec3> normals;
 	std::vector<glm::vec2> tex_coords;

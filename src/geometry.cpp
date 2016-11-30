@@ -2,6 +2,9 @@
 
 Geometry::Geometry()
 {
+	has_texture = false;
+	has_normals = true;
+
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
 	glGenBuffers(1, &NBO);
