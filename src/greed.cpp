@@ -85,6 +85,7 @@ void Greed::setup_scene()
 	water_translate->add_child(water_scale);
 	root->add_child(water_translate);
 
+	/*
 	// Beach Plane (Temporary)
 	Geometry *bez_plane_geo = GeometryGenerator::generate_bezier_plane(10.f, 50, 150, 0.1f, 0);
 	Material beach_material;
@@ -97,9 +98,11 @@ void Greed::setup_scene()
 	beach_scale->add_child(beach_model);
 	beach_translate->add_child(beach_scale);
 	root->add_child(beach_translate);
+	*/
 
+	/*
 	// Island Land Grid
-	Geometry *grid_geo = GeometryGenerator::generate_grid(9, 200.f, 30, 100.f, 777);
+	Geometry *grid_geo = GeometryGenerator::generate_grid(9, 100.f, 30, 100.f, 777);
 	Material land_material;
 	land_material.diffuse = land_material.ambient = color::windwaker_green;
 	Mesh land_mesh = { grid_geo, land_material, ShaderManager::get_default() };
@@ -110,6 +113,37 @@ void Greed::setup_scene()
 	land_scale->add_child(land_model);
 	land_translate->add_child(land_scale);
 	root->add_child(land_translate);
+	*/
+
+	//Experimenting with something differnet (THIS IS WAY BETTER< WTH)
+	unsigned int size_modifier = 9; //LOWER THIS TO RUN FASTER
+	unsigned int size = (unsigned int)glm::pow(2, size_modifier) + 1;	
+	Terrain::generate_height_map(size, 100.f, 30, 100.f, 777);
+
+	Geometry *land_geo = GeometryGenerator::generate_terrain(size, 20.0f, 200.0f);
+	Material land_material;
+	land_material.diffuse = land_material.ambient = color::windwaker_green;
+	Mesh land_mesh = { land_geo, land_material, ShaderManager::get_default() };
+	SceneModel *land_model = new SceneModel(scene);
+	land_model->add_mesh(land_mesh);
+
+	Geometry *sand_geo = GeometryGenerator::generate_terrain(size, 10.0f, 19.99f);
+	Material sand_material;
+	sand_material.diffuse = sand_material.ambient = color::windwaker_sand;
+	Mesh sand_mesh = { sand_geo, sand_material, ShaderManager::get_default() };
+	SceneModel *sand_model = new SceneModel(scene);
+	sand_model->add_mesh(sand_mesh);
+	SceneTransform *terrain_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(0.25f, 0.25f, 0.25f)));
+	SceneTransform *terrain_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, -11.0f, 0.0f)));
+	terrain_translate->add_child(sand_model);
+	terrain_translate->add_child(land_model);
+	terrain_scale->add_child(terrain_translate);
+	//terrain_scale->add_child(sand_model);
+	//terrain_scale->add_child(land_model);
+	//terrain_translate->add_child(terrain_scale);
+	root->add_child(terrain_scale);
+
+
 }
 
 void Greed::go()
