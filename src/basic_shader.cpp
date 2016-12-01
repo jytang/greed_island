@@ -12,11 +12,6 @@ void BasicShader::set_material(Material m)
 	glUniform3f(glGetUniformLocation(shader_id, "material.specular"), m.specular.x, m.specular.y, m.specular.z);
 	glUniform3f(glGetUniformLocation(shader_id, "material.ambient"), m.ambient.x, m.ambient.y, m.ambient.z);
 	glUniform1f(glGetUniformLocation(shader_id, "material.shininess"), m.shininess);
-
-	// Basic lighting
-	glUniform3f(glGetUniformLocation(shader_id, "dir_light.direction"), 0.f, -2.f, 1.f);
-	glUniform3f(glGetUniformLocation(shader_id, "dir_light.color"), 1.f, 1.f, 1.f);
-	glUniform1f(glGetUniformLocation(shader_id, "dir_light.ambient_coeff"), 0.2f);
 }
 
 void BasicShader::draw(Geometry *g, glm::mat4 to_world)
@@ -28,6 +23,12 @@ void BasicShader::draw(Geometry *g, glm::mat4 to_world)
 		glUniformMatrix4fv(glGetUniformLocation(shader_id, "light_matrix"), 1, GL_FALSE, &ss->light_matrix[0][0]);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, ss->shadow_map_tex);
+
+		// Basic lighting
+		glm::vec3 light_pos = ss->light_pos;
+		glUniform3f(glGetUniformLocation(shader_id, "dir_light.direction"), -light_pos.x, -light_pos.y, -light_pos.z);
+		glUniform3f(glGetUniformLocation(shader_id, "dir_light.color"), 1.f, 1.f, 1.f);
+		glUniform1f(glGetUniformLocation(shader_id, "dir_light.ambient_coeff"), 0.2f);
 	}
 
 	// Send camera position for shading
