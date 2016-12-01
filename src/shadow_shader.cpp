@@ -22,13 +22,6 @@ ShadowShader::ShadowShader(GLuint shader_id) : Shader(shader_id)
 	glDrawBuffer(GL_NONE);
 	glReadBuffer(GL_NONE);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-	light_pos = glm::vec3(0.f, 3, 2);
-	glm::mat4 light_proj = glm::ortho(-200.f, 200.f, -200.f, 200.f, -200.f, 200.f);
-	//glm::mat4 light_proj = glm::ortho(-10.f, 10.f, -10.f, 10.f, -10.f, 10.f);
-	//glm::mat4 light_proj = glm::perspective<float>(45.0f, 1.0f, 2.0f, 50.0f);
-	glm::mat4 light_view = glm::lookAt(light_pos, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
-	light_matrix = light_proj * light_view;
 }
 
 void ShadowShader::set_material(Material m)
@@ -37,6 +30,14 @@ void ShadowShader::set_material(Material m)
 
 void ShadowShader::draw(Geometry *g, glm::mat4 to_world)
 {
+	// Recalculate light matrix based on current light position.
+	glm::mat4 light_proj = glm::ortho(-200.f, 200.f, -200.f, 200.f, -200.f, 200.f);
+	//glm::mat4 light_proj = glm::ortho(-10.f, 10.f, -10.f, 10.f, -10.f, 10.f);
+	//glm::mat4 light_proj = glm::perspective(45.0f, 1.0f, 2.0f, 50.0f);
+	glm::mat4 light_view = glm::lookAt(light_pos, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+	light_matrix = light_proj * light_view;
+
+	glUniformMatrix4fv(glGetUniformLocation(shader_id, "view_projection"), 1, GL_FALSE, &light_matrix[0][0]);
 	glUniformMatrix4fv(glGetUniformLocation(shader_id, "model"), 1, GL_FALSE, &to_world[0][0]);
 	g->bind();
 	g->draw();

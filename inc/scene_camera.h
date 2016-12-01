@@ -18,6 +18,7 @@ public:
 	glm::vec3 cam_front;
 	glm::vec3 cam_up;
 	glm::mat4 V;
+	GLfloat pitch, yaw;
 
 	SceneCamera(Scene *);
 	~SceneCamera();

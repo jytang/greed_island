@@ -4,6 +4,7 @@ Scene::Scene()
 {
 	root = new SceneGroup(this);
 	camera = new SceneCamera(this);
+	light_pos = glm::vec3(0.f, 2.f, 1.f);
 }
 
 Scene::~Scene()
