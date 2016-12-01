@@ -161,7 +161,7 @@ void Greed::shadow_pass()
 	glBindFramebuffer(GL_FRAMEBUFFER, ss->FBO);
 	glClear(GL_DEPTH_BUFFER_BIT);
 	ss->use();
-	glUniformMatrix4fv(glGetUniformLocation(ss->shader_id, "view_projection"), 1, GL_FALSE, &ss->light_matrix[0][0]);
+	ss->light_pos = scene->light_pos;
 	// Render using scene graph.
 	scene->pass(ss);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -315,8 +315,12 @@ void Greed::cursor_position_callback(GLFWwindow* window, double x_pos, double y_
 	glm::vec3 current_cursor_pos(x_pos, y_pos, 0);
 	glm::vec3 cursor_delta = current_cursor_pos - last_cursor_pos;
 	if (lmb_down) {
+		glm::vec3 rot_axis = glm::cross(last_cursor_pos, current_cursor_pos);
+		float rot_angle = glm::length(cursor_delta) * 0.001f;
+		scene->light_pos = glm::vec3(glm::rotate(glm::mat4(1.0f), rot_angle, rot_axis) * glm::vec4(scene->light_pos, 1.0f));
+		
+		/*
 		float angle;
-
 		// Horizontal rotation
 		angle = (float)(cursor_delta.x) / 100.f;
 		camera->cam_pos = glm::vec3(glm::rotate(glm::mat4(1.f), angle, glm::vec3(0.f, 1.f, 0.f)) * glm::vec4(camera->cam_pos, 1.f));
@@ -328,8 +332,31 @@ void Greed::cursor_position_callback(GLFWwindow* window, double x_pos, double y_
 		camera->cam_pos = glm::vec3(glm::rotate(glm::mat4(1.f), angle, axis) * glm::vec4(camera->cam_pos, 1.f));
 		camera->cam_up = glm::vec3(glm::rotate(glm::mat4(1.f), angle, axis) * glm::vec4(camera->cam_up, 1.f));
 		camera->cam_front = glm::normalize(-camera->cam_pos);
-
+		
 		camera->recalculate();
+		*/
+	}
+	else {
+		// Look around.
+		GLfloat xoffset = cursor_delta.x;
+		GLfloat yoffset = cursor_delta.y;
+		GLfloat sensitivity = 0.5;
+		xoffset *= sensitivity;
+		yoffset *= sensitivity;
+
+		camera->yaw += xoffset;
+		camera->pitch += yoffset;
+
+		if (camera->pitch > 89.0f)
+			camera->pitch = 89.0f;
+		if (camera->pitch < -89.0f)
+			camera->pitch = -89.0f;
+
+		glm::vec3 front;
+		front.x = cos(glm::radians(camera->yaw)) * cos(glm::radians(camera->pitch));
+		front.y = -sin(glm::radians(camera->pitch));
+		front.z = sin(glm::radians(camera->yaw)) * cos(glm::radians(camera->pitch));
+		camera->cam_front = glm::normalize(front);
 	}
 
 	last_cursor_pos = current_cursor_pos;

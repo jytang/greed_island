@@ -13,6 +13,7 @@ public:
 	SceneGroup *root;
 	SceneCamera *camera;
 	glm::mat4 P;
+	glm::vec3 light_pos;
 
 	Scene();
 	~Scene();
