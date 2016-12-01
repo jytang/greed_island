@@ -68,13 +68,13 @@ Geometry * GeometryGenerator::generate_cube(GLfloat scale, bool has_normals)
 		for (int i = 0; i < 6; ++i)
 			cube->normals.push_back(glm::vec3(0.f, 1.f, 0.f));
 		for (int i = 0; i < 6; ++i)
-			cube->normals.push_back(glm::vec3(0.f, 0.f, 1.f));
+			cube->normals.push_back(glm::vec3(0.f, 0.f, -1.f));
 		for (int i = 0; i < 6; ++i)
 			cube->normals.push_back(glm::vec3(-1.f, 0.f, 0.f));
 		for (int i = 0; i < 6; ++i)
 			cube->normals.push_back(glm::vec3(1.f, 0.f, 0.f));
 		for (int i = 0; i < 6; ++i)
-			cube->normals.push_back(glm::vec3(0.f, 0.f, -1.f));
+			cube->normals.push_back(glm::vec3(0.f, 0.f, 1.f));
 		for (int i = 0; i < 6; ++i)
 			cube->normals.push_back(glm::vec3(0.f, -1.f, 0.f));
 	}

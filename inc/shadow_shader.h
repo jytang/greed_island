@@ -10,6 +10,7 @@ public:
 	GLuint FBO, shadow_map_tex;
 	unsigned int size;
 	glm::mat4 light_matrix;
+	glm::vec3 light_pos;
 
 	ShadowShader(GLuint shader_id);
 	void set_material(Material m);
