@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 #include <vector>
 #include <time.h>
+#include <math.h>
 
 
 class Terrain
@@ -17,6 +18,6 @@ private:
 
 public:
 	static void generate_height_map(GLuint size, GLfloat max_height, GLint village_diameter, GLfloat scale, GLuint seed);
-	static float height_lookup(int x, int z);	
+	static float height_lookup(float x, float y, float length);
 };
 

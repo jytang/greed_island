@@ -115,28 +115,29 @@ void Greed::setup_scene()
 	root->add_child(land_translate);
 	*/
 
-	//Experimenting with something differnet (THIS IS WAY BETTER< WTH)
-	unsigned int size_modifier = 9; //LOWER THIS TO RUN FASTER
+	fprintf(stderr, "Generating Height Map\n");
+	//New Terrain Method using Awesomeness
+	unsigned int size_modifier = 8; //LOWER THIS TO RUN FASTER
 	unsigned int size = (unsigned int)glm::pow(2, size_modifier) + 1;	
-	Terrain::generate_height_map(size, 100.f, 30, 100.f, 777);
+	Terrain::generate_height_map(size, 30.f, 30, 22.f, 123);
 
-	Geometry *land_geo = GeometryGenerator::generate_terrain(size, 20.0f, 200.0f);
+	fprintf(stderr, "Generating Land Terrain\n"); //Second Parameter Below is Resolution^2 of Island, LOWER TO RUN FASTER
+	Geometry *land_geo = GeometryGenerator::generate_terrain(100.0f, 300, 10.0f, 200.0f);
 	Material land_material;
 	land_material.diffuse = land_material.ambient = color::windwaker_green;
-	Mesh land_mesh = { land_geo, land_material, ShaderManager::get_default() };
-	SceneModel *land_model = new SceneModel(scene);
-	land_model->add_mesh(land_mesh);
+	Mesh land_mesh = { land_geo, land_material, ShaderManager::get_default() };	
 
-	Geometry *sand_geo = GeometryGenerator::generate_terrain(size, 10.0f, 19.99f);
+	fprintf(stderr, "Generating Sand Terrain\n");
+	Geometry *sand_geo = GeometryGenerator::generate_terrain(100.0f, 300, 5.0f, 10.0f);
 	Material sand_material;
 	sand_material.diffuse = sand_material.ambient = color::windwaker_sand;
 	Mesh sand_mesh = { sand_geo, sand_material, ShaderManager::get_default() };
-	SceneModel *sand_model = new SceneModel(scene);
-	sand_model->add_mesh(sand_mesh);
-	SceneTransform *terrain_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(0.25f, 0.25f, 0.25f)));
-	SceneTransform *terrain_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, -11.0f, 0.0f)));
-	terrain_translate->add_child(sand_model);
-	terrain_translate->add_child(land_model);
+	SceneModel *terrain_model = new SceneModel(scene);
+	terrain_model->add_mesh(land_mesh);
+	terrain_model->add_mesh(sand_mesh);
+	SceneTransform *terrain_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(1.f, 1.f, 1.f)));
+	SceneTransform *terrain_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, -6.0f, 0.0f)));
+	terrain_translate->add_child(terrain_model);
 	terrain_scale->add_child(terrain_translate);
 	//terrain_scale->add_child(sand_model);
 	//terrain_scale->add_child(land_model);
