@@ -1,12 +1,12 @@
 #include "shader_manager.h"
 #include "skybox_shader.h"
 #include "basic_shader.h"
+#include "shadow_shader.h"
 
-ShaderManager::ShaderManager()
-{
-}
+std::map<const char*, Shader*> ShaderManager::shaders;
+Shader * ShaderManager::default_shader;
 
-ShaderManager::~ShaderManager()
+void ShaderManager::destroy()
 {
     for (auto it = shaders.begin(); it != shaders.end(); ++it)
         delete(it->second);
@@ -100,10 +100,12 @@ void ShaderManager::create_shader_program(const char *type)
 
     Shader *s;
     std::string name = std::string(type);
-    if (name == "basic")
-        s = new BasicShader(ProgramID);
-    else if (name == "skybox")
-        s = new SkyboxShader(ProgramID);
+	if (name == "basic")
+		s = new BasicShader(ProgramID);
+	else if (name == "skybox")
+		s = new SkyboxShader(ProgramID);
+	else if (name == "shadow")
+		s = new ShadowShader(ProgramID);
     else {
 	    printf("Unregistered shader: %s\n", type);
         return;

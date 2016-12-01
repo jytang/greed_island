@@ -1,4 +1,5 @@
 #include "scene_group.h"
+#include "shader.h"
 
 SceneGroup::SceneGroup() {}
 
@@ -33,4 +34,10 @@ void SceneGroup::update()
 {
 	for (auto it = children.begin(); it != children.end(); ++it)
 		(*it)->update();
+}
+
+void SceneGroup::pass(glm::mat4 m, Shader *s)
+{
+	for (auto it = children.begin(); it != children.end(); ++it)
+		(*it)->pass(m, s);
 }

@@ -28,6 +28,15 @@ void SceneModel::draw(glm::mat4 m)
 	}
 }
 
+void SceneModel::pass(glm::mat4 m, Shader * s)
+{
+	for (Mesh mesh : meshes)
+	{
+		if (mesh.geometry)
+			s->draw(mesh.geometry, m);
+	}
+}
+
 void SceneModel::update()
 {
 

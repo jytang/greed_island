@@ -17,14 +17,13 @@
 class ShaderManager
 {
 private:
-	std::map<const char*, Shader*> shaders;
-	Shader *default_shader;
+	static std::map<const char*, Shader*> shaders;
+	static Shader *default_shader;
 public:
-	ShaderManager();
-	~ShaderManager();
-	void create_shader_program(const char *type);
-	Shader* get_shader_program(const char *type);
-	void set_default(const char *type);
-	Shader* get_default();
+	static void destroy();
+	static void create_shader_program(const char *type);
+	static Shader* get_shader_program(const char *type);
+	static void set_default(const char *type);
+	static Shader* get_default();
 };
 

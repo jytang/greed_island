@@ -1,6 +1,7 @@
 #include "greed.h"
 #include "window.h"
 #include "skybox_shader.h"
+#include "shadow_shader.h"
 #include "geometry_generator.h"
 #include "scene_model.h"
 #include "scene_transform.h"
@@ -28,8 +29,8 @@ Greed::~Greed() {}
 void Greed::destroy()
 {
 	// Free memory here.
-	delete(shader_manager);
 	delete(scene);
+	ShaderManager::destroy();
 	GeometryGenerator::clean_up();
 
 	glfwDestroyWindow(window);
@@ -39,9 +40,10 @@ void Greed::destroy()
 void Greed::setup_shaders()
 {
 	// Load shaders via a shader manager.
-	shader_manager->create_shader_program("basic");
-	shader_manager->create_shader_program("skybox");
-	shader_manager->set_default("basic");
+	ShaderManager::create_shader_program("basic");
+	ShaderManager::create_shader_program("skybox");
+	ShaderManager::create_shader_program("shadow");
+	ShaderManager::set_default("basic");
 }
 
 void Greed::setup_scene()
@@ -52,43 +54,42 @@ void Greed::setup_scene()
 
 	// Do skybox.
 	Material default_material;
-	Mesh skybox_mesh = { nullptr, default_material, shader_manager->get_shader_program("skybox") };
+	Mesh skybox_mesh = { nullptr, default_material, ShaderManager::get_shader_program("skybox") };
 	SceneModel *skybox_model = new SceneModel(scene);
 	skybox_model->add_mesh(skybox_mesh);
 	root->add_child(skybox_model);
 
-	/*
 	// Generate geometry and create Mesh + SceneModel.
 	Geometry *cube_geometry = GeometryGenerator::generate_cube(1.f, true);
 	Material cube_material;
 	cube_material.diffuse = cube_material.ambient = color::red;
-	Mesh cube_mesh = { cube_geometry, cube_material, shader_manager->get_default() };
+	Mesh cube_mesh = { cube_geometry, cube_material, ShaderManager::get_default() };
 	SceneModel *cube_model = new SceneModel(scene);
 	cube_model->add_mesh(cube_mesh);
-	root->add_child(cube_model);
-	*/
+	SceneTransform *cube_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 0.f, -10.0f)));
+	//SceneTransform *cube_translate = new SceneTransform(scene, glm::rotate(glm::mat4(1.f), glm::radians(45.f), glm::vec3(0.f, 1.f, 0.f)));
 
-	/*
+	cube_translate->add_child(cube_model);
+	root->add_child(cube_translate);
+
 	// Water Plane
 	Geometry *plane_geo = GeometryGenerator::generate_plane(1.f);
 	Material water_material;
 	water_material.diffuse = water_material.ambient = color::ocean_blue;
-	Mesh water_mesh = { plane_geo, water_material, shader_manager->get_default() };
+	Mesh water_mesh = { plane_geo, water_material, ShaderManager::get_default() };
 	SceneModel *water_model = new SceneModel(scene);
 	water_model->add_mesh(water_mesh);
-	SceneTransform *water_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(1000.0f, 1.0f, 1000.0f)));
+	SceneTransform *water_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(200.0f, 1.0f, 200.0f)));
 	SceneTransform *water_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, -1.2f, 0.0f)));
 	water_scale->add_child(water_model);
 	water_translate->add_child(water_scale);
 	root->add_child(water_translate);
-	*/
-
 
 	// Beach Plane (Temporary)
 	Geometry *bez_plane_geo = GeometryGenerator::generate_bezier_plane(10.f, 50, 150, 0.1f, 0);
 	Material beach_material;
 	beach_material.diffuse = beach_material.ambient = color::windwaker_sand;
-	Mesh beach_mesh = { bez_plane_geo, beach_material, shader_manager->get_default() };
+	Mesh beach_mesh = { bez_plane_geo, beach_material, ShaderManager::get_default() };
 	SceneModel *beach_model = new SceneModel(scene);
 	beach_model->add_mesh(beach_mesh);
 	SceneTransform *beach_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(10.0f, 1.0f, 10.0f)));
@@ -97,38 +98,23 @@ void Greed::setup_scene()
 	beach_translate->add_child(beach_scale);
 	root->add_child(beach_translate);
 
-	/*
-	// Island Plane (Temporary)
+	// Island Land Grid
+	/*Geometry *grid_geo = GeometryGenerator::generate_grid(7, 100.f, 30, 10);
 	Material land_material;
 	land_material.diffuse = land_material.ambient = color::windwaker_green;
-	Mesh land_mesh = { plane_geo, land_material, shader_manager->get_default() };
-	SceneModel *land_model = new SceneModel(scene);
-	land_model->add_mesh(land_mesh);
-	SceneTransform *land_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(8.0f, 1.0f, 8.0f)));
-	SceneTransform *land_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, -1.0f, 0.0f)));
-	land_scale->add_child(land_model);
-	land_translate->add_child(land_scale);
-	root->add_child(land_translate);
-	*/
-
-	//Island Land Grid
-	Geometry *grid_geo = GeometryGenerator::generate_grid(7, 100.f, 30, 10);
-	Material land_material;
-	land_material.diffuse = land_material.ambient = color::windwaker_green;
-	Mesh land_mesh = { grid_geo, land_material, shader_manager->get_default() };
+	Mesh land_mesh = { grid_geo, land_material, ShaderManager::get_default() };
 	SceneModel *land_model = new SceneModel(scene);
 	land_model->add_mesh(land_mesh);
 	SceneTransform *land_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(1.f, 1.f, 1.f)));
 	SceneTransform *land_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 0.0f, 0.0f)));
 	land_scale->add_child(land_model);
 	land_translate->add_child(land_scale);
-	root->add_child(land_translate);
+	root->add_child(land_translate);*/
 }
 
 void Greed::go()
 {
 	window = Window::create_window(1280, 720, "Greed Island");
-	shader_manager = new ShaderManager();
 	setup_callbacks();
 	setup_opengl();
 	if (vr_on) GreedVR::init();
@@ -145,6 +131,13 @@ void Greed::go()
 	{
 		glfwPollEvents();
 		handle_movement();
+
+		// First pass: shadowmap.
+		shadow_pass();
+
+		// Second pass: usual rendering.
+		glfwGetFramebufferSize(window, &width, &height);
+		glViewport(0, 0, width, height);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		if (vr_on)
@@ -159,6 +152,19 @@ void Greed::go()
 	}
 
 	destroy();
+}
+
+void Greed::shadow_pass()
+{
+	ShadowShader * ss = (ShadowShader *) ShaderManager::get_shader_program("shadow");
+	glViewport(0, 0, ss->size, ss->size);
+	glBindFramebuffer(GL_FRAMEBUFFER, ss->FBO);
+	glClear(GL_DEPTH_BUFFER_BIT);
+	ss->use();
+	glUniformMatrix4fv(glGetUniformLocation(ss->shader_id, "view_projection"), 1, GL_FALSE, &ss->light_matrix[0][0]);
+	// Render using scene graph.
+	scene->pass(ss);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void Greed::vr_render()
@@ -231,6 +237,8 @@ void Greed::handle_movement()
 		camera->cam_pos -= glm::normalize(glm::cross(camera->cam_front, camera->cam_up)) * cam_step;
 	if (keys[GLFW_KEY_D])
 		camera->cam_pos += glm::normalize(glm::cross(camera->cam_front, camera->cam_up)) * cam_step;
+	if (keys[GLFW_KEY_SPACE])
+		camera->cam_pos += cam_step * camera->cam_up;
 	camera->recalculate();
 }
 

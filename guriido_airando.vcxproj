@@ -146,6 +146,7 @@
     <ClCompile Include="src\scene_transform.cpp" />
     <ClCompile Include="src\shader.cpp" />
     <ClCompile Include="src\shader_manager.cpp" />
+    <ClCompile Include="src\shadow_shader.cpp" />
     <ClCompile Include="src\skybox_shader.cpp" />
     <ClCompile Include="src\terrain.cpp" />
     <ClCompile Include="src\util.cpp" />
@@ -171,6 +172,7 @@
     <ClInclude Include="inc\scene_transform.h" />
     <ClInclude Include="inc\shader.h" />
     <ClInclude Include="inc\shader_manager.h" />
+    <ClInclude Include="inc\shadow_shader.h" />
     <ClInclude Include="inc\skybox_shader.h" />
     <ClInclude Include="inc\terrain.h" />
     <ClInclude Include="inc\util.h" />

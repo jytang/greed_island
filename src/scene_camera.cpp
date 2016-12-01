@@ -1,4 +1,5 @@
 #include "scene_camera.h"
+#include "shader.h"
 
 SceneCamera::SceneCamera(Scene *scene)
 {
@@ -27,4 +28,8 @@ void SceneCamera::reset()
 	cam_front = DEFAULT_CAM_FRONT;
 	cam_up = DEFAULT_CAM_UP;
 	recalculate();
+}
+
+void SceneCamera::pass(glm::mat4 m, Shader *s)
+{
 }

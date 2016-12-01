@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "scene.h"
+#include "shader.h"
 
 class SceneModel :
 	public SceneNode
@@ -18,5 +19,6 @@ public:
 	void add_mesh(Mesh m);
 	void draw(glm::mat4);
 	void update();
+	void pass(glm::mat4 m, Shader *s);
 };
 

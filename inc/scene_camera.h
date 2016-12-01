@@ -3,6 +3,8 @@
 #include "scene_node.h"
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "shader.h"
+
 class SceneCamera :
 	public SceneNode
 {
@@ -20,6 +22,7 @@ public:
 	SceneCamera(Scene *);
 	~SceneCamera();
 	void draw(glm::mat4 m);
+	void pass(glm::mat4 m, Shader *s);
 	void update();
 	void recalculate();
 	void reset();

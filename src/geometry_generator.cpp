@@ -250,7 +250,6 @@ Geometry * GeometryGenerator::generate_bezier_plane(GLfloat radius, GLuint num_c
 	for (int i = 0; i < bez_plane->vertices.size(); ++i)
 		bez_plane->indices.push_back(i);
 
-	bez_plane->has_normals = true;
 	bez_plane->populate_buffers();
 	geometries.push_back(bez_plane);
 	return bez_plane;
