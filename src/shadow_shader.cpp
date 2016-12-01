@@ -8,7 +8,7 @@ ShadowShader::ShadowShader(GLuint shader_id) : Shader(shader_id)
 	glBindFramebuffer(GL_FRAMEBUFFER, FBO);
 
 	// Generate shadow map texture.
-	size = 2048;
+	size = 4096;
 	glGenTextures(1, &shadow_map_tex);
 	glBindTexture(GL_TEXTURE_2D, shadow_map_tex);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, size, size, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
@@ -30,10 +30,7 @@ void ShadowShader::set_material(Material m)
 
 void ShadowShader::draw(Geometry *g, glm::mat4 to_world)
 {
-	// Recalculate light matrix based on current light position.
-	glm::mat4 light_proj = glm::ortho(-200.f, 200.f, -200.f, 200.f, -200.f, 200.f);
-	//glm::mat4 light_proj = glm::ortho(-10.f, 10.f, -10.f, 10.f, -10.f, 10.f);
-	//glm::mat4 light_proj = glm::perspective(45.0f, 1.0f, 2.0f, 50.0f);
+	// Recalculate light matrix based on current light position and light projection matrix
 	glm::mat4 light_view = glm::lookAt(light_pos, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
 	light_matrix = light_proj * light_view;
 

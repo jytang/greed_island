@@ -164,6 +164,7 @@
     <ClInclude Include="inc\material.h" />
     <ClInclude Include="inc\geometry_generator.h" />
     <ClInclude Include="inc\mesh.h" />
+    <ClInclude Include="inc\plane.h" />
     <ClInclude Include="inc\scene.h" />
     <ClInclude Include="inc\scene_camera.h" />
     <ClInclude Include="inc\scene_group.h" />
