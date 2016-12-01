@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 
 #include "scene_group.h"
+#include "shader.h"
 
 class SceneTransform :
 	public SceneGroup
@@ -15,5 +16,6 @@ public:
 	~SceneTransform();
 	void draw(glm::mat4 m);
 	void update();
+	void pass(glm::mat4 m, Shader *s);
 };
 

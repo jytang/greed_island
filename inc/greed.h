@@ -15,7 +15,6 @@ class Greed
 {
 private:
 	GLFWwindow *window;
-	ShaderManager *shader_manager;
 
 	static Scene *scene;
 	static SceneCamera *camera;
@@ -43,4 +42,5 @@ public:
 	Greed();
 	~Greed();
 	void go();
+	void shadow_pass();
 };

@@ -1,4 +1,4 @@
-#include "..\inc\terrain.h"
+#include "terrain.h"
 
 std::vector<std::vector<GLfloat> > Terrain::height_map;
 
@@ -107,6 +107,8 @@ void Terrain::diamond_step(unsigned int x, unsigned int y, unsigned int size, fl
 		d = 0;
 
 	height_map[x][y] = (a + b + c + d) / 4.f + ((float) (rand() % 101) / 100.f) * scale;
+	if (height_map[x][y] < 0)
+		height_map[x][y] = 0;
 }
 
 void Terrain::square_step(unsigned int x, unsigned int y, unsigned int size, float scale)
@@ -146,6 +148,8 @@ void Terrain::square_step(unsigned int x, unsigned int y, unsigned int size, flo
 		d = 0;
 
 	height_map[x][y] = (a + b + c + d) / 4.f + ((float) (rand() % 101) / 100.f) * scale;
+	if (height_map[x][y] < 0)
+		height_map[x][y] = 0;
 }
 
 float Terrain::height_lookup(int x, int z)

@@ -10,112 +10,45 @@ struct DirLight {
     vec3 direction;
     vec3 color;
     float ambient_coeff;
-
-    bool on;
-};
-
-struct PointLight {
-    vec3 position;
-    vec3 color;
-    float quadratic;
-    float ambient_coeff;
-
-    bool on;
-};
-
-struct SpotLight {
-    vec3 position;
-    vec3 direction;
-    vec3 color;
-    float angle;
-    float taper;
-    float ambient_coeff;
-    float quadratic;
-
-    bool on;
 };
 
 in vec3 frag_pos;
 in vec3 frag_normal;
+in vec4 frag_pos_light;
 
 out vec4 color;
 
+uniform sampler2D shadow_map;
 uniform vec3 eye_pos;
 uniform Material material;
 uniform DirLight dir_light;
-uniform PointLight point_light;
-uniform SpotLight spot_light;
-uniform bool normal_colors;
 
-vec3 calc_dir_light(DirLight light, vec3 normal, vec3 view_dir);
-vec3 calc_point_light(PointLight light, vec3 normal, vec3 view_dir, vec3 frag_pos);
-vec3 calc_spot_light(SpotLight light, vec3 normal, vec3 view_dir, vec3 frag_pos);
 vec3 colorify(vec3 normal, vec3 view_dir, vec3 light_dir, vec3 light_intensity, float ambient_coeff);
+float calc_shadows(vec4 pos_from_light, vec3 light_dir);
 
 void main()
 {
-    vec3 norm = normalize(frag_normal);
+    vec3 normal = normalize(frag_normal);
     vec3 view_dir = normalize(eye_pos - frag_pos);
-
-    vec3 result = vec3(0.0f);
-
-    if (normal_colors) {
-        result = norm;
-    } else {
-        result = calc_dir_light(dir_light, norm, view_dir);
-        result += calc_point_light(point_light, norm, view_dir, frag_pos);
-        result += calc_spot_light(spot_light, norm, view_dir, frag_pos);
-    }
+	vec3 light_dir = normalize(-dir_light.direction);
+    vec3 light_intensity = dir_light.color;
+    vec3 result = colorify(normal, view_dir, light_dir, light_intensity, dir_light.ambient_coeff);
 
     color = vec4(result, 1.0f);
 }
 
-vec3 calc_dir_light(DirLight light, vec3 normal, vec3 view_dir)
+float calc_shadows(vec4 pos_from_light, vec3 light_dir)
 {
-    if (light.on) {
-        vec3 light_dir = normalize(-light.direction);
-        vec3 light_intensity = light.color;
-        return colorify(normal, view_dir, light_dir, light_intensity, light.ambient_coeff);
-    } else {
-        return vec3(0.0f);
-    }
-}
+	vec3 clip_coords = pos_from_light.xyz / pos_from_light.w;
+	// Transform to range of [0, 1] to fit depth map
+	clip_coords = clip_coords * 0.5 + 0.5; 
+	float closest_depth = texture(shadow_map, clip_coords.xy).r;
+	float current_depth = clip_coords.z;
 
-vec3 calc_point_light(PointLight light, vec3 normal, vec3 view_dir, vec3 frag_pos)
-{
-    if (light.on) {
-        vec3 light_dir = normalize(light.position - frag_pos);
+	float bias = max(0.05 * (1.0 - dot(normalize(frag_normal), light_dir)), 0.005);  
+	float shadow = current_depth - bias > closest_depth ? 1.0 : 0.0;
 
-        float distance = length(light.position - frag_pos);
-        float attenuation = 1.0f / (light.quadratic * distance * distance);
-        vec3 light_intensity = light.color * attenuation;
-
-        return colorify(normal, view_dir, light_dir, light_intensity, light.ambient_coeff);
-    } else {
-        return vec3(0.0f);
-    }
-}
-
-vec3 calc_spot_light(SpotLight light, vec3 normal, vec3 view_dir, vec3 frag_pos)
-{
-    if (light.on) {
-        vec3 light_dir = normalize(light.position - frag_pos);
-        vec3 spotlight_dir = normalize(light.direction);
-
-        vec3 light_intensity = vec3(0.0f);
-        float distance = length(light.position - frag_pos);
-        float attenuation = 1.0f / (light.quadratic * distance * distance);
-
-        // Check that point is within the beam
-        if (dot(-light_dir, spotlight_dir) > cos(light.angle)) {
-            light_intensity = light.color * pow(dot(-light_dir, spotlight_dir), light.taper);
-            light_intensity *= attenuation;
-        }
-
-        return colorify(normal, view_dir, light_dir, light_intensity, light.ambient_coeff);
-    } else {
-        return vec3(0.0f);
-    }
+	return shadow;
 }
 
 vec3 colorify(vec3 normal, vec3 view_dir, vec3 light_dir, vec3 light_intensity, float ambient_coeff)
@@ -131,5 +64,6 @@ vec3 colorify(vec3 normal, vec3 view_dir, vec3 light_dir, vec3 light_intensity, 
     // Ambient: c_a (ambient color) * k_a (coeff)
     vec3 ambient = material.ambient * ambient_coeff;
 
-    return diffuse + specular + ambient;
+	float shadow = calc_shadows(frag_pos_light, light_dir);
+    return (1.0 - shadow) * (diffuse + specular) + ambient;
 }

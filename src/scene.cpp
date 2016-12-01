@@ -16,3 +16,8 @@ void Scene::render()
 {
 	root->draw(glm::mat4(1.f));
 }
+
+void Scene::pass(Shader * s)
+{
+	root->pass(glm::mat4(1.f), s);
+}

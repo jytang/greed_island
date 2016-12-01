@@ -1,4 +1,5 @@
 #include "scene_transform.h"
+#include "shader.h"
 
 SceneTransform::SceneTransform(Scene *scene, glm::mat4 m)
 {
@@ -17,4 +18,10 @@ void SceneTransform::draw(glm::mat4 m)
 void SceneTransform::update()
 {
 
+}
+
+void SceneTransform::pass(glm::mat4 m, Shader *s)
+{
+	glm::mat4 new_mat = m * transformation;
+	SceneGroup::pass(new_mat, s);
 }

@@ -62,6 +62,9 @@
     <ClCompile Include="src\terrain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\shadow_shader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -125,6 +128,9 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="inc\terrain.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\shadow_shader.h">
       <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>
