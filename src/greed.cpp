@@ -99,13 +99,13 @@ void Greed::setup_scene()
 	root->add_child(beach_translate);
 
 	// Island Land Grid
-	Geometry *grid_geo = GeometryGenerator::generate_grid(7, 100.f, 30, 10);
+	Geometry *grid_geo = GeometryGenerator::generate_grid(9, 200.f, 30, 100.f, 777);
 	Material land_material;
 	land_material.diffuse = land_material.ambient = color::windwaker_green;
 	Mesh land_mesh = { grid_geo, land_material, ShaderManager::get_default() };
 	SceneModel *land_model = new SceneModel(scene);
 	land_model->add_mesh(land_mesh);
-	SceneTransform *land_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(1.f, 1.f, 1.f)));
+	SceneTransform *land_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(0.25f, 0.25f, 0.25f)));
 	SceneTransform *land_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, -1.0f, 0.0f)));
 	land_scale->add_child(land_model);
 	land_translate->add_child(land_scale);
@@ -228,7 +228,7 @@ void Greed::vr_render()
 
 void Greed::handle_movement()
 {
-	const GLfloat cam_step = 0.01f;
+	const GLfloat cam_step = 1.01f;//0.01f; <-- too slow on lab computers
 	if (keys[GLFW_KEY_W])
 		camera->cam_pos += cam_step * camera->cam_front;
 	if (keys[GLFW_KEY_S])

@@ -2,7 +2,7 @@
 
 std::vector<std::vector<GLfloat> > Terrain::height_map;
 
-void Terrain::generate_height_map(GLuint size, GLfloat max_height, GLint village_diameter, GLuint seed = 0)
+void Terrain::generate_height_map(GLuint size, GLfloat max_height, GLint village_diameter, GLfloat scale, GLuint seed = 0)
 {	
 	unsigned int middle = ((size - 1) / 2); //Size is always odd
 	
@@ -26,9 +26,28 @@ void Terrain::generate_height_map(GLuint size, GLfloat max_height, GLint village
 	height_map[size - 1][0] = 0;
 	height_map[size - 1][size - 1] = 0;
 
+	//Initialize all sides ot be ground level
+	for (unsigned int i = 0; i < size; i++)
+	{
+		height_map[0][i] = 0;
+		height_map[size - 1][i] = 0;
+		height_map[i][0] = 0;
+		height_map[i][size - 1] = 0;
+	}
+
 	//Set Plateau! MaxHeight defined, and will be a fixed circle using VillageDiamteter
 	//TODO: Later, for now center will just be the highest point;
 	height_map[middle][middle] = max_height;
+	//For now, square plateau
+	unsigned int village_mid = village_diameter / 2;
+	for (unsigned int i = middle - village_mid; i <= middle + village_mid; i++)
+	{
+		for (unsigned int j = middle - village_mid; j <= middle + village_mid; j++)
+		{
+			height_map[i][j] = max_height;
+		}
+	}
+
 
 	//Diamond Square Algorithm
 	if (seed == 0)
@@ -37,7 +56,6 @@ void Terrain::generate_height_map(GLuint size, GLfloat max_height, GLint village
 		srand(seed);
 
 	unsigned int stepsize = size - 1;
-	float scale = 100.f;
 
 	//Recursively creates height map
 	diamond_square(stepsize, size, scale);
@@ -45,41 +63,47 @@ void Terrain::generate_height_map(GLuint size, GLfloat max_height, GLint village
 
 void Terrain::diamond_square(unsigned int step, unsigned int size, float scale)
 {
-	if (step < 1)
+	if (step <= 1)
 		return;
 
 	unsigned int halfstep = step / 2;
 
-	for (unsigned int y = halfstep; y < size; y += step)
+	for (unsigned int x = halfstep; x < size; x += step)
 	{
-		for (unsigned int x = halfstep; x < size; x += step)
+		for (unsigned int y = halfstep; y < size; y += step)
 		{
-			diamond_step(x, y, step, (rand() % 2 - 1) * scale);
+			diamond_step(x, y, step, size, (((float)(rand() % 101) / 100.f) * 2 - 1) *scale);
 		}
 	}
 
-	for (unsigned int y = 0; y < size; y += step)
+	for (unsigned int x = 0; x < size; x += step)
 	{
-		for (unsigned int x = 0; x < size; x += step)
+		for (unsigned int y = 0; y < size; y += step)
 		{
 			if (x + halfstep < size)
-				square_step(x + halfstep, y, step, (rand() % 2 - 1) * scale);
+				square_step(x + halfstep, y, step, size, (((float)(rand() % 101) / 100.f) * 2 - 1) *scale);
 			if (y + halfstep < size)
-				square_step(x, y + halfstep, step, (rand() % 2 - 1) * scale);
+				square_step(x, y + halfstep, step, size, (((float)(rand() % 101) / 100.f) * 2 - 1) *scale);
 		}
 	}
+
+	// (((float)(rand() % 101) / 100.f) * 2 - 1) *
+
+	float roughness = 0.9f; //higher is smoother, lower is rougher
+
+	scale *= (float) glm::pow(2.f, -roughness);
 	
-	diamond_square(step / 2, size, scale / 2.f);
+	diamond_square(step / 2, size, scale);
 }
 
-void Terrain::diamond_step(unsigned int x, unsigned int y, unsigned int size, float scale)
+void Terrain::diamond_step(unsigned int x, unsigned int y, unsigned int step, unsigned int size, float scale)
 {
-
-	//Check if point already set
-	if (height_map[x][y] >= 0)
+	if (height_map[x][y] != -1)
 		return;
 
-	unsigned int halfstep = size / 2;
+	//fprintf(stderr, "Diamond on point %u, %u\n", x, y, size);
+
+	unsigned int halfstep = step / 2;
 
 	// a     b 
 	//
@@ -88,6 +112,7 @@ void Terrain::diamond_step(unsigned int x, unsigned int y, unsigned int size, fl
 	// c     d
 
 	float a, b, c, d;
+	float num = 4.0f;
 
 	if (x >= halfstep && y >= halfstep)
 		a = height_map[x - halfstep][y - halfstep];
@@ -97,27 +122,33 @@ void Terrain::diamond_step(unsigned int x, unsigned int y, unsigned int size, fl
 		b = height_map[x + halfstep][y - halfstep];
 	else
 		b = 0;
-	if (x >= halfstep && y + halfstep >= 0)
+	if (x >= halfstep && y + halfstep < size)
 		c = height_map[x - halfstep][y + halfstep];
 	else
 		c = 0;
-	if (x + halfstep >= 0 && y + halfstep >= 0)
+	if (x + halfstep < size && y + halfstep < size)
 		d = height_map[x + halfstep][y + halfstep];
 	else
 		d = 0;
 
-	height_map[x][y] = (a + b + c + d) / 4.f + ((float) (rand() % 101) / 100.f) * scale;
+	float r = (float)(rand() % 101) / 100.f;
+	//fprintf(stderr, "Random: %f\n", r);
+
+	//fprintf(stderr, "Using: %.2f, %.2f, %.2f, %.2f and %.2f\n", a, b, c, d, num);
+
+	height_map[x][y] = ((a + b + c + d) / num) +(r * scale);
 	if (height_map[x][y] < 0)
 		height_map[x][y] = 0;
 }
 
-void Terrain::square_step(unsigned int x, unsigned int y, unsigned int size, float scale)
+void Terrain::square_step(unsigned int x, unsigned int y, unsigned int step, unsigned int size, float scale)
 {
-	//Check if point already set
-	if (height_map[x][y] >= 0)
+	if (height_map[x][y] != -1)
 		return;
 
-	unsigned int halfstep = size / 2;
+	//fprintf(stderr, "Square on point %u, %u\n", x, y);
+
+	unsigned int halfstep = step / 2;
 
 	//   c
 	//
@@ -125,10 +156,8 @@ void Terrain::square_step(unsigned int x, unsigned int y, unsigned int size, flo
 	//
 	//   d
 
-	float a;
-	float b;
-	float c;
-	float d;
+	float a, b, c, d;	
+	float num = 4.0f;
 
 	if (x >= halfstep)
 		a = height_map[x - halfstep][y];
@@ -137,17 +166,25 @@ void Terrain::square_step(unsigned int x, unsigned int y, unsigned int size, flo
 	if (x + halfstep < size)
 		b = height_map[x + halfstep][y];
 	else
-		b = 0;
+		b = 0;	
 	if (y >= halfstep)
 		c = height_map[x][y - halfstep];
 	else
-		c = 0;
+		c = 0;	
 	if (y + halfstep < size)
 		d = height_map[x][y + halfstep];
 	else
 		d = 0;
 
-	height_map[x][y] = (a + b + c + d) / 4.f + ((float) (rand() % 101) / 100.f) * scale;
+	if (x == 0 || y == 0 || x == size - 1 || y == size - 1)
+		num = 3.0f;
+	
+
+	//fprintf(stderr, "Using: %.2f, %.2f, %.2f, %.2f and %.2f\n", a, b, c, d, num);
+
+	float r = ((float)(rand() % 101) / 100.f);
+
+	height_map[x][y] = ((a + b + c + d) / num) +(r * scale);
 	if (height_map[x][y] < 0)
 		height_map[x][y] = 0;
 }

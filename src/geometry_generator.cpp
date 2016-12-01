@@ -131,14 +131,25 @@ Geometry * GeometryGenerator::generate_plane(GLfloat scale)
 	return plane;
 }
 
-Geometry * GeometryGenerator::generate_grid(GLint size_modifier, GLfloat max_height, GLint village_diameter, GLuint seed = 0)
-{	
+Geometry * GeometryGenerator::generate_grid(GLint size_modifier, GLfloat max_height, GLint village_diameter, GLfloat scale, GLuint seed = 0)
+{		
+	/*Note to self regarding terrain's smoothness: AustinPuk
+		The reason why the current terrain has such low resolution is becuase after generating the height map,
+		I just made a 1:1 relation of the height map's points to the vertices. This is actually pretty inefficient
+		since the height map takes exponentially longer to calculate with more points, but we do not necessarily
+		need more points on the height map itself to have a smoother, more realistic surface. Instead, I should
+		really be using the height map as a proper lookup table and make the grid an aribtrary sized resolution of
+		vertices, and then choosing the height of each pixel in the height map based on an averaged/nearest-neighor
+		approach to get smoother surfaces.		
+		This shouldn't take long to fix. In fact, I'll do it now....		
+	*/
+
 	//Create 2D Array of size (2^n + 1) for Height Map
 	unsigned int size = (unsigned int)glm::pow(2, size_modifier) + 1;
 
 	Geometry *terrain = new Geometry();
 
-	Terrain::generate_height_map(size, max_height, village_diameter, seed = 0);
+	Terrain::generate_height_map(size, max_height, village_diameter, scale, seed);
 
 	//Create array of points using height map lookup function
 	//Grid is same size as height map, and scales with height map size
