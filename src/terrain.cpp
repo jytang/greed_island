@@ -89,7 +89,7 @@ void Terrain::diamond_square(unsigned int step, unsigned int size, float scale)
 
 	// (((float)(rand() % 101) / 100.f) * 2 - 1) *
 
-	float roughness = 0.9f; //higher is smoother, lower is rougher
+	float roughness = 0.9f; //higher is smoother, lower is rougher (0 -> 1)
 
 	scale *= (float) glm::pow(2.f, -roughness);
 	
@@ -189,7 +189,38 @@ void Terrain::square_step(unsigned int x, unsigned int y, unsigned int step, uns
 		height_map[x][y] = 0;
 }
 
-float Terrain::height_lookup(int x, int z)
+float Terrain::height_lookup(float x, float y, float length)
 {
-	return height_map[x][z];
+	//Assumes that terrain will be centered at origin and that terrain is square
+
+	//fprintf(stderr, "Orig: %f, %f\n", x, y);
+
+	//Translate to height_map coordinates
+	float mid = length / 2.f;
+	x = ((x + mid) / length) * ((float) height_map.size() - 1.f);
+	y = ((y + mid) / length) * ((float) height_map.size() - 1.f);
+
+	int x0 = (int) floorf(x);
+	int x1 = (int) ceilf(x);
+	int y0 = (int) floorf(y);
+	int y1 = (int) ceilf(y);
+
+	float rx, ry; //Ratios
+
+	//Bilinear Interpolation
+	if (x1 != x0)
+		rx = (x - x0) / (x1 - x0);
+	else
+		rx = 0.0f;
+	if (y1 != y0)
+		ry = (y - y0) / (y1 - y0);
+	else
+		ry = 0.0f;
+
+	//fprintf(stderr, "Test: %d, %d, %d, %d, %f, %f\n", x0, x1, y0, y1, x, y);
+
+	float h0 = (height_map[x0][y0] * (1.f - rx)) + (height_map[x1][y0] * rx);
+	float h1 = (height_map[x0][y1] * (1.f - rx)) + (height_map[x1][y1] * rx);
+
+	return (h0 * (1.f - ry)) + (h1 * ry);
 }

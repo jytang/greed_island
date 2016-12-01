@@ -131,37 +131,42 @@ Geometry * GeometryGenerator::generate_plane(GLfloat scale)
 	return plane;
 }
 
-Geometry * GeometryGenerator::generate_terrain(GLint size, GLfloat min_height, GLfloat max_height)
+Geometry * GeometryGenerator::generate_terrain(GLfloat size, GLint num_points_side, GLfloat min_height, GLfloat max_height)
 {
 	//Experimenting. Assumed that height map is already set up and size is same as height map size
+
+	//Terain is size x size
 
 	Geometry *terrain = new Geometry();
 
 	//Create array of points using height map lookup function
 	//Grid is same size as height map, and scales with height map size
-	int middle = (size - 1) / 2;
-	int min_x = -middle;
-	int min_z = -middle;
-	int max_x = middle;
-	int max_z = middle;
+	float middle = size / 2.f;
+	float min_x = -middle;
+	float min_z = -middle;
+	float max_x = middle;
+	float max_z = middle;
+
+	float step_size =  size / (float) num_points_side;
 
 	//Goes Square by Square
-	for (int x = min_x; x < max_x; x++)
+	for (float x = min_x; x <= (max_x - step_size); x += step_size)
 	{
-		for (int z = min_z; z < max_z; z++)
+		for (float z = min_z; z <= (max_z - step_size); z += step_size)
 		{
-			float h1 = Terrain::height_lookup(x + middle, z + middle);
-			float h2 = Terrain::height_lookup(x + 1 + middle, z + middle);
-			float h3 = Terrain::height_lookup(x + middle, z + 1 + middle);
-			float h4 = Terrain::height_lookup(x + 1 + middle, z + 1 + middle);
+			float h1 = Terrain::height_lookup(x, z, size);
 
 			if (h1 < min_height || h1 > max_height)
 				continue;
 
-			glm::vec3 v1 = glm::vec3(x, h1, z); //Upper Left
-			glm::vec3 v2 = glm::vec3(x + 1, h2, z); //Upper Right
-			glm::vec3 v3 = glm::vec3(x, h3, z + 1); //Lower Left
-			glm::vec3 v4 = glm::vec3(x + 1, h4, z + 1);  //Lower Right)
+			float h2 = Terrain::height_lookup(x + step_size, z, size);
+			float h3 = Terrain::height_lookup(x, z + step_size, size);
+			float h4 = Terrain::height_lookup(x + step_size, z + step_size, size);			
+
+			glm::vec3 v1 = glm::vec3(x, h1, z);							//Upper Left
+			glm::vec3 v2 = glm::vec3(x + step_size, h2, z);				//Upper Right
+			glm::vec3 v3 = glm::vec3(x, h3, z + step_size);				 //Lower Left
+			glm::vec3 v4 = glm::vec3(x + step_size, h4, z + step_size);  //Lower Right
 
 	        //Make Two Triangles for Square
 			terrain->vertices.push_back(v4);
@@ -198,7 +203,7 @@ Geometry * GeometryGenerator::generate_terrain(GLint size, GLfloat min_height, G
 	return terrain;
 }
 
-/*
+/* DEPRICATED, DOES NOT WORK ANYMORE, JUST FOR REFERENCE
 Geometry * GeometryGenerator::generate_grid(GLint size_modifier, GLfloat max_height, GLint village_diameter, GLfloat scale, GLuint seed = 0)
 {		
 	/*Note to self regarding terrain's smoothness: AustinPuk
