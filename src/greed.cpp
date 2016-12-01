@@ -22,6 +22,8 @@ bool Greed::rmb_down = false;
 bool Greed::vr_on = false;
 bool Greed::keys[1024];
 
+const GLfloat FAR = 1000.f;
+
 Greed::Greed() {}
 
 Greed::~Greed() {}
@@ -143,8 +145,6 @@ void Greed::setup_scene()
 	//terrain_scale->add_child(land_model);
 	//terrain_translate->add_child(terrain_scale);
 	root->add_child(terrain_scale);
-
-
 }
 
 void Greed::go()
@@ -162,16 +162,36 @@ void Greed::go()
 	glfwGetFramebufferSize(window, &width, &height);
 	resize_callback(window, width, height);
 
+	GLuint frame = 0;
+	double prev_ticks = glfwGetTime();
+	double move_prev_ticks = prev_ticks;
+
 	while (!glfwWindowShouldClose(window))
 	{
 		glfwPollEvents();
-		handle_movement();
+
+		frame++;
+		double curr_time = glfwGetTime();
+		if (curr_time - prev_ticks > 1.f)
+		{
+			std::cerr << "FPS: " << frame << std::endl;
+			frame = 0;
+			prev_ticks = curr_time;
+		}
+		if (curr_time - move_prev_ticks > 1.f / 60.f)
+		{
+			handle_movement();
+			move_prev_ticks = curr_time;
+		}
+
+		glfwGetFramebufferSize(window, &width, &height);
+		scene->update_frustum_planes();
+		scene->update_frustum_corners(width, height, FAR);
 
 		// First pass: shadowmap.
 		shadow_pass();
 
 		// Second pass: usual rendering.
-		glfwGetFramebufferSize(window, &width, &height);
 		glViewport(0, 0, width, height);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -182,7 +202,6 @@ void Greed::go()
 		else {
 			scene->render();
 		}
-
 		glfwSwapBuffers(window);
 	}
 
@@ -197,6 +216,7 @@ void Greed::shadow_pass()
 	glClear(GL_DEPTH_BUFFER_BIT);
 	ss->use();
 	ss->light_pos = scene->light_pos;
+	ss->light_proj = scene->frustum_ortho();
 	// Render using scene graph.
 	scene->pass(ss);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -263,7 +283,7 @@ void Greed::vr_render()
 
 void Greed::handle_movement()
 {
-	const GLfloat cam_step = 1.01f;//0.01f; <-- too slow on lab computers
+	const GLfloat cam_step = 0.25f;
 	if (keys[GLFW_KEY_W])
 		camera->cam_pos += cam_step * camera->cam_front;
 	if (keys[GLFW_KEY_S])
@@ -314,7 +334,7 @@ void Greed::resize_callback(GLFWwindow* window, int width, int height)
 	glViewport(0, 0, width, height);
 
 	if (height > 0)
-		scene->P = glm::perspective(45.0f, (float)width / (float)height, 0.1f, 1000.0f);
+		scene->P = glm::perspective(45.0f, (float)width / (float)height, 0.1f, FAR);
 }
 
 void Greed::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)

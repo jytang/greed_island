@@ -39,6 +39,7 @@ void main()
 
 float calc_shadows(vec4 pos_from_light, vec3 light_dir)
 {
+	//return 0;
 	vec3 clip_coords = pos_from_light.xyz / pos_from_light.w;
 	// Transform to range of [0, 1] to fit depth map
 	clip_coords = clip_coords * 0.5 + 0.5; 
