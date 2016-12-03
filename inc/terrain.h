@@ -6,7 +6,6 @@
 #include <time.h>
 #include <math.h>
 
-
 class Terrain
 {
 private:

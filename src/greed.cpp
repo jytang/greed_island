@@ -5,6 +5,7 @@
 #include "geometry_generator.h"
 #include "scene_model.h"
 #include "scene_transform.h"
+#include "tree.h"
 
 #include "util.h"
 #include "colors.h"
@@ -19,6 +20,7 @@ glm::vec3 Greed::last_cursor_pos;
 vr_vars GreedVR::vars;
 bool Greed::lmb_down = false;
 bool Greed::rmb_down = false;
+bool Greed::shift_down = false;
 bool Greed::vr_on = false;
 bool Greed::keys[1024];
 
@@ -68,10 +70,11 @@ void Greed::setup_scene()
 	Mesh cube_mesh = { cube_geometry, cube_material, ShaderManager::get_default() };
 	SceneModel *cube_model = new SceneModel(scene);
 	cube_model->add_mesh(cube_mesh);
-	SceneTransform *cube_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 0.f, 0.0f)));
+	SceneTransform *cube_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(1.0f, 1.0f, 1.0f)));
+	SceneTransform *cube_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 50.f, 0.0f)));
 	//SceneTransform *cube_translate = new SceneTransform(scene, glm::rotate(glm::mat4(1.f), glm::radians(45.f), glm::vec3(0.f, 1.f, 0.f)));
-
-	cube_translate->add_child(cube_model);
+	cube_scale->add_child(cube_model);
+	cube_translate->add_child(cube_scale);
 	root->add_child(cube_translate);
 
 	// Water Plane
@@ -119,32 +122,40 @@ void Greed::setup_scene()
 
 	fprintf(stderr, "Generating Height Map\n");
 	//New Terrain Method using Awesomeness
-	unsigned int size_modifier = 8; //LOWER THIS TO RUN FASTER
+	unsigned int size_modifier = 5; //LOWER THIS TO RUN FASTER
 	unsigned int size = (unsigned int)glm::pow(2, size_modifier) + 1;	
-	Terrain::generate_height_map(size, 30.f, 30, 22.f, 123);
+	Terrain::generate_height_map(size, 40.f, 30, 40.f, 123);
 
 	fprintf(stderr, "Generating Land Terrain\n"); //Second Parameter Below is Resolution^2 of Island, LOWER TO RUN FASTER
-	Geometry *land_geo = GeometryGenerator::generate_terrain(100.0f, 300, 10.0f, 200.0f);
+	Geometry *land_geo = GeometryGenerator::generate_terrain(200.0f, 200, 6.5f, 200.0f);
 	Material land_material;
 	land_material.diffuse = land_material.ambient = color::windwaker_green;
 	Mesh land_mesh = { land_geo, land_material, ShaderManager::get_default() };	
 
 	fprintf(stderr, "Generating Sand Terrain\n");
-	Geometry *sand_geo = GeometryGenerator::generate_terrain(100.0f, 300, 5.0f, 10.0f);
-	Material sand_material;
+	Geometry *sand_geo = GeometryGenerator::generate_terrain(200.0f, 200, 5.0f, 6.5f);
+	Material sand_material;	
 	sand_material.diffuse = sand_material.ambient = color::windwaker_sand;
 	Mesh sand_mesh = { sand_geo, sand_material, ShaderManager::get_default() };
 	SceneModel *terrain_model = new SceneModel(scene);
 	terrain_model->add_mesh(land_mesh);
 	terrain_model->add_mesh(sand_mesh);
-	SceneTransform *terrain_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(1.f, 1.f, 1.f)));
-	SceneTransform *terrain_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, -6.0f, 0.0f)));
-	terrain_translate->add_child(terrain_model);
-	terrain_scale->add_child(terrain_translate);
-	//terrain_scale->add_child(sand_model);
-	//terrain_scale->add_child(land_model);
-	//terrain_translate->add_child(terrain_scale);
-	root->add_child(terrain_scale);
+	SceneTransform *terrain_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(1.5f, 1.f, 1.5f)));
+	SceneTransform *terrain_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, -6.0f, 0.0f)));	
+	terrain_scale->add_child(terrain_model);
+	terrain_translate->add_child(terrain_scale);
+	root->add_child(terrain_translate);	
+
+	
+	//Create a Single Tree
+	SceneGroup *tree_group = Tree::generate_tree(scene, cube_geometry, 10, 777);
+	SceneTransform *tree_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(1.f, 1.f, 1.f)));
+	SceneTransform *tree_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 45.0f, 0.0f)));
+	tree_scale->add_child(tree_group);
+	tree_translate->add_child(tree_scale);
+	root->add_child(tree_translate);
+	
+
 }
 
 void Greed::go()
@@ -283,7 +294,7 @@ void Greed::vr_render()
 
 void Greed::handle_movement()
 {
-	const GLfloat cam_step = 0.25f;
+	const GLfloat cam_step = 3.00f;//0.25f;
 	if (keys[GLFW_KEY_W])
 		camera->cam_pos += cam_step * camera->cam_front;
 	if (keys[GLFW_KEY_S])
@@ -355,6 +366,8 @@ void Greed::key_callback(GLFWwindow* window, int key, int scancode, int action, 
 		case GLFW_KEY_R:
 			camera->reset();
 			break;
+		case GLFW_KEY_LEFT_SHIFT:
+			shift_down = true;
 		default:
 			break;
 		}
@@ -362,6 +375,12 @@ void Greed::key_callback(GLFWwindow* window, int key, int scancode, int action, 
 	else if (action == GLFW_RELEASE)
 	{
 		keys[key] = false;
+		switch (key) {
+		case GLFW_KEY_LEFT_SHIFT:
+			shift_down = false;
+		default:
+			break;
+		}
 	}
 }
 
@@ -369,7 +388,7 @@ void Greed::cursor_position_callback(GLFWwindow* window, double x_pos, double y_
 {
 	glm::vec3 current_cursor_pos(x_pos, y_pos, 0);
 	glm::vec3 cursor_delta = current_cursor_pos - last_cursor_pos;
-	if (lmb_down) {
+	if (lmb_down && shift_down) {
 		glm::vec3 rot_axis = glm::cross(last_cursor_pos, current_cursor_pos);
 		float rot_angle = glm::length(cursor_delta) * 0.001f;
 		scene->light_pos = glm::vec3(glm::rotate(glm::mat4(1.0f), rot_angle, rot_axis) * glm::vec4(scene->light_pos, 1.0f));
@@ -391,7 +410,7 @@ void Greed::cursor_position_callback(GLFWwindow* window, double x_pos, double y_
 		camera->recalculate();
 		*/
 	}
-	else {
+	else if (!shift_down) {
 		// Look around.
 		GLfloat xoffset = cursor_delta.x;
 		GLfloat yoffset = cursor_delta.y;

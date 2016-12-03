@@ -72,7 +72,7 @@ void Terrain::diamond_square(unsigned int step, unsigned int size, float scale)
 	{
 		for (unsigned int y = halfstep; y < size; y += step)
 		{
-			diamond_step(x, y, step, size, (((float)(rand() % 101) / 100.f) * 2 - 1) *scale);
+			diamond_step(x, y, step, size, (((float)(rand() % 101) / 100.f) * 2.f - 1) *scale);
 		}
 	}
 
@@ -81,15 +81,15 @@ void Terrain::diamond_square(unsigned int step, unsigned int size, float scale)
 		for (unsigned int y = 0; y < size; y += step)
 		{
 			if (x + halfstep < size)
-				square_step(x + halfstep, y, step, size, (((float)(rand() % 101) / 100.f) * 2 - 1) *scale);
+				square_step(x + halfstep, y, step, size, (((float)(rand() % 101) / 100.f) * 2.f - 1) *scale);
 			if (y + halfstep < size)
-				square_step(x, y + halfstep, step, size, (((float)(rand() % 101) / 100.f) * 2 - 1) *scale);
+				square_step(x, y + halfstep, step, size, (((float)(rand() % 101) / 100.f) * 2.f - 1) *scale);
 		}
 	}
 
 	// (((float)(rand() % 101) / 100.f) * 2 - 1) *
 
-	float roughness = 0.9f; //higher is smoother, lower is rougher (0 -> 1)
+	float roughness = 2.0f; //higher is smoother, lower is rougher
 
 	scale *= (float) glm::pow(2.f, -roughness);
 	

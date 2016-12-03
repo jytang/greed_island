@@ -20,6 +20,7 @@ private:
 	static SceneCamera *camera;
 	static bool lmb_down;
 	static bool rmb_down;
+	static bool shift_down;
 	static bool vr_on;
 	static glm::vec3 last_cursor_pos;
 	static bool keys[1024];
