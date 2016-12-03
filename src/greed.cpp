@@ -147,11 +147,10 @@ void Greed::setup_scene()
 	root->add_child(terrain_translate);	
 		
 	//Create a Single Tree
-	SceneModel *tree_model = Tree::generate_tree(scene, cube_geometry, 5, 3123);
-	tree_model->combine_meshes();
+	SceneGroup *tree_group = Tree::generate_tree(scene, cube_geometry, 30, 3123);	
 	SceneTransform *tree_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(1.f, 1.f, 1.f)));
 	SceneTransform *tree_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 45.0f, 0.0f)));
-	tree_scale->add_child(tree_model);
+	tree_scale->add_child(tree_group);
 	tree_translate->add_child(tree_scale);
 	root->add_child(tree_translate);	
 }

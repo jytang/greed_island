@@ -45,6 +45,10 @@ void SceneModel::update()
 
 void SceneModel::combine_meshes()
 {
+	// Stop if one or zero meshes.
+	if (meshes.size() <= 1)
+		return;
+
 	Mesh mega_mesh = meshes.at(0);
 	Geometry * mega_geometry = new Geometry();
 	// TODO: GARBAGE COLLECT THIS PIECE OF GEOMETRY.
