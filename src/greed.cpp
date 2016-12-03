@@ -88,10 +88,22 @@ void Greed::setup_scene()
 	cylinder_model->add_mesh(cylinder_mesh);
 	SceneTransform *cylinder_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(1.0f, 1.0f, 1.0f)));
 	SceneTransform *cylinder_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 50.f, 10.0f)));
-	//SceneTransform *cylinder_translate = new SceneTransform(scene, glm::rotate(glm::mat4(1.f), glm::radians(45.f), glm::vec3(0.f, 1.f, 0.f)));
 	cylinder_scale->add_child(cylinder_model);
 	cylinder_translate->add_child(cylinder_scale);
 	root->add_child(cylinder_translate);
+
+	//Sphere
+	Geometry *sphere_geometry = GeometryGenerator::generate_sphere(4.f, 10);
+	Material sphere_material;
+	sphere_material.diffuse = sphere_material.ambient = color::red;
+	Mesh sphere_mesh = { sphere_geometry, sphere_material, ShaderManager::get_default(), glm::mat4(1.f) };
+	SceneModel *sphere_model = new SceneModel(scene);
+	sphere_model->add_mesh(sphere_mesh);
+	SceneTransform *sphere_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(1.0f, 1.0f, 1.0f)));
+	SceneTransform *sphere_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 50.f, 20.0f)));
+	sphere_scale->add_child(sphere_model);
+	sphere_translate->add_child(sphere_scale);
+	root->add_child(sphere_translate);
 
 	// Water Plane
 	Geometry *plane_geo = GeometryGenerator::generate_plane(1.f);
@@ -163,12 +175,27 @@ void Greed::setup_scene()
 	root->add_child(terrain_translate);	
 		
 	//Create a Single Tree
-	SceneGroup *tree_group = Tree::generate_tree(scene, cylinder_geometry, 10, 3123);	
+	SceneGroup *tree1 = Tree::generate_tree(scene, cylinder_geometry, sphere_geometry, 7, 777);	
 	SceneTransform *tree_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(1.f, 1.f, 1.f)));
-	SceneTransform *tree_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 45.0f, 0.0f)));
-	tree_scale->add_child(tree_group);
+	SceneTransform *tree_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 40.0f, 0.0f)));
+	tree_scale->add_child(tree1);
 	tree_translate->add_child(tree_scale);
 	root->add_child(tree_translate);	
+
+	SceneGroup *tree2 = Tree::generate_tree(scene, cylinder_geometry, sphere_geometry, 7, 0);	
+	SceneTransform *tree2_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 40.0f, -50.0f)));
+	tree2_translate->add_child(tree2);
+	root->add_child(tree2_translate);
+
+	SceneGroup *tree3 = Tree::generate_tree(scene, cylinder_geometry, sphere_geometry, 7, 0);
+	SceneTransform *tree3_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(-50.0f, 40.0f, 0.0f)));
+	tree3_translate->add_child(tree3);
+	root->add_child(tree3_translate);
+
+	SceneGroup *tree4 = Tree::generate_tree(scene, cylinder_geometry, sphere_geometry, 7, 0);
+	SceneTransform *tree4_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(50.0f, 40.0f, 0.0f)));
+	tree4_translate->add_child(tree4);
+	root->add_child(tree4_translate);
 }
 
 void Greed::go()

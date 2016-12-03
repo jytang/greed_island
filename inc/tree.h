@@ -13,7 +13,7 @@
 class Tree
 {
 private:
-	static void tree_system(glm::mat4, float last_angle, float last_scale, unsigned int curr_iter, unsigned int max_iter);
+	static void tree_system(glm::mat4, glm::vec3, glm::vec3, float, float, float last_scale, unsigned int curr_iter, unsigned int max_iter);
 	
 	static unsigned int leaf_threshold;
 	//static SceneModel *tree_model;
@@ -27,6 +27,6 @@ private:
 	static SceneTransform *scale;
 
 public:
-	static SceneGroup *generate_tree(Scene *, Geometry *, unsigned int, int);
+	static SceneGroup *generate_tree(Scene *, Geometry *, Geometry *, unsigned int, int);
 };
 

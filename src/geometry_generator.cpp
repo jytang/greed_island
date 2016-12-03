@@ -90,7 +90,84 @@ Geometry * GeometryGenerator::generate_cube(GLfloat scale, bool has_normals)
 
 Geometry * GeometryGenerator::generate_sphere(GLfloat radius, GLuint divisions)
 {
-	return nullptr;
+
+	Geometry *sphere = new Geometry();
+
+	float fstacks = divisions;
+	float fslices = divisions;
+	float pi = glm::pi<float>();
+
+	//From Piazza
+	for (int i = 0; i < divisions; i++)
+	{
+		for (int j = 0; j < divisions; j++)
+		{
+			// Top left
+			sphere->vertices.push_back(glm::vec3(
+				radius * -cos(2.0f * pi * i / fstacks) * sin(pi * (j + 1.0f) / fslices),
+				radius * -cos(pi * (j + 1.0f) / fslices),
+				radius * sin(2.0f * pi * i / fstacks) * sin(pi * (j + 1.0f) / fslices)));
+			sphere->normals.push_back(glm::normalize(glm::vec3(
+				-cos(2.0f * pi * i / fstacks) * sin(pi * (j + 1.0f) / fslices),
+				-cos(pi * (j + 1.0f) / fslices),
+				sin(2.0f * pi * i / fstacks) * sin(pi * (j + 1.0f) / fslices))));
+			sphere->vertices.push_back(glm::vec3(
+				radius * -cos(2.0f * pi * (i + 1.0) / fstacks) * sin(pi * j / fslices),
+				radius * -cos(pi * j / fslices),
+				radius * sin(2.0f * pi * (i + 1.0) / fstacks) * sin(pi * j / fslices)));
+			sphere->normals.push_back(glm::normalize(glm::vec3(
+				-cos(2.0f * pi * (i + 1.0) / fstacks) * sin(pi * j / fslices),
+				-cos(pi * j / fslices),
+				sin(2.0f * pi * (i + 1.0) / fstacks) * sin(pi * j / fslices))));
+			sphere->vertices.push_back(glm::vec3(
+				radius * -cos(2.0f * pi * (i + 1.0) / fstacks) * sin(pi * (j + 1.0) / fslices),
+				radius * -cos(pi * (j + 1.0) / fslices),
+				radius * sin(2.0f * pi * (i + 1.0) / fstacks) * sin(pi * (j + 1.0) / fslices)));
+			sphere->normals.push_back(glm::normalize(glm::vec3(
+				-cos(2.0f * pi * (i + 1.0) / fstacks) * sin(pi * (j + 1.0) / fslices),
+				-cos(pi * (j + 1.0) / fslices),
+				sin(2.0f * pi * (i + 1.0) / fstacks) * sin(pi * (j + 1.0) / fslices))));			
+
+			// Need to repeat 2 of the vertices since we can only draw triangles. Eliminates the confusion
+			// of array indices.
+			// Top left
+			sphere->vertices.push_back(glm::vec3(
+				radius * -cos(2.0f * pi * i / fstacks) * sin(pi * (j + 1.0f) / fslices),
+				radius * -cos(pi * (j + 1.0f) / fslices),
+				radius * sin(2.0f * pi * i / fstacks) * sin(pi * (j + 1.0f) / fslices)));
+			sphere->normals.push_back(glm::normalize(glm::vec3(
+				-cos(2.0f * pi * i / fstacks) * sin(pi * (j + 1.0f) / fslices),
+				-cos(pi * (j + 1.0f) / fslices),
+				sin(2.0f * pi * i / fstacks) * sin(pi * (j + 1.0f) / fslices))));
+			// Bottom left
+			sphere->vertices.push_back(glm::vec3(
+				radius * -cos(2.0f * pi * i / fstacks) * sin(pi * j / fslices),
+				radius * -cos(pi * j / fslices),
+				radius * sin(2.0f * pi * i / fstacks) * sin(pi * j / fslices)));
+			sphere->normals.push_back(glm::normalize(glm::vec3(
+				-cos(2.0f * pi * i / fstacks) * sin(pi * j / fslices),
+				-cos(pi * j / fslices),
+				sin(2.0f * pi * i / fstacks) * sin(pi * j / fslices))));
+			//Bottom Right
+			sphere->vertices.push_back(glm::vec3(
+				radius * -cos(2.0f * pi * (i + 1.0) / fstacks) * sin(pi * j / fslices),
+				radius * -cos(pi * j / fslices),
+				radius * sin(2.0f * pi * (i + 1.0) / fstacks) * sin(pi * j / fslices)));
+			sphere->normals.push_back(glm::normalize(glm::vec3(
+				-cos(2.0f * pi * (i + 1.0) / fstacks) * sin(pi * j / fslices),
+				-cos(pi * j / fslices),
+				sin(2.0f * pi * (i + 1.0) / fstacks) * sin(pi * j / fslices))));			
+			
+		}
+	}
+
+	for (int i = 0; i < sphere->vertices.size(); i++)
+		sphere->indices.push_back(i);
+
+	sphere->populate_buffers();
+	geometries.push_back(sphere);
+
+	return sphere;
 }
 
 Geometry * GeometryGenerator::generate_cylinder(GLfloat radius, GLfloat height, GLuint divisions, bool is_centered)
