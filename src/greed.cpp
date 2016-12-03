@@ -63,6 +63,7 @@ void Greed::setup_scene()
 	skybox_model->add_mesh(skybox_mesh);
 	root->add_child(skybox_model);
 
+	/*
 	// Generate geometry and create Mesh + SceneModel.
 	Geometry *cube_geometry = GeometryGenerator::generate_cube(1.f, true);
 	Material cube_material;
@@ -76,6 +77,21 @@ void Greed::setup_scene()
 	cube_scale->add_child(cube_model);
 	cube_translate->add_child(cube_scale);
 	root->add_child(cube_translate);
+	*/
+
+	//Cylinder
+	Geometry *cylinder_geometry = GeometryGenerator::generate_cylinder(0.5f, 4.f, 10, false);
+	Material cylinder_material;
+	cylinder_material.diffuse = cylinder_material.ambient = color::red;
+	Mesh cylinder_mesh = { cylinder_geometry, cylinder_material, ShaderManager::get_default(), glm::mat4(1.f) };
+	SceneModel *cylinder_model = new SceneModel(scene);
+	cylinder_model->add_mesh(cylinder_mesh);
+	SceneTransform *cylinder_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(1.0f, 1.0f, 1.0f)));
+	SceneTransform *cylinder_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 50.f, 10.0f)));
+	//SceneTransform *cylinder_translate = new SceneTransform(scene, glm::rotate(glm::mat4(1.f), glm::radians(45.f), glm::vec3(0.f, 1.f, 0.f)));
+	cylinder_scale->add_child(cylinder_model);
+	cylinder_translate->add_child(cylinder_scale);
+	root->add_child(cylinder_translate);
 
 	// Water Plane
 	Geometry *plane_geo = GeometryGenerator::generate_plane(1.f);
@@ -147,7 +163,7 @@ void Greed::setup_scene()
 	root->add_child(terrain_translate);	
 		
 	//Create a Single Tree
-	SceneGroup *tree_group = Tree::generate_tree(scene, cube_geometry, 30, 3123);	
+	SceneGroup *tree_group = Tree::generate_tree(scene, cylinder_geometry, 10, 3123);	
 	SceneTransform *tree_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(1.f, 1.f, 1.f)));
 	SceneTransform *tree_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 45.0f, 0.0f)));
 	tree_scale->add_child(tree_group);

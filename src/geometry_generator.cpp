@@ -12,14 +12,14 @@ Geometry * GeometryGenerator::generate_cube(GLfloat scale, bool has_normals)
 {
 	Geometry *cube = new Geometry();
 	
-	glm::vec3 v0 = { scale, scale, scale };
-	glm::vec3 v1 = { -scale, scale, scale };
-	glm::vec3 v2 = { scale, scale, -scale };
-	glm::vec3 v3 = { -scale, scale, -scale };
-	glm::vec3 v4 = { scale, -scale, scale };
-	glm::vec3 v5 = { -scale, -scale, scale };
-	glm::vec3 v6 = { scale, -scale, -scale };
-	glm::vec3 v7 = { -scale, -scale, -scale };
+	glm::vec3 v0 = { scale / 2.f, scale / 2.f, scale / 2.f };
+	glm::vec3 v1 = { -scale / 2.f, scale / 2.f, scale / 2.f };
+	glm::vec3 v2 = { scale / 2.f, scale / 2.f, -scale / 2.f };
+	glm::vec3 v3 = { -scale / 2.f, scale / 2.f, -scale / 2.f };
+	glm::vec3 v4 = { scale / 2.f, -scale / 2.f, scale / 2.f };
+	glm::vec3 v5 = { -scale / 2.f, -scale / 2.f, scale / 2.f };
+	glm::vec3 v6 = { scale / 2.f, -scale / 2.f, -scale / 2.f };
+	glm::vec3 v7 = { -scale / 2.f, -scale / 2.f, -scale / 2.f };
 
 	cube->vertices.push_back(v0);
 	cube->vertices.push_back(v2);
@@ -93,9 +93,88 @@ Geometry * GeometryGenerator::generate_sphere(GLfloat radius, GLuint divisions)
 	return nullptr;
 }
 
-Geometry * GeometryGenerator::generate_cylinder(GLfloat radius, GLfloat height, GLuint divisions)
+Geometry * GeometryGenerator::generate_cylinder(GLfloat radius, GLfloat height, GLuint divisions, bool is_centered)
 {
-	return nullptr;
+	Geometry *cylinder = new Geometry();
+
+	glm::vec3 v_top, v_bot, v0, v1, v2, v3;
+
+	//Make Top and Bottom
+	if (is_centered) //Origin at center
+	{
+		v_top = { 0, height / 2, 0 };
+		v_bot = { 0, -height / 2, 0 };
+	}
+	else //Origin at botoom
+	{
+		v_top = { 0, height, 0 };
+		v_bot = { 0, 0, 0 };
+	}
+	
+
+	float step = (2 * glm::pi<float>()) / divisions;
+
+	//Goes Slice by Slice
+	for (float i = 0; i <= divisions; i++)
+	{
+		float theta = step * i;
+
+		if (is_centered)
+		{
+			v0 = { radius * cos(theta), height / 2, radius * sinf(theta) };
+			v1 = { radius * cos(theta + step), height / 2, radius * sinf(theta + step) };
+			v2 = { radius * cos(theta), -height / 2, radius * sinf(theta) };
+			v3 = { radius * cos(theta + step), -height / 2, radius * sinf(theta + step) };
+		}
+		else
+		{
+			v0 = { radius * cos(theta), height, radius * sinf(theta) };
+			v1 = { radius * cos(theta + step), height, radius * sinf(theta + step) };
+			v2 = { radius * cos(theta), 0, radius * sinf(theta) };
+			v3 = { radius * cos(theta + step), 0, radius * sinf(theta + step) };
+		}
+		
+
+		//Top Portion
+		cylinder->vertices.push_back(v_top);
+		cylinder->vertices.push_back(v1);
+		cylinder->vertices.push_back(v0);
+		cylinder->normals.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+		cylinder->normals.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+		cylinder->normals.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+
+		//Middle Portion
+		cylinder->vertices.push_back(v0);
+		cylinder->vertices.push_back(v1);
+		cylinder->vertices.push_back(v2);
+		cylinder->vertices.push_back(v1);
+		cylinder->vertices.push_back(v3);
+		cylinder->vertices.push_back(v2);
+		cylinder->normals.push_back(glm::normalize(v0));
+		cylinder->normals.push_back(glm::normalize(v1));
+		cylinder->normals.push_back(glm::normalize(v2));
+		cylinder->normals.push_back(glm::normalize(v1));
+		cylinder->normals.push_back(glm::normalize(v3));
+		cylinder->normals.push_back(glm::normalize(v2));
+
+		//Bottom Portion
+		cylinder->vertices.push_back(v_bot);
+		cylinder->vertices.push_back(v2);
+		cylinder->vertices.push_back(v3);
+		cylinder->normals.push_back(glm::vec3(0.0f, -1.0f, 0.0f));
+		cylinder->normals.push_back(glm::vec3(0.0f, -1.0f, 0.0f));
+		cylinder->normals.push_back(glm::vec3(0.0f, -1.0f, 0.0f));
+	}
+
+	//Indices are just in order to make it easier
+	for (int i = 0; i < cylinder->vertices.size(); i++)
+		cylinder->indices.push_back(i);
+
+	cylinder->populate_buffers();
+	geometries.push_back(cylinder);
+
+	return cylinder;
+
 }
 
 Geometry * GeometryGenerator::generate_plane(GLfloat scale)
