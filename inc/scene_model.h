@@ -19,6 +19,7 @@ public:
 	void add_mesh(Mesh m);
 	void draw(glm::mat4);
 	void update();
+	void combine_meshes();
 	void pass(glm::mat4 m, Shader *s);
 };
 
