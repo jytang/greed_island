@@ -149,6 +149,7 @@
     <ClCompile Include="src\shadow_shader.cpp" />
     <ClCompile Include="src\skybox_shader.cpp" />
     <ClCompile Include="src\terrain.cpp" />
+    <ClCompile Include="src\tree.cpp" />
     <ClCompile Include="src\util.cpp" />
     <ClCompile Include="src\greed_vr.cpp" />
     <ClCompile Include="src\window.cpp" />
@@ -176,6 +177,7 @@
     <ClInclude Include="inc\shadow_shader.h" />
     <ClInclude Include="inc\skybox_shader.h" />
     <ClInclude Include="inc\terrain.h" />
+    <ClInclude Include="inc\tree.h" />
     <ClInclude Include="inc\util.h" />
     <ClInclude Include="inc\greed_vr.h" />
     <ClInclude Include="inc\window.h" />
