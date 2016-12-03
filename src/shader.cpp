@@ -20,3 +20,8 @@ void Shader::set_VP(glm::mat4 V, glm::mat4 P)
     this->V = V;
     this->P = P;
 }
+
+void Shader::send_mesh_model(glm::mat4 mesh_model)
+{
+	this->mesh_model = mesh_model;
+}

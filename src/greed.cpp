@@ -58,7 +58,7 @@ void Greed::setup_scene()
 
 	// Do skybox.
 	Material default_material;
-	Mesh skybox_mesh = { nullptr, default_material, ShaderManager::get_shader_program("skybox") };
+	Mesh skybox_mesh = { nullptr, default_material, ShaderManager::get_shader_program("skybox"), glm::mat4(1.f) };
 	SceneModel *skybox_model = new SceneModel(scene);
 	skybox_model->add_mesh(skybox_mesh);
 	root->add_child(skybox_model);
@@ -67,7 +67,7 @@ void Greed::setup_scene()
 	Geometry *cube_geometry = GeometryGenerator::generate_cube(1.f, true);
 	Material cube_material;
 	cube_material.diffuse = cube_material.ambient = color::red;
-	Mesh cube_mesh = { cube_geometry, cube_material, ShaderManager::get_default() };
+	Mesh cube_mesh = { cube_geometry, cube_material, ShaderManager::get_default(), glm::mat4(1.f) };
 	SceneModel *cube_model = new SceneModel(scene);
 	cube_model->add_mesh(cube_mesh);
 	SceneTransform *cube_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(1.0f, 1.0f, 1.0f)));
@@ -81,7 +81,7 @@ void Greed::setup_scene()
 	Geometry *plane_geo = GeometryGenerator::generate_plane(1.f);
 	Material water_material;
 	water_material.diffuse = water_material.ambient = color::ocean_blue;
-	Mesh water_mesh = { plane_geo, water_material, ShaderManager::get_default() };
+	Mesh water_mesh = { plane_geo, water_material, ShaderManager::get_default(), glm::mat4(1.f) };
 	SceneModel *water_model = new SceneModel(scene);
 	water_model->add_mesh(water_mesh);
 	SceneTransform *water_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(200.0f, 1.0f, 200.0f)));
@@ -119,10 +119,10 @@ void Greed::setup_scene()
 	land_translate->add_child(land_scale);
 	root->add_child(land_translate);
 	*/
-
+	
 	fprintf(stderr, "Generating Height Map\n");
 	//New Terrain Method using Awesomeness
-	unsigned int size_modifier = 5; //LOWER THIS TO RUN FASTER
+	unsigned int size_modifier = 8; //LOWER THIS TO RUN FASTER
 	unsigned int size = (unsigned int)glm::pow(2, size_modifier) + 1;	
 	Terrain::generate_height_map(size, 40.f, 30, 40.f, 123);
 
@@ -130,32 +130,30 @@ void Greed::setup_scene()
 	Geometry *land_geo = GeometryGenerator::generate_terrain(200.0f, 200, 6.5f, 200.0f);
 	Material land_material;
 	land_material.diffuse = land_material.ambient = color::windwaker_green;
-	Mesh land_mesh = { land_geo, land_material, ShaderManager::get_default() };	
+	Mesh land_mesh = { land_geo, land_material, ShaderManager::get_default(), glm::mat4(1.f) };	
 
 	fprintf(stderr, "Generating Sand Terrain\n");
-	Geometry *sand_geo = GeometryGenerator::generate_terrain(200.0f, 200, 5.0f, 6.5f);
+	Geometry *sand_geo = GeometryGenerator::generate_terrain(200.0f, 200, 0.0f, 6.5f);
 	Material sand_material;	
 	sand_material.diffuse = sand_material.ambient = color::windwaker_sand;
-	Mesh sand_mesh = { sand_geo, sand_material, ShaderManager::get_default() };
+	Mesh sand_mesh = { sand_geo, sand_material, ShaderManager::get_default(), glm::mat4(1.f) };
 	SceneModel *terrain_model = new SceneModel(scene);
 	terrain_model->add_mesh(land_mesh);
 	terrain_model->add_mesh(sand_mesh);
-	SceneTransform *terrain_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(1.5f, 1.f, 1.5f)));
+	SceneTransform *terrain_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(6.f, 1.f, 6.f)));
 	SceneTransform *terrain_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, -6.0f, 0.0f)));	
 	terrain_scale->add_child(terrain_model);
 	terrain_translate->add_child(terrain_scale);
 	root->add_child(terrain_translate);	
-
-	
+		
 	//Create a Single Tree
-	SceneGroup *tree_group = Tree::generate_tree(scene, cube_geometry, 10, 777);
+	SceneModel *tree_model = Tree::generate_tree(scene, cube_geometry, 5, 3123);
+	tree_model->combine_meshes();
 	SceneTransform *tree_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(1.f, 1.f, 1.f)));
 	SceneTransform *tree_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 45.0f, 0.0f)));
-	tree_scale->add_child(tree_group);
+	tree_scale->add_child(tree_model);
 	tree_translate->add_child(tree_scale);
-	root->add_child(tree_translate);
-	
-
+	root->add_child(tree_translate);	
 }
 
 void Greed::go()
