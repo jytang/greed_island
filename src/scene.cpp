@@ -126,5 +126,5 @@ glm::mat4 Scene::frustum_ortho()
 	}
 
 	//return glm::ortho(min.x, max.x, min.y, max.y, 0.1f, 30.f);
-	return glm::ortho(-600.f, 600.f, -600.f, 600.f, -200.f, 200.f);
+	return glm::ortho(-600.f, 600.f, -600.f, 600.f, -300.f, 300.f);
 }

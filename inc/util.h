@@ -12,11 +12,15 @@
 class Util
 {
     public:
+		static GLuint quadVAO;
+		static GLuint quadVBO;
+
         static void print_vec3(glm::vec3 v);
         static void print_mat4(glm::mat4 m);
 		static unsigned char * loadPPM(const char * filename, int & width, int & height);
         static glm::mat4 calc_bezier_mat(glm::vec3 p0, glm::vec3 p1, glm::vec3 p2, glm::vec3 p3);
         static glm::vec3 trackball_position(double x_pos, double y_pos, int width, int height);
+		static void render_quad();
 };
 
 #endif

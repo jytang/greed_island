@@ -106,6 +106,8 @@ void ShaderManager::create_shader_program(const char *type)
 		s = new SkyboxShader(ProgramID);
 	else if (name == "shadow")
 		s = new ShadowShader(ProgramID);
+	else if (name == "debug_shadow")
+		s = new Shader(ProgramID);
     else {
 	    printf("Unregistered shader: %s\n", type);
         return;

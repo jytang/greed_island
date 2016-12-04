@@ -25,6 +25,7 @@ bool Greed::vr_on = false;
 bool Greed::keys[1024];
 
 const GLfloat FAR = 1000.f;
+bool debug_shadows = false;
 
 Greed::Greed() {}
 
@@ -47,6 +48,7 @@ void Greed::setup_shaders()
 	ShaderManager::create_shader_program("basic");
 	ShaderManager::create_shader_program("skybox");
 	ShaderManager::create_shader_program("shadow");
+	ShaderManager::create_shader_program("debug_shadow");
 	ShaderManager::set_default("basic");
 }
 
@@ -62,22 +64,6 @@ void Greed::setup_scene()
 	SceneModel *skybox_model = new SceneModel(scene);
 	skybox_model->add_mesh(skybox_mesh);
 	root->add_child(skybox_model);
-
-	/*
-	// Generate geometry and create Mesh + SceneModel.
-	Geometry *cube_geometry = GeometryGenerator::generate_cube(1.f, true);
-	Material cube_material;
-	cube_material.diffuse = cube_material.ambient = color::red;
-	Mesh cube_mesh = { cube_geometry, cube_material, ShaderManager::get_default(), glm::mat4(1.f) };
-	SceneModel *cube_model = new SceneModel(scene);
-	cube_model->add_mesh(cube_mesh);
-	SceneTransform *cube_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(1.0f, 1.0f, 1.0f)));
-	SceneTransform *cube_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 50.f, 0.0f)));
-	//SceneTransform *cube_translate = new SceneTransform(scene, glm::rotate(glm::mat4(1.f), glm::radians(45.f), glm::vec3(0.f, 1.f, 0.f)));
-	cube_scale->add_child(cube_model);
-	cube_translate->add_child(cube_scale);
-	root->add_child(cube_translate);
-	*/
 
 	//Cylinder
 	Geometry *cylinder_geometry = GeometryGenerator::generate_cylinder(0.5f, 4.f, 10, false);
@@ -117,36 +103,6 @@ void Greed::setup_scene()
 	water_scale->add_child(water_model);
 	water_translate->add_child(water_scale);
 	root->add_child(water_translate);
-
-	/*
-	// Beach Plane (Temporary)
-	Geometry *bez_plane_geo = GeometryGenerator::generate_bezier_plane(10.f, 50, 150, 0.1f, 0);
-	Material beach_material;
-	beach_material.diffuse = beach_material.ambient = color::windwaker_sand;
-	Mesh beach_mesh = { bez_plane_geo, beach_material, ShaderManager::get_default() };
-	SceneModel *beach_model = new SceneModel(scene);
-	beach_model->add_mesh(beach_mesh);
-	SceneTransform *beach_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(10.0f, 1.0f, 10.0f)));
-	SceneTransform *beach_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, -1.1f, 0.0f)));
-	beach_scale->add_child(beach_model);
-	beach_translate->add_child(beach_scale);
-	root->add_child(beach_translate);
-	*/
-
-	/*
-	// Island Land Grid
-	Geometry *grid_geo = GeometryGenerator::generate_grid(9, 100.f, 30, 100.f, 777);
-	Material land_material;
-	land_material.diffuse = land_material.ambient = color::windwaker_green;
-	Mesh land_mesh = { grid_geo, land_material, ShaderManager::get_default() };
-	SceneModel *land_model = new SceneModel(scene);
-	land_model->add_mesh(land_mesh);
-	SceneTransform *land_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(0.25f, 0.25f, 0.25f)));
-	SceneTransform *land_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, -1.0f, 0.0f)));
-	land_scale->add_child(land_model);
-	land_translate->add_child(land_scale);
-	root->add_child(land_translate);
-	*/
 	
 	fprintf(stderr, "Generating Height Map\n");
 	//New Terrain Method using Awesomeness
@@ -174,28 +130,16 @@ void Greed::setup_scene()
 	terrain_translate->add_child(terrain_scale);
 	root->add_child(terrain_translate);	
 		
-	//Create a Single Tree
-	SceneGroup *tree1 = Tree::generate_tree(scene, cylinder_geometry, sphere_geometry, 7, 777);	
+	//Create forest
+	const GLuint NUM_TREES = 10;
+	for (int i = 0; i < NUM_TREES; ++i) {
+		SceneGroup *tree = Tree::generate_tree(scene, cylinder_geometry, sphere_geometry, 7, 0);
+		SceneTransform *tree_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(i * 10.f, 40.0f, 0.0f)));
+		tree_translate->add_child(tree);
+		root->add_child(tree_translate);
+	}
+
 	SceneTransform *tree_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(1.f, 1.f, 1.f)));
-	SceneTransform *tree_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 40.0f, 0.0f)));
-	tree_scale->add_child(tree1);
-	tree_translate->add_child(tree_scale);
-	root->add_child(tree_translate);	
-
-	SceneGroup *tree2 = Tree::generate_tree(scene, cylinder_geometry, sphere_geometry, 7, 0);	
-	SceneTransform *tree2_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 40.0f, -50.0f)));
-	tree2_translate->add_child(tree2);
-	root->add_child(tree2_translate);
-
-	SceneGroup *tree3 = Tree::generate_tree(scene, cylinder_geometry, sphere_geometry, 7, 0);
-	SceneTransform *tree3_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(-50.0f, 40.0f, 0.0f)));
-	tree3_translate->add_child(tree3);
-	root->add_child(tree3_translate);
-
-	SceneGroup *tree4 = Tree::generate_tree(scene, cylinder_geometry, sphere_geometry, 7, 0);
-	SceneTransform *tree4_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(50.0f, 40.0f, 0.0f)));
-	tree4_translate->add_child(tree4);
-	root->add_child(tree4_translate);
 }
 
 void Greed::go()
@@ -253,6 +197,17 @@ void Greed::go()
 		else {
 			scene->render();
 		}
+
+		// Debug shadows.
+		if (debug_shadows)
+		{
+			glViewport(0, 0, width/5, height/5);
+			ShaderManager::get_shader_program("debug_shadow")->use();
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, ((ShadowShader *)ShaderManager::get_shader_program("shadow"))->shadow_map_tex);
+			Util::render_quad();
+		}
+
 		glfwSwapBuffers(window);
 	}
 
@@ -408,6 +363,10 @@ void Greed::key_callback(GLFWwindow* window, int key, int scancode, int action, 
 			break;
 		case GLFW_KEY_LEFT_SHIFT:
 			shift_down = true;
+			break;
+		case GLFW_KEY_Q:
+			debug_shadows = !debug_shadows;
+			break;
 		default:
 			break;
 		}
@@ -429,9 +388,9 @@ void Greed::cursor_position_callback(GLFWwindow* window, double x_pos, double y_
 	glm::vec3 current_cursor_pos(x_pos, y_pos, 0);
 	glm::vec3 cursor_delta = current_cursor_pos - last_cursor_pos;
 	if (lmb_down && shift_down) {
-		glm::vec3 rot_axis = glm::cross(last_cursor_pos, current_cursor_pos);
-		float rot_angle = glm::length(cursor_delta) * 0.001f;
-		scene->light_pos = glm::vec3(glm::rotate(glm::mat4(1.0f), rot_angle, rot_axis) * glm::vec4(scene->light_pos, 1.0f));
+		int dir = cursor_delta.x > 0 ? 1 : -1;
+		float rot_angle = dir * glm::length(cursor_delta) * 0.001f;
+		scene->light_pos = glm::vec3(glm::rotate(glm::mat4(1.0f), rot_angle, glm::vec3(0.f, 1.f, 0.f)) * glm::vec4(scene->light_pos, 1.0f));
 		
 		/*
 		float angle;

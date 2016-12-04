@@ -25,3 +25,7 @@ void Shader::send_mesh_model(glm::mat4 mesh_model)
 {
 	this->mesh_model = mesh_model;
 }
+
+void Shader::set_material(Material m) {}
+
+void Shader::draw(Geometry *g, glm::mat4 to_world) {}
