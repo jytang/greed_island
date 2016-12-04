@@ -71,31 +71,36 @@ void Greed::setup_scene()
 	Geometry *cylinder_geometry = GeometryGenerator::generate_cylinder(0.5f, 4.f, 10, false);
 	Geometry *sphere_geometry = GeometryGenerator::generate_sphere(4.f, 10);
 
+	// Procedural generation parameters
+	const GLuint    HEIGHT_MAP_POWER =   8;
+	const GLuint    HEIGHT_MAP_SIZE =    (unsigned int)glm::pow(2, HEIGHT_MAP_POWER) + 1;
+	const GLfloat   HEIGHT_MAP_MAX =     40.f;
+	const GLuint    VILLAGE_DIAMETER =   30;
+	const GLfloat   TERRAIN_SIZE =       200.f;
+	const GLfloat   TERRAIN_SCALE =      6.f;
+	const GLuint    TERRAIN_RESOLUTION = 200;
+	const GLfloat   BEACH_HEIGHT =       3.f;
+	const GLuint    NUM_TREES =          100;
+	const GLfloat   FOREST_X_BOUND =     TERRAIN_SIZE * TERRAIN_SCALE / 3;
+	const GLfloat   FOREST_Z_BOUND =     TERRAIN_SIZE * TERRAIN_SCALE / 3;
+	const GLint     CAM_OFFSET =         10;
+
+	camera->cam_pos = glm::vec3(0.f, 0.f, TERRAIN_SIZE * TERRAIN_SCALE/2 - CAM_OFFSET);
+	camera->recalculate();
+
 	// Water Plane
 	Geometry *plane_geo = GeometryGenerator::generate_plane(1.f);
 	Material water_material;
 	water_material.diffuse = water_material.ambient = color::ocean_blue;
+	water_material.shadows = false;
 	Mesh water_mesh = { plane_geo, water_material, ShaderManager::get_default(), glm::mat4(1.f) };
 	SceneModel *water_model = new SceneModel(scene);
 	water_model->add_mesh(water_mesh);
-	SceneTransform *water_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(200.0f, 1.0f, 200.0f)));
+	SceneTransform *water_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(TERRAIN_SIZE*TERRAIN_SCALE, 1.0f, TERRAIN_SIZE*TERRAIN_SCALE)));
 	SceneTransform *water_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 0.0f, 0.0f)));
 	water_scale->add_child(water_model);
 	water_translate->add_child(water_scale);
 	root->add_child(water_translate);
-
-	// Procedural generation parameters
-	const GLuint	HEIGHT_MAP_POWER =   8;
-	const GLuint	HEIGHT_MAP_SIZE =    (unsigned int)glm::pow(2, HEIGHT_MAP_POWER) + 1;
-	const GLfloat	HEIGHT_MAP_MAX =     40.f;
-	const GLuint	VILLAGE_DIAMETER =   30;
-	const GLfloat	TERRAIN_SIZE =       200.f;
-	const GLfloat	TERRAIN_SCALE =      6.f;
-	const GLuint	TERRAIN_RESOLUTION = 200;
-	const GLfloat	BEACH_HEIGHT =       3.f;
-	const GLuint	NUM_TREES =          100;
-	const GLfloat	FOREST_X_BOUND =     TERRAIN_SIZE * TERRAIN_SCALE / 3;
-	const GLfloat	FOREST_Z_BOUND =     TERRAIN_SIZE * TERRAIN_SCALE / 3;
 
 	// New Terrain Method using Awesomeness
 	std::cerr << "Generating Height Map" << std::endl;
@@ -189,16 +194,15 @@ void Greed::go()
 		}
 		else {
 			scene->render();
-		}
-
-		// Debug shadows.
-		if (debug_shadows)
-		{
-			glViewport(0, 0, width/5, height/5);
-			ShaderManager::get_shader_program("debug_shadow")->use();
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, ((ShadowShader *)ShaderManager::get_shader_program("shadow"))->shadow_map_tex);
-			Util::render_quad();
+			// Debug shadows.
+			if (debug_shadows)
+			{
+				glViewport(0, 0, width / 5, height / 5);
+				ShaderManager::get_shader_program("debug_shadow")->use();
+				glActiveTexture(GL_TEXTURE0);
+				glBindTexture(GL_TEXTURE_2D, ((ShadowShader *)ShaderManager::get_shader_program("shadow"))->shadow_map_tex);
+				Util::render_quad();
+			}
 		}
 
 		glfwSwapBuffers(window);

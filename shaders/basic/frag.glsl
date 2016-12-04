@@ -22,6 +22,7 @@ uniform sampler2D shadow_map;
 uniform vec3 eye_pos;
 uniform Material material;
 uniform DirLight dir_light;
+uniform bool shadows_enabled;
 
 vec3 colorify(vec3 normal, vec3 view_dir, vec3 light_dir, vec3 light_intensity, float ambient_coeff);
 float calc_shadows(vec4 pos_from_light, vec3 light_dir);
@@ -65,6 +66,8 @@ vec3 colorify(vec3 normal, vec3 view_dir, vec3 light_dir, vec3 light_intensity, 
     // Ambient: c_a (ambient color) * k_a (coeff)
     vec3 ambient = material.ambient * ambient_coeff;
 
-	float shadow = calc_shadows(frag_pos_light, light_dir);
+	float shadow = 0;
+	if (shadows_enabled)
+		shadow = calc_shadows(frag_pos_light, light_dir);
     return (1.0 - shadow) * (diffuse + specular) + ambient;
 }

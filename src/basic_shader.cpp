@@ -12,6 +12,7 @@ void BasicShader::set_material(Material m)
 	glUniform3f(glGetUniformLocation(shader_id, "material.specular"), m.specular.x, m.specular.y, m.specular.z);
 	glUniform3f(glGetUniformLocation(shader_id, "material.ambient"), m.ambient.x, m.ambient.y, m.ambient.z);
 	glUniform1f(glGetUniformLocation(shader_id, "material.shininess"), m.shininess);
+	glUniform1i(glGetUniformLocation(shader_id, "shadows_enabled"), m.shadows);
 }
 
 void BasicShader::draw(Geometry *g, glm::mat4 to_world)
