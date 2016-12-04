@@ -58,6 +58,9 @@ void Greed::setup_scene()
 	camera = scene->camera;
 	SceneGroup *root = scene->root;
 
+	// Seed PRNG.
+	Util::seed(0);
+
 	// Do skybox.
 	Material default_material;
 	Mesh skybox_mesh = { nullptr, default_material, ShaderManager::get_shader_program("skybox"), glm::mat4(1.f) };
@@ -65,31 +68,8 @@ void Greed::setup_scene()
 	skybox_model->add_mesh(skybox_mesh);
 	root->add_child(skybox_model);
 
-	//Cylinder
 	Geometry *cylinder_geometry = GeometryGenerator::generate_cylinder(0.5f, 4.f, 10, false);
-	Material cylinder_material;
-	cylinder_material.diffuse = cylinder_material.ambient = color::red;
-	Mesh cylinder_mesh = { cylinder_geometry, cylinder_material, ShaderManager::get_default(), glm::mat4(1.f) };
-	SceneModel *cylinder_model = new SceneModel(scene);
-	cylinder_model->add_mesh(cylinder_mesh);
-	SceneTransform *cylinder_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(1.0f, 1.0f, 1.0f)));
-	SceneTransform *cylinder_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 50.f, 10.0f)));
-	cylinder_scale->add_child(cylinder_model);
-	cylinder_translate->add_child(cylinder_scale);
-	root->add_child(cylinder_translate);
-
-	//Sphere
 	Geometry *sphere_geometry = GeometryGenerator::generate_sphere(4.f, 10);
-	Material sphere_material;
-	sphere_material.diffuse = sphere_material.ambient = color::red;
-	Mesh sphere_mesh = { sphere_geometry, sphere_material, ShaderManager::get_default(), glm::mat4(1.f) };
-	SceneModel *sphere_model = new SceneModel(scene);
-	sphere_model->add_mesh(sphere_mesh);
-	SceneTransform *sphere_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(1.0f, 1.0f, 1.0f)));
-	SceneTransform *sphere_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 50.f, 20.0f)));
-	sphere_scale->add_child(sphere_model);
-	sphere_translate->add_child(sphere_scale);
-	root->add_child(sphere_translate);
 
 	// Water Plane
 	Geometry *plane_geo = GeometryGenerator::generate_plane(1.f);
@@ -99,42 +79,55 @@ void Greed::setup_scene()
 	SceneModel *water_model = new SceneModel(scene);
 	water_model->add_mesh(water_mesh);
 	SceneTransform *water_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(200.0f, 1.0f, 200.0f)));
-	SceneTransform *water_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, -1.2f, 0.0f)));
+	SceneTransform *water_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 0.0f, 0.0f)));
 	water_scale->add_child(water_model);
 	water_translate->add_child(water_scale);
 	root->add_child(water_translate);
-	
-	fprintf(stderr, "Generating Height Map\n");
-	//New Terrain Method using Awesomeness
-	unsigned int size_modifier = 8; //LOWER THIS TO RUN FASTER
-	unsigned int size = (unsigned int)glm::pow(2, size_modifier) + 1;	
-	Terrain::generate_height_map(size, 40.f, 30, 40.f, 123);
 
-	fprintf(stderr, "Generating Land Terrain\n"); //Second Parameter Below is Resolution^2 of Island, LOWER TO RUN FASTER
-	Geometry *land_geo = GeometryGenerator::generate_terrain(200.0f, 200, 6.5f, 200.0f);
+	// Procedural generation parameters
+	const GLuint	HEIGHT_MAP_POWER =   8;
+	const GLuint	HEIGHT_MAP_SIZE =    (unsigned int)glm::pow(2, HEIGHT_MAP_POWER) + 1;
+	const GLfloat	HEIGHT_MAP_MAX =     40.f;
+	const GLuint	VILLAGE_DIAMETER =   30;
+	const GLfloat	TERRAIN_SIZE =       200.f;
+	const GLfloat	TERRAIN_SCALE =      6.f;
+	const GLuint	TERRAIN_RESOLUTION = 200;
+	const GLfloat	BEACH_HEIGHT =       3.f;
+	const GLuint	NUM_TREES =          100;
+	const GLfloat	FOREST_X_BOUND =     TERRAIN_SIZE * TERRAIN_SCALE / 3;
+	const GLfloat	FOREST_Z_BOUND =     TERRAIN_SIZE * TERRAIN_SCALE / 3;
+
+	// New Terrain Method using Awesomeness
+	std::cerr << "Generating Height Map" << std::endl;
+	Terrain::generate_height_map(HEIGHT_MAP_SIZE, HEIGHT_MAP_MAX, VILLAGE_DIAMETER, 40.f, 0);
+
+	std::cerr << "Generating Land Terrain" << std::endl;
+	// Second Parameter Below is Resolution^2 of Island, LOWER TO RUN FASTER
+	Geometry *land_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, BEACH_HEIGHT, 200.0f);
 	Material land_material;
 	land_material.diffuse = land_material.ambient = color::windwaker_green;
 	Mesh land_mesh = { land_geo, land_material, ShaderManager::get_default(), glm::mat4(1.f) };	
 
-	fprintf(stderr, "Generating Sand Terrain\n");
-	Geometry *sand_geo = GeometryGenerator::generate_terrain(200.0f, 200, 0.0f, 6.5f);
+	std::cerr << "Generating Sand Terrain" << std::endl;
+	Geometry *sand_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, 0.0f, BEACH_HEIGHT);
 	Material sand_material;	
 	sand_material.diffuse = sand_material.ambient = color::windwaker_sand;
 	Mesh sand_mesh = { sand_geo, sand_material, ShaderManager::get_default(), glm::mat4(1.f) };
 	SceneModel *terrain_model = new SceneModel(scene);
 	terrain_model->add_mesh(land_mesh);
 	terrain_model->add_mesh(sand_mesh);
-	SceneTransform *terrain_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(6.f, 1.f, 6.f)));
-	SceneTransform *terrain_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, -6.0f, 0.0f)));	
+	SceneTransform *terrain_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(TERRAIN_SCALE, 1.f, TERRAIN_SCALE)));
 	terrain_scale->add_child(terrain_model);
-	terrain_translate->add_child(terrain_scale);
-	root->add_child(terrain_translate);	
-		
-	//Create forest
-	const GLuint NUM_TREES = 10;
+	root->add_child(terrain_scale);
+
+	std::cerr << "Generating Forest" << std::endl;
 	for (int i = 0; i < NUM_TREES; ++i) {
 		SceneGroup *tree = Tree::generate_tree(scene, cylinder_geometry, sphere_geometry, 7, 0);
-		SceneTransform *tree_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(i * 10.f, 40.0f, 0.0f)));
+		float x = Util::random(-FOREST_X_BOUND, FOREST_X_BOUND);
+		float z = Util::random(-FOREST_Z_BOUND, FOREST_Z_BOUND);
+		float y = 10.f; //Terrain::height_lookup(x, z, TERRAIN_SIZE);
+		glm::vec3 location = {x, y, z};
+		SceneTransform *tree_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), location));
 		tree_translate->add_child(tree);
 		root->add_child(tree_translate);
 	}

@@ -50,9 +50,7 @@ void Terrain::generate_height_map(GLuint size, GLfloat max_height, GLint village
 
 
 	//Diamond Square Algorithm
-	if (seed == 0)
-		srand((unsigned int)time(NULL));
-	else
+	if (seed != 0)
 		srand(seed);
 
 	unsigned int stepsize = size - 1;

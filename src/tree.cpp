@@ -15,9 +15,7 @@ SceneGroup *Tree::generate_tree(Scene *scene, Geometry *base_branch, Geometry *b
 	SceneGroup *tree_group = new SceneGroup(scene);
 
 	//Set Random Seed
-	if (seed == 0)
-		srand((unsigned int)time(NULL));
-	else
+	if (seed != 0)
 		srand(seed);
 
 	//Set Basic Properties

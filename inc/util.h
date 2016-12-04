@@ -21,6 +21,8 @@ class Util
         static glm::mat4 calc_bezier_mat(glm::vec3 p0, glm::vec3 p1, glm::vec3 p2, glm::vec3 p3);
         static glm::vec3 trackball_position(double x_pos, double y_pos, int width, int height);
 		static void render_quad();
+		static void seed(unsigned int s);
+		static float random(float min, float max);
 };
 
 #endif
