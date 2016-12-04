@@ -13,19 +13,20 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-/* static var definitions */
-Scene* Greed::scene;
-SceneCamera* Greed::camera;
-glm::vec3 Greed::last_cursor_pos;
+/* global vars */
 vr_vars GreedVR::vars;
-bool Greed::lmb_down = false;
-bool Greed::rmb_down = false;
-bool Greed::shift_down = false;
-bool Greed::vr_on = false;
-bool Greed::keys[1024];
-
-const GLfloat FAR = 1000.f;
+Scene* scene;
+SceneCamera* camera;
+bool keys[1024];
+bool lmb_down = false;
+bool rmb_down = false;
+bool shift_down = false;
 bool debug_shadows = false;
+bool vr_on = false;
+const GLfloat FAR_PLANE = 1000.f;
+glm::vec3 last_cursor_pos;
+
+const GLfloat ISLAND_SIZE = 600.f;
 
 Greed::Greed() {}
 
@@ -72,20 +73,21 @@ void Greed::setup_scene()
 	Geometry *sphere_geometry = GeometryGenerator::generate_sphere(4.f, 10);
 
 	// Procedural generation parameters
-	const GLuint    HEIGHT_MAP_POWER =   8;
-	const GLuint    HEIGHT_MAP_SIZE =    (unsigned int)glm::pow(2, HEIGHT_MAP_POWER) + 1;
-	const GLfloat   HEIGHT_MAP_MAX =     40.f;
-	const GLuint    VILLAGE_DIAMETER =   30;
-	const GLfloat   TERRAIN_SIZE =       200.f;
-	const GLfloat   TERRAIN_SCALE =      6.f;
+	const GLuint    HEIGHT_MAP_POWER = 8;
+	const GLuint    HEIGHT_MAP_SIZE = (unsigned int)glm::pow(2, HEIGHT_MAP_POWER) + 1;
+	const GLfloat   HEIGHT_MAP_MAX = 40.f;
+	const GLuint    VILLAGE_DIAMETER = 30;
+	const GLfloat   TERRAIN_SIZE = ISLAND_SIZE / 3;
+	const GLfloat   TERRAIN_SCALE = ISLAND_SIZE / 100;
 	const GLuint    TERRAIN_RESOLUTION = 200;
-	const GLfloat   BEACH_HEIGHT =       3.f;
-	const GLuint    NUM_TREES =          100;
-	const GLfloat   FOREST_X_BOUND =     TERRAIN_SIZE * TERRAIN_SCALE / 3;
-	const GLfloat   FOREST_Z_BOUND =     TERRAIN_SIZE * TERRAIN_SCALE / 3;
-	const GLint     CAM_OFFSET =         10;
+	const GLfloat   BEACH_HEIGHT = 3.f;
+	const GLuint    NUM_TREES = 50;
+	const GLfloat   FOREST_X_BOUND = ISLAND_SIZE / 1.5f;
+	const GLfloat   FOREST_Z_BOUND = ISLAND_SIZE / 1.5f;
+	const GLfloat   WATER_SCALE = ISLAND_SIZE * 2;
+	const GLint     CAM_OFFSET = 10;
 
-	camera->cam_pos = glm::vec3(0.f, 0.f, TERRAIN_SIZE * TERRAIN_SCALE/2 - CAM_OFFSET);
+	camera->cam_pos = glm::vec3(0.f, BEACH_HEIGHT, ISLAND_SIZE - CAM_OFFSET);
 	camera->recalculate();
 
 	// Water Plane
@@ -96,8 +98,8 @@ void Greed::setup_scene()
 	Mesh water_mesh = { plane_geo, water_material, ShaderManager::get_default(), glm::mat4(1.f) };
 	SceneModel *water_model = new SceneModel(scene);
 	water_model->add_mesh(water_mesh);
-	SceneTransform *water_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(TERRAIN_SIZE*TERRAIN_SCALE, 1.0f, TERRAIN_SIZE*TERRAIN_SCALE)));
-	SceneTransform *water_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 0.0f, 0.0f)));
+	SceneTransform *water_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(WATER_SCALE, 1.0f, WATER_SCALE)));
+	SceneTransform *water_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, -1.0f, 0.0f)));
 	water_scale->add_child(water_model);
 	water_translate->add_child(water_scale);
 	root->add_child(water_translate);
@@ -179,7 +181,7 @@ void Greed::go()
 
 		glfwGetFramebufferSize(window, &width, &height);
 		scene->update_frustum_planes();
-		scene->update_frustum_corners(width, height, FAR);
+		scene->update_frustum_corners(width, height, FAR_PLANE);
 
 		// First pass: shadowmap.
 		shadow_pass();
@@ -286,17 +288,45 @@ void Greed::vr_render()
 
 void Greed::handle_movement()
 {
-	const GLfloat cam_step = 3.00f;//0.25f;
+	const GLfloat EDGE_THRESH = 20.f;
+	const GLfloat cam_step = 2.00f;
+	glm::vec3 displacement(0.f);
 	if (keys[GLFW_KEY_W])
-		camera->cam_pos += cam_step * camera->cam_front;
+		displacement += cam_step * camera->cam_front;
 	if (keys[GLFW_KEY_S])
-		camera->cam_pos -= cam_step * camera->cam_front;
+		displacement -= cam_step * camera->cam_front;
 	if (keys[GLFW_KEY_A])
-		camera->cam_pos -= glm::normalize(glm::cross(camera->cam_front, camera->cam_up)) * cam_step;
+		displacement -= glm::normalize(glm::cross(camera->cam_front, camera->cam_up)) * cam_step;
 	if (keys[GLFW_KEY_D])
-		camera->cam_pos += glm::normalize(glm::cross(camera->cam_front, camera->cam_up)) * cam_step;
+		displacement += glm::normalize(glm::cross(camera->cam_front, camera->cam_up)) * cam_step;
 	if (keys[GLFW_KEY_SPACE])
-		camera->cam_pos += cam_step * camera->cam_up;
+		displacement += cam_step * camera->cam_up;
+	glm::vec3 new_pos = camera->cam_pos + displacement;
+	// Check bounds.
+	if (new_pos.y < 0) // TODO: use heightmap to fix y coordinate.
+		return;
+	if (new_pos.x < -ISLAND_SIZE || new_pos.x > ISLAND_SIZE || new_pos.z < -ISLAND_SIZE || new_pos.z > ISLAND_SIZE)
+		return;
+
+	// Smoother edge movement
+	if (new_pos.x < -ISLAND_SIZE + EDGE_THRESH) {
+		float diff = glm::abs(-ISLAND_SIZE - new_pos.x);
+		displacement *= diff / EDGE_THRESH;
+	}
+	else if (new_pos.x > ISLAND_SIZE - EDGE_THRESH) {
+		float diff = glm::abs(ISLAND_SIZE - new_pos.x);
+		displacement *= diff / EDGE_THRESH;
+	}
+	if (new_pos.z < -ISLAND_SIZE + EDGE_THRESH) {
+		float diff = glm::abs(-ISLAND_SIZE - new_pos.z);
+		displacement *= diff / EDGE_THRESH;
+	}
+	else if (new_pos.z > ISLAND_SIZE - EDGE_THRESH) {
+		float diff = glm::abs(ISLAND_SIZE - new_pos.z);
+		displacement *= diff / EDGE_THRESH;
+	}
+	new_pos = camera->cam_pos + displacement;
+	camera->cam_pos = new_pos;
 	camera->recalculate();
 }
 
@@ -337,7 +367,7 @@ void Greed::resize_callback(GLFWwindow* window, int width, int height)
 	glViewport(0, 0, width, height);
 
 	if (height > 0)
-		scene->P = glm::perspective(45.0f, (float)width / (float)height, 0.1f, FAR);
+		scene->P = glm::perspective(45.0f, (float)width / (float)height, 0.1f, FAR_PLANE);
 }
 
 void Greed::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -427,6 +457,7 @@ void Greed::cursor_position_callback(GLFWwindow* window, double x_pos, double y_
 		front.y = -sin(glm::radians(camera->pitch));
 		front.z = sin(glm::radians(camera->yaw)) * cos(glm::radians(camera->pitch));
 		camera->cam_front = glm::normalize(front);
+		camera->recalculate();
 	}
 
 	last_cursor_pos = current_cursor_pos;
