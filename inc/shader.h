@@ -18,6 +18,6 @@ public:
 	void send_cam_pos(glm::vec3 cam_pos);
     void set_VP(glm::mat4 V, glm::mat4 P);
 	void send_mesh_model(glm::mat4 mesh_model);
-    virtual void set_material(Material m) = 0;
-    virtual void draw(Geometry *g, glm::mat4 to_world) = 0;
+    virtual void set_material(Material m);
+    virtual void draw(Geometry *g, glm::mat4 to_world);
 };
