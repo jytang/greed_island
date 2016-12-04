@@ -450,9 +450,7 @@ Geometry * GeometryGenerator::generate_bezier_plane(GLfloat radius, GLuint num_c
 	bez_plane->draw_type = GL_TRIANGLE_FAN;
 
 	// Make bezier curves
-	if (seed == 0)
-		srand((unsigned int)time(NULL));
-	else
+	if (seed != 0)
 		srand(seed);
 	int num_points = num_curves * 3;
 	std::vector<glm::vec3> control_points(num_points);

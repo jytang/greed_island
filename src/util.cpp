@@ -1,4 +1,5 @@
 #include "util.h"
+#include <time.h>
 
 GLuint Util::quadVAO;
 GLuint Util::quadVBO;
@@ -132,4 +133,20 @@ void Util::render_quad()
 	glBindVertexArray(quadVAO);
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 	glBindVertexArray(0);
+}
+
+void Util::seed(unsigned int s)
+{
+	if (s == 0)
+		srand((unsigned int)time(NULL));
+	else
+		srand(s);
+}
+
+float Util::random(float min, float max)
+{
+	float random = ((float)rand()) / (float)RAND_MAX;
+	float diff = max - min;
+	float r = random * diff;
+	return min + r;
 }
