@@ -19,9 +19,11 @@ void SceneGroup::add_child(SceneNode *node)
 	children.push_back(node);
 }
 
-void SceneGroup::remove_child(SceneNode *node)
+void SceneGroup::remove_all()
 {
-	children.remove(node);
+	for (auto it = children.begin(); it != children.end(); ++it)
+		delete(*it);
+	children.clear();
 }
 
 void SceneGroup::draw(glm::mat4 m)

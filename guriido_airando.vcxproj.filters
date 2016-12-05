@@ -68,6 +68,9 @@
     <ClCompile Include="src\tree.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\scene_animation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -140,6 +143,9 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="inc\tree.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\scene_animation.h">
       <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>

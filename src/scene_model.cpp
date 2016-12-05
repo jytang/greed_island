@@ -62,8 +62,11 @@ void SceneModel::combine_meshes()
 	{
 		for (glm::vec3 v : mesh.geometry->vertices)
 			mega_geometry->vertices.push_back(glm::vec3(mesh.to_world * glm::vec4(v, 1.f)));
-		for (glm::vec3 n : mesh.geometry->normals)
+		for (glm::vec3 n : mesh.geometry->normals) {
+			// The commented line is correct. But the wrong normals look better for our purposes.
+			//mega_geometry->normals.push_back(glm::normalize(glm::mat3(glm::transpose(glm::inverse(mesh.to_world))) * n));
 			mega_geometry->normals.push_back(glm::vec3(mesh.to_world * glm::vec4(n, 1.f)));
+		}
 		for (unsigned int i : mesh.geometry->indices)
 			mega_geometry->indices.push_back(i+index_offset);
 		index_offset += mesh.geometry->indices.size();

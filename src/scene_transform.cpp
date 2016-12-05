@@ -7,6 +7,7 @@ SceneTransform::SceneTransform(Scene *scene, glm::mat4 m)
 	transformation = m;
 }
 
+SceneTransform::SceneTransform() {}
 SceneTransform::~SceneTransform() {}
 
 void SceneTransform::draw(glm::mat4 m)

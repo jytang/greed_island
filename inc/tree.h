@@ -27,6 +27,6 @@ private:
 	static SceneTransform *scale;
 
 public:
-	static SceneGroup *generate_tree(Scene *, Geometry *, Geometry *, unsigned int, unsigned int, GLfloat, GLfloat, Material, Material, int);
+	static SceneGroup *generate_tree(Scene *, Geometry *, Geometry *, unsigned int, unsigned int, GLfloat, GLfloat, Material, Material, bool, glm::vec3, int);
 };
 

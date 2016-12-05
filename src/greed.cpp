@@ -5,6 +5,7 @@
 #include "geometry_generator.h"
 #include "scene_model.h"
 #include "scene_transform.h"
+#include "scene_animation.h"
 #include "tree.h"
 
 #include "util.h"
@@ -138,7 +139,8 @@ void Greed::setup_scene()
 	const GLfloat   TERRAIN_SCALE = ISLAND_SIZE / 60;
 	const GLuint    TERRAIN_RESOLUTION = 200;
 	const GLfloat   BEACH_HEIGHT = 10.f;
-	const GLuint    NUM_TREES = 500;
+	const GLuint    NUM_TREES = 200;
+	const GLfloat   PERCENT_TREE_ANIM = 1.f;
 	const GLuint    NUM_TREE_TYPES = 10;
 	const GLfloat   PATH_WIDTH = 80.f;
 	const GLfloat   FOREST_RADIUS = ISLAND_SIZE / 1.2f;
@@ -220,9 +222,11 @@ void Greed::setup_scene()
 	for (int i = 0; i < NUM_TREES; ++i) {
 		//SceneGroup *tree = tree_types[i % tree_types.size()];
 		leaf_material.diffuse = leaf_material.ambient = leaf_colors[i%8];
+		bool animated = false;
+		if (i % (NUM_TREES / (int) (NUM_TREES*PERCENT_TREE_ANIM)) == 0)
+			animated = true;
 		if (i % 50 == 0)
 			std::cerr << "Tree " << i << std::endl;
-		SceneGroup *tree = Tree::generate_tree(scene, cylinder_geo, diamond_geo, 7, 1, 20.f, 2.f, branch_material, leaf_material, 0);
 		float x, z;
 		do {
 			float angle = Util::random(0, 360);
@@ -233,11 +237,17 @@ void Greed::setup_scene()
 		} while (Util::within_rect(glm::vec2(x, z), glm::vec2(-PATH_WIDTH/2, FOREST_RADIUS), glm::vec2(PATH_WIDTH/2, 0)));
 		float y = Terrain::height_lookup(x, z, ISLAND_SIZE*2);
 		glm::vec3 location = {x, y, z};
+
+		SceneGroup *tree = Tree::generate_tree(scene, cylinder_geo, diamond_geo, 7, 1, 20.f, 2.f, branch_material, leaf_material, animated, location, 0);
 		
-		for (SceneNode * child : tree->children) {
-			((SceneModel *)child)->meshes[0].to_world = glm::translate(glm::mat4(1.f), location) * glm::scale(glm::mat4(1.f), glm::vec3(1.f));
-		}
-		
+		// THIS IS NASTY CODE:
+		((SceneModel *)(tree->children[0]))->meshes[0].to_world = glm::translate(glm::mat4(1.f), location) * glm::scale(glm::mat4(1.f), glm::vec3(1.f));
+		if (animated)
+			((SceneModel *)((SceneAnimation *)(tree->children[1]))->children[0])->meshes[0].to_world = glm::translate(glm::mat4(1.f), location) * glm::scale(glm::mat4(1.f), glm::vec3(1.f));
+		else
+			((SceneModel *)(tree->children[1]))->meshes[0].to_world = glm::translate(glm::mat4(1.f), location) * glm::scale(glm::mat4(1.f), glm::vec3(1.f));
+		// END NASTY CODE
+
 		forest->add_child(tree);
 
 		//SceneTransform *tree_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), location));
@@ -247,7 +257,7 @@ void Greed::setup_scene()
 	root->add_child(forest);
 	std::cerr << "Done." << std::endl;
 
-	SceneGroup *bush = Tree::generate_tree(scene, sphere_geo, sphere_geo, 3, 3, 80.f, 1.f, leaf_material, leaf_material, 0);
+	SceneGroup *bush = Tree::generate_tree(scene, sphere_geo, sphere_geo, 3, 3, 80.f, 1.f, leaf_material, leaf_material, false, glm::vec3(0), 0);
 	SceneTransform *bush_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.f, Terrain::height_lookup(0, 0, ISLAND_SIZE * 2), 0.f)));
 	bush_translate->add_child(bush);
 	//root->add_child(bush_translate);

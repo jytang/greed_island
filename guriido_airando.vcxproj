@@ -140,6 +140,7 @@
     <ClCompile Include="src\greed.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\scene.cpp" />
+    <ClCompile Include="src\scene_animation.cpp" />
     <ClCompile Include="src\scene_camera.cpp" />
     <ClCompile Include="src\scene_group.cpp" />
     <ClCompile Include="src\scene_model.cpp" />
@@ -167,6 +168,7 @@
     <ClInclude Include="inc\mesh.h" />
     <ClInclude Include="inc\plane.h" />
     <ClInclude Include="inc\scene.h" />
+    <ClInclude Include="inc\scene_animation.h" />
     <ClInclude Include="inc\scene_camera.h" />
     <ClInclude Include="inc\scene_group.h" />
     <ClInclude Include="inc\scene_model.h" />

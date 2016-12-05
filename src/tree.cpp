@@ -1,4 +1,6 @@
 #include "tree.h"
+#include "scene_animation.h"
+#include "util.h"
 
 SceneModel *Tree::branch_model;
 SceneModel *Tree::leaf_model;
@@ -13,7 +15,7 @@ SceneTransform *Tree::scale;
 GLfloat angle_delta;
 GLfloat geo_size;
 
-SceneGroup *Tree::generate_tree(Scene *scene, Geometry *base_branch, Geometry *base_leaf, unsigned int num_iterations, unsigned int leaves, GLfloat angle, GLfloat size, Material branch_material, Material leaf_material, int seed = 0)
+SceneGroup *Tree::generate_tree(Scene *scene, Geometry *base_branch, Geometry *base_leaf, unsigned int num_iterations, unsigned int leaves, GLfloat angle, GLfloat size, Material branch_material, Material leaf_material, bool animated, glm::vec3 location, int seed = 0)
 {
 	angle_delta = angle;
 	leaf_layers = leaves;
@@ -31,8 +33,15 @@ SceneGroup *Tree::generate_tree(Scene *scene, Geometry *base_branch, Geometry *b
 	leaf_model = new SceneModel(scene);
 
 	tree_group->add_child(branch_model); //Base of tree BUT IT'S NOT SCALED RIGHT
-	tree_group->add_child(leaf_model);
-	
+	if (animated)
+	{
+		SceneAnimation * anim_node = new SceneAnimation(scene, -3.f, 3.f, 0.f, -0.05f, location + glm::vec3(Util::random(0.75, 1), 0.f, Util::random(0.75, 1)), glm::vec3(0.f, 0.f, 0.f));
+		anim_node->add_child(leaf_model);
+		tree_group->add_child(anim_node);
+	}
+	else {
+		tree_group->add_child(leaf_model);
+	}
 	tree_system(glm::mat4(1.0f), glm::vec3(0.f, 1.0f, 0.f), glm::vec3(0.f, 0.0f, 1.f), 0.f, 0.f, 10.f, 1, num_iterations);
 
 	branch_model->combine_meshes();
