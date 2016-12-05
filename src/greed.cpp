@@ -132,7 +132,7 @@ void Greed::setup_scene()
 		SceneGroup *tree = Tree::generate_tree(scene, cylinder_geometry, sphere_geometry, 7, 0);
 		float x = Util::random(-FOREST_X_BOUND, FOREST_X_BOUND);
 		float z = Util::random(-FOREST_Z_BOUND, FOREST_Z_BOUND);
-		float y = 10.f; //Terrain::height_lookup(x, z, TERRAIN_SIZE);
+		float y = Terrain::height_lookup(x, z, ISLAND_SIZE*2);
 		glm::vec3 location = {x, y, z};
 		SceneTransform *tree_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), location));
 		tree_translate->add_child(tree);
@@ -289,6 +289,7 @@ void Greed::vr_render()
 void Greed::handle_movement()
 {
 	const GLfloat EDGE_THRESH = 20.f;
+	const GLfloat PLAYER_HEIGHT = 20.f;
 	const GLfloat cam_step = 2.00f;
 	glm::vec3 displacement(0.f);
 	if (keys[GLFW_KEY_W])
@@ -302,13 +303,17 @@ void Greed::handle_movement()
 	if (keys[GLFW_KEY_SPACE])
 		displacement += cam_step * camera->cam_up;
 	glm::vec3 new_pos = camera->cam_pos + displacement;
-	// Check bounds.
-	if (new_pos.y < 0) // TODO: use heightmap to fix y coordinate.
-		return;
+
+	// Fix height to be based on heightmap.
+	float new_height = Terrain::height_lookup(new_pos.x, new_pos.z, ISLAND_SIZE * 2);
+	if (new_pos.y - PLAYER_HEIGHT < new_height)
+		new_pos.y = new_height + PLAYER_HEIGHT;
+
+	// Check horizontal bounds.
 	if (new_pos.x < -ISLAND_SIZE || new_pos.x > ISLAND_SIZE || new_pos.z < -ISLAND_SIZE || new_pos.z > ISLAND_SIZE)
 		return;
 
-	// Smoother edge movement
+	// Smoother edge movement.
 	if (new_pos.x < -ISLAND_SIZE + EDGE_THRESH) {
 		float diff = glm::abs(-ISLAND_SIZE - new_pos.x);
 		displacement *= diff / EDGE_THRESH;
@@ -326,6 +331,12 @@ void Greed::handle_movement()
 		displacement *= diff / EDGE_THRESH;
 	}
 	new_pos = camera->cam_pos + displacement;
+
+	// Recheck height.
+	new_height = Terrain::height_lookup(new_pos.x, new_pos.z, ISLAND_SIZE * 2);
+	if (new_pos.y - PLAYER_HEIGHT < new_height)
+		new_pos.y = new_height + PLAYER_HEIGHT;
+
 	camera->cam_pos = new_pos;
 	camera->recalculate();
 }
