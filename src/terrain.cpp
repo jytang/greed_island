@@ -1,4 +1,5 @@
 #include "terrain.h"
+#include "util.h"
 
 std::vector<std::vector<GLfloat> > Terrain::height_map;
 
@@ -37,16 +38,39 @@ void Terrain::generate_height_map(GLuint size, GLfloat max_height, GLint village
 
 	//Set Plateau! MaxHeight defined, and will be a fixed circle using VillageDiamteter
 	//TODO: Later, for now center will just be the highest point;
-	height_map[middle][middle] = max_height;
-	//For now, square plateau
-	unsigned int village_mid = village_diameter / 2;
-	for (unsigned int i = middle - village_mid; i <= middle + village_mid; i++)
+
+	//Offset of Village on Island, Round Plateau.
+	float r_ratio_offset = 0.5; //Row <----Currnently, Code only works for when village is at center of island.
+	float c_ratio_offset = 0.5; //Col
+	unsigned int village_mid_r = size * r_ratio_offset;
+	unsigned int village_mid_c = size * c_ratio_offset;
+
+	unsigned int radius = village_diameter / 2;
+
+	for (unsigned int r = village_mid_r - radius; r < village_mid_r + radius; r++) 
 	{
-		for (unsigned int j = middle - village_mid; j <= middle + village_mid; j++)
+		for (unsigned int c = village_mid_c - radius; c < village_mid_c + radius; c++) 
 		{
-			height_map[i][j] = max_height;
+			float dist = glm::distance(glm::vec2(r, c), glm::vec2(village_mid_r, village_mid_c));
+			//fprintf(stderr, "Dist: %f\n", dist);
+			if (dist <= radius)
+			{
+				height_map[r][c] = max_height;
+			}
 		}
 	}
+	
+	//Square Plateau
+	//height_map[middle][middle] = max_height;
+	////For now, square plateau
+	//unsigned int village_mid = village_diameter / 2;
+	//for (unsigned int i = middle - village_mid; i <= middle + village_mid; i++)
+	//{
+	//	for (unsigned int j = middle - village_mid; j <= middle + village_mid; j++)
+	//	{
+	//		height_map[i][j] = max_height;
+	//	}
+	//}
 
 
 	//Diamond Square Algorithm
@@ -57,6 +81,47 @@ void Terrain::generate_height_map(GLuint size, GLfloat max_height, GLint village
 
 	//Recursively creates height map
 	diamond_square(stepsize, size, scale);
+
+	//Depresses the Plateau for a cooler effect!
+	max_height *= 0.8f; //Amount of depression.
+
+	for (unsigned int r = village_mid_r - radius; r < village_mid_r + radius; r++)
+	{
+		for (unsigned int c = village_mid_c - radius; c < village_mid_c + radius; c++)
+		{
+			float dist = glm::distance(glm::vec2(r, c), glm::vec2(village_mid_r, village_mid_c));
+			//fprintf(stderr, "Dist: %f\n", dist);
+			if (dist <= radius)
+			{
+				height_map[r][c] = max_height;
+			}
+		}
+	}	
+
+	//Makes a ramp to the plateau	
+	float start_slope = 1.0f;
+	float end_slope = 20.0f;
+	float widen_offset = 5.0f;
+	unsigned int initial_widen = 5;
+
+	for (unsigned int c = village_mid_c + radius; c < village_mid_c + radius + end_slope; c++)
+	{
+		float ratio = (village_mid_c + radius + end_slope - (float)c) / (end_slope - start_slope);
+		unsigned int widen = (unsigned int) (widen_offset * (1.0f - ratio));
+		unsigned int opening_size = initial_widen + widen;
+		for (unsigned int r = village_mid_r - opening_size; r < village_mid_r + opening_size; r++)
+		{
+			if (c <= village_mid_c + radius + start_slope)
+			{
+				height_map[r][c] = max_height;
+			}
+			else
+			{				
+				float diff = max_height - height_map[r][c];				
+				height_map[r][c] = max_height - (diff * (1.f - ratio));
+			}			
+		}
+	}
 }
 
 void Terrain::diamond_square(unsigned int step, unsigned int size, float scale)
@@ -70,7 +135,7 @@ void Terrain::diamond_square(unsigned int step, unsigned int size, float scale)
 	{
 		for (unsigned int y = halfstep; y < size; y += step)
 		{
-			diamond_step(x, y, step, size, (((float)(rand() % 101) / 100.f) * 2.f - 1) *scale);
+			diamond_step(x, y, step, size, Util::random(-1.f, 1.f) * scale);
 		}
 	}
 
@@ -79,18 +144,18 @@ void Terrain::diamond_square(unsigned int step, unsigned int size, float scale)
 		for (unsigned int y = 0; y < size; y += step)
 		{
 			if (x + halfstep < size)
-				square_step(x + halfstep, y, step, size, (((float)(rand() % 101) / 100.f) * 2.f - 1) *scale);
+				square_step(x + halfstep, y, step, size, Util::random(-1.f, 1.f)  *scale);
 			if (y + halfstep < size)
-				square_step(x, y + halfstep, step, size, (((float)(rand() % 101) / 100.f) * 2.f - 1) *scale);
+				square_step(x, y + halfstep, step, size, Util::random(-1.f, 1.f)  *scale);
 		}
 	}
 
 	// (((float)(rand() % 101) / 100.f) * 2 - 1) *
 
-	float roughness = 1.f; //higher is smoother, lower is rougher
+	float roughness = 2.f; //higher is smoother, lower is rougher
 
-	scale *= (float) glm::pow(2.f, -roughness);
-	
+	scale *= (float)glm::pow(2.f, -roughness);
+
 	diamond_square(step / 2, size, scale);
 }
 
@@ -110,7 +175,7 @@ void Terrain::diamond_step(unsigned int x, unsigned int y, unsigned int step, un
 	// c     d
 
 	float a, b, c, d;
-	float num = 4.0f;
+	float num = 4.0f;	
 
 	if (x >= halfstep && y >= halfstep)
 		a = height_map[x - halfstep][y - halfstep];
@@ -129,12 +194,15 @@ void Terrain::diamond_step(unsigned int x, unsigned int y, unsigned int step, un
 	else
 		d = 0;
 
-	float r = (float)(rand() % 101) / 100.f;
+	//float r = (float)(rand() % 101) / 100.f;
+	float r = Util::random(0.f, 1.f);
 	//fprintf(stderr, "Random: %f\n", r);
 
 	//fprintf(stderr, "Using: %.2f, %.2f, %.2f, %.2f and %.2f\n", a, b, c, d, num);
 
-	height_map[x][y] = ((a + b + c + d) / num) +(r * scale);
+	float sum = (a + b + c + d);
+
+	height_map[x][y] = (sum / num) +(r * scale);
 	if (height_map[x][y] < 0)
 		height_map[x][y] = 0;
 }
@@ -176,13 +244,16 @@ void Terrain::square_step(unsigned int x, unsigned int y, unsigned int step, uns
 
 	if (x == 0 || y == 0 || x == size - 1 || y == size - 1)
 		num = 3.0f;
-	
+		
 
 	//fprintf(stderr, "Using: %.2f, %.2f, %.2f, %.2f and %.2f\n", a, b, c, d, num);
 
-	float r = ((float)(rand() % 101) / 100.f);
+	//float r = ((float)(rand() % 101) / 100.f);
+	float r = Util::random(0.f, 1.f);
 
-	height_map[x][y] = ((a + b + c + d) / num) +(r * scale);
+	float sum = (a + b + c + d);
+
+	height_map[x][y] = (sum / num) +(r * scale);
 	if (height_map[x][y] < 0)
 		height_map[x][y] = 0;
 }
