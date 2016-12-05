@@ -93,12 +93,13 @@ void Greed::setup_scene()
 	skybox_model->add_mesh(skybox_mesh);
 	root->add_child(skybox_model);
 
-	Geometry *cylinder_geometry = GeometryGenerator::generate_cylinder(0.25f, 2.f, 3, false);
-	Geometry *sphere_geometry = GeometryGenerator::generate_sphere(2.f, 3);
+	Geometry *cylinder_geo = GeometryGenerator::generate_cylinder(0.25f, 2.f, 3, false);
+	Geometry *diamond_geo = GeometryGenerator::generate_sphere(2.f, 3);
+	Geometry *sphere_geo = GeometryGenerator::generate_sphere(1.f, 7);
 
 	Material sphere_material;
 	sphere_material.diffuse = sphere_material.ambient = color::ocean_blue;
-	Mesh sphere_mesh = { sphere_geometry, sphere_material, ShaderManager::get_default(), glm::mat4(1.f) };
+	Mesh sphere_mesh = { diamond_geo, sphere_material, ShaderManager::get_default(), glm::mat4(1.f) };
 	SceneModel *sphere_model = new SceneModel(scene);
 	sphere_model->add_mesh(sphere_mesh);
 	SceneTransform *sphere_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(1.f, 1.0f, 1.f)));
@@ -182,15 +183,19 @@ void Greed::setup_scene()
 
 	std::vector<SceneGroup *> tree_types;
 	/*for (int i = 0; i < NUM_TREE_TYPES; ++i) {
-		tree_types.push_back(Tree::generate_tree(scene, cylinder_geometry, sphere_geometry, 9, 0));
+		tree_types.push_back(Tree::generate_tree(scene, cylinder_geo, diamond_geo, 9, 0));
 	}*/
 
+	glm::vec3 leaf_colors[5] = {color::autumn_orange, color::olive_green, color::purple, color::bone_white, color::indian_red};
+	Material branch_material, leaf_material;
+	branch_material.diffuse = branch_material.ambient = color::brown;
 	SceneGroup *forest = new SceneGroup(scene);
 	for (int i = 0; i < NUM_TREES; ++i) {
 		//SceneGroup *tree = tree_types[i % tree_types.size()];
+		leaf_material.diffuse = leaf_material.ambient = leaf_colors[i%5];
 		if (i % 50 == 0)
 			std::cerr << "Tree " << i << std::endl;
-		SceneGroup *tree = Tree::generate_tree(scene, cylinder_geometry, sphere_geometry, 7, 0);
+		SceneGroup *tree = Tree::generate_tree(scene, cylinder_geo, diamond_geo, 7, 1, 20.f, 2.f, branch_material, leaf_material, 0);
 		float x, z;
 		do {
 			x = Util::random(-FOREST_X_BOUND, FOREST_X_BOUND);
@@ -211,6 +216,11 @@ void Greed::setup_scene()
 	}
 	root->add_child(forest);
 	std::cerr << "Done." << std::endl;
+
+	SceneGroup *bush = Tree::generate_tree(scene, sphere_geo, sphere_geo, 3, 3, 80.f, 1.f, leaf_material, leaf_material, 0);
+	SceneTransform *bush_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.f, Terrain::height_lookup(0, 0, ISLAND_SIZE * 2), 0.f)));
+	bush_translate->add_child(bush);
+	//root->add_child(bush_translate);
 }
 
 void Greed::go()
@@ -509,7 +519,7 @@ void Greed::cursor_position_callback(GLFWwindow* window, double x_pos, double y_
 	if (lmb_down && shift_down) {
 		int dir = cursor_delta.x > 0 ? 1 : -1;
 		float rot_angle = dir * glm::length(cursor_delta) * 0.001f;
-		scene->light_pos = glm::vec3(glm::rotate(glm::mat4(1.0f), rot_angle, glm::vec3(0.f, 1.f, 0.f)) * glm::vec4(scene->light_pos, 1.0f));
+		scene->light_pos = glm::vec3(glm::rotate(glm::mat4(1.0f), rot_angle, glm::vec3(0.f, 0.f, 1.f)) * glm::vec4(scene->light_pos, 1.0f));
 		
 		/*
 		float angle;
