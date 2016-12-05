@@ -150,3 +150,12 @@ float Util::random(float min, float max)
 	float r = random * diff;
 	return min + r;
 }
+
+bool Util::within_rect(glm::vec2 pos, glm::vec2 top_left, glm::vec2 bottom_right)
+{
+	if (pos.x > top_left.x && pos.x < bottom_right.x && pos.y > bottom_right.y && pos.y < top_left.y)
+	{
+		return true;
+	}
+	return false;
+}

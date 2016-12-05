@@ -96,6 +96,7 @@ void Greed::setup_scene()
 	const GLfloat   BEACH_HEIGHT = 3.f;
 	const GLuint    NUM_TREES = 200;
 	const GLuint    NUM_TREE_TYPES = 10;
+	const GLfloat   PATH_WIDTH = 80.f;
 	const GLfloat   FOREST_X_BOUND = ISLAND_SIZE / 1.5f;
 	const GLfloat   FOREST_Z_BOUND = ISLAND_SIZE / 1.5f;
 	const GLfloat   WATER_SCALE = ISLAND_SIZE * 2;
@@ -167,8 +168,11 @@ void Greed::setup_scene()
 		if (i % 50 == 0)
 			std::cerr << "Tree " << i << std::endl;
 		SceneGroup *tree = Tree::generate_tree(scene, cylinder_geometry, sphere_geometry, 7, 0);
-		float x = Util::random(-FOREST_X_BOUND, FOREST_X_BOUND);
-		float z = Util::random(-FOREST_Z_BOUND, FOREST_Z_BOUND);
+		float x, z;
+		do {
+			x = Util::random(-FOREST_X_BOUND, FOREST_X_BOUND);
+			z = Util::random(-FOREST_Z_BOUND, FOREST_Z_BOUND);
+		} while (Util::within_rect(glm::vec2(x, z), glm::vec2(-PATH_WIDTH/2, FOREST_Z_BOUND), glm::vec2(PATH_WIDTH/2, 0)));
 		float y = Terrain::height_lookup(x, z, ISLAND_SIZE*2);
 		glm::vec3 location = {x, y, z};
 		
