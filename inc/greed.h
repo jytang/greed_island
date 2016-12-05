@@ -23,7 +23,9 @@ private:
 	void setup_opengl();
 	void setup_shaders();
 	void destroy();
+	static void next_skybox();
 	static void change_scene(Scene *);
+	static void next_scene();
 	/* static callbacks */
 	static void error_callback(int error, const char* description);
 	static void resize_callback(GLFWwindow* window, int width, int height);

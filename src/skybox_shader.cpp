@@ -48,6 +48,8 @@ const GLfloat skybox_vertices[] = {
 	1.0f, -1.0f,  1.0f
 };
 
+const int NUM_SKYBOXES = 6;
+
 SkyboxShader::SkyboxShader(GLuint shader_id) : Shader(shader_id)
 {
 	glGenVertexArrays(1, &VAO);
@@ -61,7 +63,12 @@ SkyboxShader::SkyboxShader(GLuint shader_id) : Shader(shader_id)
 
 	glBindVertexArray(0);
 
-	glGenTextures(1, &texture_id);
+	for (int i = 0; i < NUM_SKYBOXES; ++i)
+	{
+		GLuint texture_id;
+		glGenTextures(1, &texture_id);
+		texture_ids.push_back(texture_id);
+	}
 	load_cubemap();
 }
 
@@ -78,21 +85,34 @@ void SkyboxShader::load_cubemap()
 	int width, height;
 	unsigned char *image;
 
-	glBindTexture(GL_TEXTURE_CUBE_MAP, texture_id);
-	for (GLuint i = 0; i < faces.size(); ++i) {
-		std::string path = "assets\\skybox\\low-res-cloudy" + std::string(faces[i]);
-		image = Util::loadPPM(path.c_str(), width, height);
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
-		delete image;
-	}
+	std::string prefix = "assets\\skybox\\";
 
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+	std::vector<std::string> skybox_names;
+	skybox_names.push_back("low-res-cloudy");
+	skybox_names.push_back("space");
+	skybox_names.push_back("sahara");
+	skybox_names.push_back("snow");
+	skybox_names.push_back("desert-sorbin");
+	skybox_names.push_back("violent-days");
+
+	for (int i = 0; i < NUM_SKYBOXES; ++i)
+	{
+		glBindTexture(GL_TEXTURE_CUBE_MAP, texture_ids[i]);
+		for (GLuint j = 0; j < faces.size(); ++j) {
+			std::string path = prefix + skybox_names[i] + std::string(faces[j]);
+			image = Util::loadPPM(path.c_str(), width, height);
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + j, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+			delete image;
+		}
+
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+	}
 }
 
 void SkyboxShader::set_material(Material m)
@@ -113,7 +133,7 @@ void SkyboxShader::draw(Geometry *g, glm::mat4 to_world)
 	glBindVertexArray(VAO);
 	glActiveTexture(GL_TEXTURE0);
 	glUniform1i(glGetUniformLocation(shader_id, "skybox"), 0);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, texture_id);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, texture_ids[current_texture_id]);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 	glBindVertexArray(0);
 	glDepthMask(GL_TRUE);

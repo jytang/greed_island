@@ -1,12 +1,14 @@
 #pragma once
 
 #include "shader.h"
+#include <vector>
 
 class SkyboxShader :
 	public Shader
 {
 public:
-	GLuint texture_id;
+	GLuint current_texture_id;
+	std::vector<GLuint> texture_ids;
 	GLuint VAO, VBO;
 
 	SkyboxShader(GLuint shader_id);

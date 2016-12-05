@@ -48,10 +48,28 @@ void Greed::destroy()
 	glfwTerminate();
 }
 
+void Greed::next_skybox()
+{
+	SkyboxShader * ss = ((SkyboxShader *)ShaderManager::get_shader_program("skybox"));
+	ss->current_texture_id = (ss->current_texture_id + 1) % ss->texture_ids.size();
+}
+
 void Greed::change_scene(Scene * s)
 {
 	scene = s;
 	camera = s->camera;
+}
+
+void Greed::next_scene()
+{
+	int curr = 0;
+	for (auto it = scenes.begin(); it != scenes.end(); ++it)
+	{
+		if (*it == scene)
+			curr = it - scenes.begin();
+	}
+	next_skybox();
+	change_scene(scenes[(curr + 1) % scenes.size()]);
 }
 
 void Greed::setup_shaders()
@@ -92,10 +110,12 @@ void Greed::setup_scene()
 	SceneModel *skybox_model = new SceneModel(scene);
 	skybox_model->add_mesh(skybox_mesh);
 	root->add_child(skybox_model);
+	transition_scene->root->add_child(skybox_model);
 
 	Geometry *cylinder_geo = GeometryGenerator::generate_cylinder(0.25f, 2.f, 3, false);
 	Geometry *diamond_geo = GeometryGenerator::generate_sphere(2.f, 3);
 	Geometry *sphere_geo = GeometryGenerator::generate_sphere(1.f, 7);
+	Geometry *cube_geometry = GeometryGenerator::generate_cube(1.f, true);
 
 	Material sphere_material;
 	sphere_material.diffuse = sphere_material.ambient = color::ocean_blue;
@@ -111,18 +131,18 @@ void Greed::setup_scene()
 	// Procedural generation parameters
 	const GLuint    HEIGHT_MAP_POWER = 8;
 	const GLuint    HEIGHT_MAP_SIZE = (unsigned int)glm::pow(2, HEIGHT_MAP_POWER) + 1;
-	const GLfloat   HEIGHT_MAP_MAX = 100.f;
-	const GLuint    VILLAGE_DIAMETER = 30;
+	const GLfloat   HEIGHT_MAP_MAX = 200.f;
+	const GLfloat   HEIGHT_RANDOMNESS_SCALE = 200.f;
+	const GLint     VILLAGE_DIAMETER = 60;
 	const GLfloat   TERRAIN_SIZE = ISLAND_SIZE / 5;
 	const GLfloat   TERRAIN_SCALE = ISLAND_SIZE / 60;
 	const GLuint    TERRAIN_RESOLUTION = 200;
-	const GLfloat   BEACH_HEIGHT = 3.f;
-	const GLuint    NUM_TREES = 200;
+	const GLfloat   BEACH_HEIGHT = 10.f;
+	const GLuint    NUM_TREES = 500;
 	const GLuint    NUM_TREE_TYPES = 10;
 	const GLfloat   PATH_WIDTH = 80.f;
-	const GLfloat   FOREST_X_BOUND = ISLAND_SIZE / 1.5f;
-	const GLfloat   FOREST_Z_BOUND = ISLAND_SIZE / 1.5f;
-	const GLfloat   WATER_SCALE = ISLAND_SIZE * 2;
+	const GLfloat   FOREST_RADIUS = ISLAND_SIZE / 1.2f;
+	const GLfloat   WATER_SCALE = ISLAND_SIZE * 4;
 	const GLint     CAM_OFFSET = 10;
 
 	camera->cam_pos = glm::vec3(0.f, BEACH_HEIGHT, ISLAND_SIZE - CAM_OFFSET);
@@ -144,14 +164,20 @@ void Greed::setup_scene()
 
 	// New Terrain Method using Awesomeness
 	std::cerr << "Generating Height Map" << std::endl;
-	Terrain::generate_height_map(HEIGHT_MAP_SIZE, HEIGHT_MAP_MAX, VILLAGE_DIAMETER, 40.f, 0);
+	Terrain::generate_height_map(HEIGHT_MAP_SIZE, HEIGHT_MAP_MAX, VILLAGE_DIAMETER, HEIGHT_RANDOMNESS_SCALE, 0);
 
 	std::cerr << "Generating Land Terrain" << std::endl;
 	// Second Parameter Below is Resolution^2 of Island, LOWER TO RUN FASTER
-	Geometry *land_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, BEACH_HEIGHT, 200.0f);
+	Geometry *land_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, BEACH_HEIGHT, HEIGHT_MAP_MAX * 0.8f - 0.2f);
 	Material land_material;
 	land_material.diffuse = land_material.ambient = color::windwaker_green;
 	Mesh land_mesh = { land_geo, land_material, ShaderManager::get_default(), glm::mat4(1.f) };	
+
+	std::cerr << "Generating Plateau Terrain" << std::endl;
+	Geometry *plateau_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, HEIGHT_MAP_MAX * 0.8f - 0.2f, HEIGHT_MAP_MAX);
+	Material plateau_material;
+	plateau_material.diffuse = plateau_material.ambient = color::bone_white;
+	Mesh plateau_mesh = { plateau_geo, plateau_material, ShaderManager::get_default(), glm::mat4(1.f) };
 
 	std::cerr << "Generating Sand Terrain" << std::endl;
 	Geometry *sand_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, 0.0f, BEACH_HEIGHT);
@@ -161,6 +187,7 @@ void Greed::setup_scene()
 	SceneModel *terrain_model = new SceneModel(scene);
 	terrain_model->add_mesh(land_mesh);
 	terrain_model->add_mesh(sand_mesh);
+	terrain_model->add_mesh(plateau_mesh);
 	SceneTransform *terrain_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(TERRAIN_SCALE, 1.f, TERRAIN_SCALE)));
 	terrain_scale->add_child(terrain_model);
 	root->add_child(terrain_scale);
@@ -186,26 +213,29 @@ void Greed::setup_scene()
 		tree_types.push_back(Tree::generate_tree(scene, cylinder_geo, diamond_geo, 9, 0));
 	}*/
 
-	glm::vec3 leaf_colors[5] = {color::autumn_orange, color::olive_green, color::purple, color::bone_white, color::indian_red};
+	glm::vec3 leaf_colors[8] = {color::autumn_orange, color::olive_green, color::olive_green, color::olive_green, color::olive_green, color::purple, color::bone_white, color::indian_red};
 	Material branch_material, leaf_material;
 	branch_material.diffuse = branch_material.ambient = color::brown;
 	SceneGroup *forest = new SceneGroup(scene);
 	for (int i = 0; i < NUM_TREES; ++i) {
 		//SceneGroup *tree = tree_types[i % tree_types.size()];
-		leaf_material.diffuse = leaf_material.ambient = leaf_colors[i%5];
+		leaf_material.diffuse = leaf_material.ambient = leaf_colors[i%8];
 		if (i % 50 == 0)
 			std::cerr << "Tree " << i << std::endl;
 		SceneGroup *tree = Tree::generate_tree(scene, cylinder_geo, diamond_geo, 7, 1, 20.f, 2.f, branch_material, leaf_material, 0);
 		float x, z;
 		do {
-			x = Util::random(-FOREST_X_BOUND, FOREST_X_BOUND);
-			z = Util::random(-FOREST_Z_BOUND, FOREST_Z_BOUND);
-		} while (Util::within_rect(glm::vec2(x, z), glm::vec2(-PATH_WIDTH/2, FOREST_Z_BOUND), glm::vec2(PATH_WIDTH/2, 0)));
+			float angle = Util::random(0, 360);
+			float distance = Util::random(VILLAGE_DIAMETER*TERRAIN_SCALE / 3, FOREST_RADIUS);
+
+			x = glm::cos(glm::radians(angle)) * distance;
+			z = glm::sin(glm::radians(angle)) * distance;
+		} while (Util::within_rect(glm::vec2(x, z), glm::vec2(-PATH_WIDTH/2, FOREST_RADIUS), glm::vec2(PATH_WIDTH/2, 0)));
 		float y = Terrain::height_lookup(x, z, ISLAND_SIZE*2);
 		glm::vec3 location = {x, y, z};
 		
 		for (SceneNode * child : tree->children) {
-			((SceneModel *)child)->meshes[0].to_world = glm::translate(glm::mat4(1.f), location);
+			((SceneModel *)child)->meshes[0].to_world = glm::translate(glm::mat4(1.f), location) * glm::scale(glm::mat4(1.f), glm::vec3(1.f));
 		}
 		
 		forest->add_child(tree);
@@ -221,6 +251,17 @@ void Greed::setup_scene()
 	SceneTransform *bush_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.f, Terrain::height_lookup(0, 0, ISLAND_SIZE * 2), 0.f)));
 	bush_translate->add_child(bush);
 	//root->add_child(bush_translate);
+
+	Material cube_material;
+	cube_material.diffuse = cube_material.ambient = color::red;
+	Mesh cube_mesh = { cube_geometry, cube_material, ShaderManager::get_default() };
+	SceneModel *cube_model = new SceneModel(scene);
+	cube_model->add_mesh(cube_mesh);
+	SceneTransform *cube_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(20.f)));
+	cube_scale->add_child(cube_model);
+	SceneTransform *cube_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.f, Terrain::height_lookup(0, 0, ISLAND_SIZE * 2)+20.f, 0.f)));
+	cube_translate->add_child(cube_scale);
+	root->add_child(cube_translate);
 }
 
 void Greed::go()
@@ -280,7 +321,7 @@ void Greed::go()
 			// Debug shadows.
 			if (debug_shadows)
 			{
-				glViewport(0, 0, width / 5, height / 5);
+				glViewport(0, 0, width / 3, height / 3);
 				ShaderManager::get_shader_program("debug_shadow")->use();
 				glActiveTexture(GL_TEXTURE0);
 				glBindTexture(GL_TEXTURE_2D, ((ShadowShader *)ShaderManager::get_shader_program("shadow"))->shadow_map_tex);
@@ -464,8 +505,6 @@ void Greed::resize_callback(GLFWwindow* window, int width, int height)
 
 void Greed::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-	int curr = 0;
-
 	// Check for a key press
 	if (action == GLFW_PRESS)
 	{
@@ -489,12 +528,10 @@ void Greed::key_callback(GLFWwindow* window, int key, int scancode, int action, 
 			debug_shadows = !debug_shadows;
 			break;
 		case GLFW_KEY_C:
-			for (auto it = scenes.begin(); it != scenes.end(); ++it)
-			{
-				if (*it == scene)
-					curr = it - scenes.begin();
-			}
-			change_scene(scenes[(curr + 1) % scenes.size()]);
+			next_scene();
+			break;
+		case GLFW_KEY_Z:
+			next_skybox();
 			break;
 		default:
 			break;
