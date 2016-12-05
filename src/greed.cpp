@@ -75,10 +75,10 @@ void Greed::setup_scene()
 	// Procedural generation parameters
 	const GLuint    HEIGHT_MAP_POWER = 8;
 	const GLuint    HEIGHT_MAP_SIZE = (unsigned int)glm::pow(2, HEIGHT_MAP_POWER) + 1;
-	const GLfloat   HEIGHT_MAP_MAX = 40.f;
+	const GLfloat   HEIGHT_MAP_MAX = 100.f;
 	const GLuint    VILLAGE_DIAMETER = 30;
-	const GLfloat   TERRAIN_SIZE = ISLAND_SIZE / 3;
-	const GLfloat   TERRAIN_SCALE = ISLAND_SIZE / 100;
+	const GLfloat   TERRAIN_SIZE = ISLAND_SIZE / 5;
+	const GLfloat   TERRAIN_SCALE = ISLAND_SIZE / 60;
 	const GLuint    TERRAIN_RESOLUTION = 200;
 	const GLfloat   BEACH_HEIGHT = 3.f;
 	const GLuint    NUM_TREES = 50;
@@ -99,7 +99,7 @@ void Greed::setup_scene()
 	SceneModel *water_model = new SceneModel(scene);
 	water_model->add_mesh(water_mesh);
 	SceneTransform *water_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(WATER_SCALE, 1.0f, WATER_SCALE)));
-	SceneTransform *water_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, -1.0f, 0.0f)));
+	SceneTransform *water_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, -1.2f, 0.0f)));
 	water_scale->add_child(water_model);
 	water_translate->add_child(water_scale);
 	root->add_child(water_translate);
@@ -117,7 +117,7 @@ void Greed::setup_scene()
 
 	std::cerr << "Generating Sand Terrain" << std::endl;
 	Geometry *sand_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, 0.0f, BEACH_HEIGHT);
-	Material sand_material;	
+	Material sand_material;
 	sand_material.diffuse = sand_material.ambient = color::windwaker_sand;
 	Mesh sand_mesh = { sand_geo, sand_material, ShaderManager::get_default(), glm::mat4(1.f) };
 	SceneModel *terrain_model = new SceneModel(scene);
@@ -126,6 +126,19 @@ void Greed::setup_scene()
 	SceneTransform *terrain_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(TERRAIN_SCALE, 1.f, TERRAIN_SCALE)));
 	terrain_scale->add_child(terrain_model);
 	root->add_child(terrain_scale);
+
+	// Beach Plane
+	Geometry *beach_geo = GeometryGenerator::generate_bezier_plane(ISLAND_SIZE*1.5f, 50, 150, 0.1f, 0);
+	Material beach_material = sand_material;
+	beach_material.shadows = false;
+	Mesh beach_mesh = { beach_geo, beach_material, ShaderManager::get_default(), glm::mat4(1.f) };
+	SceneModel *beach_model = new SceneModel(scene);
+	beach_model->add_mesh(beach_mesh);
+	SceneTransform *beach_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(1.0f, 1.0f, 1.0f)));
+	SceneTransform *beach_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, -1.1f, 0.0f)));
+	beach_scale->add_child(beach_model);
+	beach_translate->add_child(beach_scale);
+	root->add_child(beach_translate);
 
 	std::cerr << "Generating Forest" << std::endl;
 	for (int i = 0; i < NUM_TREES; ++i) {

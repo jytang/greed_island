@@ -87,7 +87,7 @@ void Terrain::diamond_square(unsigned int step, unsigned int size, float scale)
 
 	// (((float)(rand() % 101) / 100.f) * 2 - 1) *
 
-	float roughness = 0.5f; //higher is smoother, lower is rougher
+	float roughness = 1.f; //higher is smoother, lower is rougher
 
 	scale *= (float) glm::pow(2.f, -roughness);
 	
