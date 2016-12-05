@@ -23,6 +23,7 @@ private:
 	void setup_opengl();
 	void setup_shaders();
 	void destroy();
+	static void change_scene(Scene *);
 	/* static callbacks */
 	static void error_callback(int error, const char* description);
 	static void resize_callback(GLFWwindow* window, int width, int height);
