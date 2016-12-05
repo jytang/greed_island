@@ -23,6 +23,7 @@ class Util
 		static void render_quad();
 		static void seed(unsigned int s);
 		static float random(float min, float max);
+		static bool within_rect(glm::vec2 pos, glm::vec2 top_left, glm::vec2 bottom_right);
 };
 
 #endif
