@@ -36,6 +36,7 @@ void ShadowShader::draw(Geometry *g, glm::mat4 to_world)
 
 	glUniformMatrix4fv(glGetUniformLocation(shader_id, "view_projection"), 1, GL_FALSE, &light_matrix[0][0]);
 	glUniformMatrix4fv(glGetUniformLocation(shader_id, "model"), 1, GL_FALSE, &to_world[0][0]);
+	glUniformMatrix4fv(glGetUniformLocation(shader_id, "mesh_model"), 1, GL_FALSE, &mesh_model[0][0]);
 	g->bind();
 	g->draw();
 	glBindVertexArray(0);

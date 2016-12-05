@@ -33,8 +33,10 @@ void SceneModel::pass(glm::mat4 m, Shader * s)
 {
 	for (Mesh mesh : meshes)
 	{
-		if (mesh.geometry)
+		if (mesh.geometry) {
+			s->send_mesh_model(mesh.to_world);
 			s->draw(mesh.geometry, m);
+		}
 	}
 }
 
