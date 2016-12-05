@@ -16,6 +16,10 @@
 /* global vars */
 vr_vars GreedVR::vars;
 Scene* scene;
+Scene* island_scene;
+Scene* desert_scene;
+Scene* transition_scene;
+std::vector<Scene*> scenes;
 SceneCamera* camera;
 bool keys[1024];
 bool lmb_down = false;
@@ -35,12 +39,19 @@ Greed::~Greed() {}
 void Greed::destroy()
 {
 	// Free memory here.
-	delete(scene);
+	//delete(transition_scene);
+	delete(island_scene);
 	ShaderManager::destroy();
 	GeometryGenerator::clean_up();
 
 	glfwDestroyWindow(window);
 	glfwTerminate();
+}
+
+void Greed::change_scene(Scene * s)
+{
+	scene = s;
+	camera = s->camera;
 }
 
 void Greed::setup_shaders()
@@ -55,9 +66,22 @@ void Greed::setup_shaders()
 
 void Greed::setup_scene()
 {
-	scene = new Scene();
+	island_scene = new Scene();
+	transition_scene = new Scene();
+	desert_scene = new Scene();
+	scenes.push_back(island_scene);
+	scenes.push_back(transition_scene);
+	scenes.push_back(desert_scene);
+
+	scene = island_scene;
 	camera = scene->camera;
 	SceneGroup *root = scene->root;
+	
+	// Set all cameras to be the same.
+	for (Scene* s : scenes)
+	{
+		s->camera = camera;
+	}
 
 	// Seed PRNG.
 	Util::seed(0);
@@ -72,7 +96,6 @@ void Greed::setup_scene()
 	Geometry *cylinder_geometry = GeometryGenerator::generate_cylinder(0.25f, 2.f, 3, false);
 	Geometry *sphere_geometry = GeometryGenerator::generate_sphere(2.f, 3);
 
-
 	Material sphere_material;
 	sphere_material.diffuse = sphere_material.ambient = color::ocean_blue;
 	Mesh sphere_mesh = { sphere_geometry, sphere_material, ShaderManager::get_default(), glm::mat4(1.f) };
@@ -83,7 +106,6 @@ void Greed::setup_scene()
 	sphere_scale->add_child(sphere_model);
 	sphere_translate->add_child(sphere_scale);
 	//root->add_child(sphere_translate);
-
 
 	// Procedural generation parameters
 	const GLuint    HEIGHT_MAP_POWER = 8;
@@ -154,6 +176,7 @@ void Greed::setup_scene()
 	beach_scale->add_child(beach_model);
 	beach_translate->add_child(beach_scale);
 	root->add_child(beach_translate);
+	desert_scene->root->add_child(beach_translate);
 
 	std::cerr << "Generating Forest" << std::endl;
 
@@ -431,6 +454,8 @@ void Greed::resize_callback(GLFWwindow* window, int width, int height)
 
 void Greed::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
+	int curr = 0;
+
 	// Check for a key press
 	if (action == GLFW_PRESS)
 	{
@@ -452,6 +477,14 @@ void Greed::key_callback(GLFWwindow* window, int key, int scancode, int action, 
 			break;
 		case GLFW_KEY_Q:
 			debug_shadows = !debug_shadows;
+			break;
+		case GLFW_KEY_C:
+			for (auto it = scenes.begin(); it != scenes.end(); ++it)
+			{
+				if (*it == scene)
+					curr = it - scenes.begin();
+			}
+			change_scene(scenes[(curr + 1) % scenes.size()]);
 			break;
 		default:
 			break;
