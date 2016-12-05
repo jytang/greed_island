@@ -15,7 +15,7 @@ class Tree
 private:
 	static void tree_system(glm::mat4, glm::vec3, glm::vec3, float, float, float last_scale, unsigned int curr_iter, unsigned int max_iter);
 	
-	static unsigned int leaf_threshold;
+	static unsigned int leaf_layers;
 	//static SceneModel *tree_model;
 	static SceneModel *branch_model;
 	static SceneModel *leaf_model;

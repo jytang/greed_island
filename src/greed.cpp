@@ -69,8 +69,21 @@ void Greed::setup_scene()
 	skybox_model->add_mesh(skybox_mesh);
 	root->add_child(skybox_model);
 
-	Geometry *cylinder_geometry = GeometryGenerator::generate_cylinder(0.5f, 4.f, 10, false);
-	Geometry *sphere_geometry = GeometryGenerator::generate_sphere(4.f, 10);
+	Geometry *cylinder_geometry = GeometryGenerator::generate_cylinder(0.25f, 2.f, 3, false);
+	Geometry *sphere_geometry = GeometryGenerator::generate_sphere(2.f, 3);
+
+
+	Material sphere_material;
+	sphere_material.diffuse = sphere_material.ambient = color::ocean_blue;
+	Mesh sphere_mesh = { sphere_geometry, sphere_material, ShaderManager::get_default(), glm::mat4(1.f) };
+	SceneModel *sphere_model = new SceneModel(scene);
+	sphere_model->add_mesh(sphere_mesh);
+	SceneTransform *sphere_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(1.f, 1.0f, 1.f)));
+	SceneTransform *sphere_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 100.f, 100.0f)));
+	sphere_scale->add_child(sphere_model);
+	sphere_translate->add_child(sphere_scale);
+	//root->add_child(sphere_translate);
+
 
 	// Procedural generation parameters
 	const GLuint    HEIGHT_MAP_POWER = 8;
@@ -81,7 +94,8 @@ void Greed::setup_scene()
 	const GLfloat   TERRAIN_SCALE = ISLAND_SIZE / 60;
 	const GLuint    TERRAIN_RESOLUTION = 200;
 	const GLfloat   BEACH_HEIGHT = 3.f;
-	const GLuint    NUM_TREES = 50;
+	const GLuint    NUM_TREES = 200;
+	const GLuint    NUM_TREE_TYPES = 10;
 	const GLfloat   FOREST_X_BOUND = ISLAND_SIZE / 1.5f;
 	const GLfloat   FOREST_Z_BOUND = ISLAND_SIZE / 1.5f;
 	const GLfloat   WATER_SCALE = ISLAND_SIZE * 2;
@@ -99,7 +113,7 @@ void Greed::setup_scene()
 	SceneModel *water_model = new SceneModel(scene);
 	water_model->add_mesh(water_mesh);
 	SceneTransform *water_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(WATER_SCALE, 1.0f, WATER_SCALE)));
-	SceneTransform *water_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, -1.2f, 0.0f)));
+	SceneTransform *water_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, -2.f, 0.0f)));
 	water_scale->add_child(water_model);
 	water_translate->add_child(water_scale);
 	root->add_child(water_translate);
@@ -141,18 +155,35 @@ void Greed::setup_scene()
 	root->add_child(beach_translate);
 
 	std::cerr << "Generating Forest" << std::endl;
+
+	std::vector<SceneGroup *> tree_types;
+	/*for (int i = 0; i < NUM_TREE_TYPES; ++i) {
+		tree_types.push_back(Tree::generate_tree(scene, cylinder_geometry, sphere_geometry, 9, 0));
+	}*/
+
+	SceneGroup *forest = new SceneGroup(scene);
 	for (int i = 0; i < NUM_TREES; ++i) {
+		//SceneGroup *tree = tree_types[i % tree_types.size()];
+		if (i % 50 == 0)
+			std::cerr << "Tree " << i << std::endl;
 		SceneGroup *tree = Tree::generate_tree(scene, cylinder_geometry, sphere_geometry, 7, 0);
 		float x = Util::random(-FOREST_X_BOUND, FOREST_X_BOUND);
 		float z = Util::random(-FOREST_Z_BOUND, FOREST_Z_BOUND);
 		float y = Terrain::height_lookup(x, z, ISLAND_SIZE*2);
 		glm::vec3 location = {x, y, z};
-		SceneTransform *tree_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), location));
-		tree_translate->add_child(tree);
-		root->add_child(tree_translate);
-	}
+		
+		for (SceneNode * child : tree->children) {
+			((SceneModel *)child)->meshes[0].to_world = glm::translate(glm::mat4(1.f), location);
+		}
+		
+		forest->add_child(tree);
 
-	SceneTransform *tree_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(1.f, 1.f, 1.f)));
+		//SceneTransform *tree_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), location));
+		//tree_translate->add_child(tree);
+		//root->add_child(tree_translate);
+	}
+	root->add_child(forest);
+	std::cerr << "Done." << std::endl;
 }
 
 void Greed::go()

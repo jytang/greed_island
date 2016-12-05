@@ -10,9 +10,8 @@
 class SceneGroup :
 	public SceneNode
 {
-protected:
-	std::list<SceneNode *> children;
 public:
+	std::list<SceneNode *> children;
 	SceneGroup();
 	SceneGroup(Scene *);
 	~SceneGroup();
