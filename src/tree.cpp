@@ -42,7 +42,10 @@ SceneGroup *Tree::generate_tree(Scene *scene, Geometry *base_branch, Geometry *b
 	else {
 		tree_group->add_child(leaf_model);
 	}
-	tree_system(glm::mat4(1.0f), glm::vec3(0.f, 1.0f, 0.f), glm::vec3(0.f, 0.0f, 1.f), 0.f, 0.f, 10.f, 1, num_iterations);
+
+	int total_iters = (int)(Util::random(num_iterations-1, num_iterations+1));
+
+	tree_system(glm::mat4(1.0f), glm::vec3(0.f, 1.0f, 0.f), glm::vec3(0.f, 0.0f, 1.f), 0.f, 0.f, Util::random(9.f, 11.f), 1, total_iters);
 
 	branch_model->combine_meshes();
 	leaf_model->combine_meshes();
@@ -55,16 +58,20 @@ void Tree::tree_system(glm::mat4 last_trans, glm::vec3 last_dir, glm::vec3 z_dir
 	if (curr_iter > max_iter)
 		return;
 
-	float r, scale_value_y;
+	float r;
 
 	//Handle Transformations
 	r = (rand() % 2 == 0) ? -1.f : 1.f; //Positive or Negative Angle Change
 	r *= (float)(rand() % 101 / 100.f);
-	//fprintf(stderr, "Random: %f\n", r);	
+	//fprintf(stderr, "Random: %f\n", r);
+
+	float scale_value_xz = last_scale * 0.8;
+	float scale_value_y = scale_value_xz * Util::random(0.7f, 1.3f);
+
 	if (curr_iter == 0) //Most of the random stuff is kinda just me messing around with numbers.
 	{
 		z_angle = 0.f;
-		scale_value_y = last_scale;
+		scale_value_xz = last_scale;
 	}
 	if (curr_iter == 2)
 	{
@@ -73,14 +80,11 @@ void Tree::tree_system(glm::mat4 last_trans, glm::vec3 last_dir, glm::vec3 z_dir
 	else if (curr_iter < 4)
 	{
 		z_angle += (r * 1.f);
-		y_angle += (r * 1.f);
 	}
 	else
 	{
 		z_angle += (r * 10.f);
-		y_angle += (r * 10.f);
 	}
-	scale_value_y = last_scale * 0.8;
 
 	glm::mat4 rot_mat, trans_mat, scale_mat;
 
@@ -94,7 +98,7 @@ void Tree::tree_system(glm::mat4 last_trans, glm::vec3 last_dir, glm::vec3 z_dir
 
 	trans_mat = last_trans;
 
-	scale_mat = glm::scale(glm::mat4(1.f), glm::vec3(scale_value_y));
+	scale_mat = glm::scale(glm::mat4(1.f), glm::vec3(scale_value_xz, scale_value_y, scale_value_xz));
 
 	glm::mat4 combined_mat = trans_mat * rot_mat;
 	combined_mat = combined_mat * scale_mat;
@@ -104,22 +108,27 @@ void Tree::tree_system(glm::mat4 last_trans, glm::vec3 last_dir, glm::vec3 z_dir
 	z_dir = glm::vec3(combined_mat * glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
 
 	Mesh mesh;
-	if (curr_iter < max_iter-leaf_layers)
+	if (curr_iter+((int)Util::random(0,2)) < max_iter-leaf_layers)
 	{
 		mesh = branch_mesh;
 		mesh.to_world = combined_mat;
 		branch_model->add_mesh(mesh);
-		tree_system(trans_mat, dir, z_dir, z_angle + angle_delta, y_angle, scale_value_y, curr_iter + 1, max_iter);
-		tree_system(trans_mat, dir, z_dir, z_angle + angle_delta, y_angle + 130.f, scale_value_y, curr_iter + 1, max_iter);
-		tree_system(trans_mat, dir, z_dir, z_angle + angle_delta, y_angle + 260.f, scale_value_y, curr_iter + 1, max_iter);
 	}
 	else
 	{
 		mesh = leaf_mesh;
 		mesh.to_world = combined_mat;
-		leaf_model->add_mesh(mesh);		
-		tree_system(trans_mat, dir, z_dir, z_angle + angle_delta, y_angle, scale_value_y, curr_iter + 1, max_iter);
-		tree_system(trans_mat, dir, z_dir, z_angle + angle_delta, y_angle + 130.f, scale_value_y, curr_iter + 2, max_iter);
-		tree_system(trans_mat, dir, z_dir, z_angle + angle_delta, y_angle + 260.f, scale_value_y, curr_iter + 3, max_iter);
+		leaf_model->add_mesh(mesh);
+	}
+
+	int iter_distr[] = { 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 5, 5 };
+	int iters = iter_distr[(int)Util::random(0, 13)];
+	// Last two layers only use two iters.
+	if (curr_iter + 1 + leaf_layers == max_iter)
+		iters = 2;
+	for (int i = 0; i < iters; ++i)
+	{
+		float rand_angle_offset = Util::random(0.f, 5.f);
+		tree_system(trans_mat, dir, z_dir, z_angle + angle_delta, y_angle + i*(180.f / iters) + rand_angle_offset, scale_value_xz, curr_iter + 1, max_iter);
 	}
 }
