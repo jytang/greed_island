@@ -8,6 +8,7 @@
 #include "scene_animation.h"
 #include "tree.h"
 #include "shape_grammar.h"
+#include <cfloat>
 
 #include "util.h"
 #include "colors.h"
@@ -69,7 +70,7 @@ void Greed::next_scene()
 	for (auto it = scenes.begin(); it != scenes.end(); ++it)
 	{
 		if (*it == scene)
-			curr = it - scenes.begin();
+			curr = (int) (it - scenes.begin());
 	}
 	next_skybox();
 	change_scene(scenes[(curr + 1) % scenes.size()]);
@@ -190,6 +191,7 @@ void Greed::setup_scene()
 	Material sand_material;
 	sand_material.diffuse = sand_material.ambient = color::windwaker_sand;
 	Mesh sand_mesh = { sand_geo, sand_material, ShaderManager::get_default(), glm::mat4(1.f) };
+
 	SceneModel *terrain_model = new SceneModel(scene);
 	terrain_model->add_mesh(land_mesh);
 	terrain_model->add_mesh(sand_mesh);
@@ -212,12 +214,6 @@ void Greed::setup_scene()
 	desert_scene->root->add_child(beach_translate);
 
 	std::cerr << "Generating Forest" << std::endl;
-
-	std::vector<SceneGroup *> tree_types;
-	/*for (int i = 0; i < NUM_TREE_TYPES; ++i) {
-		tree_types.push_back(Tree::generate_tree(scene, cylinder_geo, diamond_geo, 9, 0));
-	}*/
-
 	glm::vec3 leaf_colors[] = {color::olive_green, color::olive_green, color::olive_green, color::autumn_orange, color::purple, color::bone_white, color::indian_red};
 	glm::vec3 branch_colors[] = { color::brown, color::wood_saddle, color::wood_sienna, color::wood_tan, color::wood_tan_light };
 	Material branch_material, leaf_material;
@@ -280,7 +276,35 @@ void Greed::setup_scene()
 	SceneTransform *building_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.f, Terrain::height_lookup(0, 0, ISLAND_SIZE * 2), 30.f)));
 	building_scale->add_child(building_model);
 	building_translate->add_child(building_scale);
-	root->add_child(building_translate);
+	//root->add_child(building_translate);
+
+	// Small-scale showcase.
+	const GLfloat SMALL_ROT_SPEED = 0.3f;
+	SceneTransform *small_terrain_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(0.05f, 0.05f/10.f, 0.05f)));
+	SceneAnimation *small_terrain_anim = new SceneAnimation(scene, 0.f, FLT_MAX, 0.f, SMALL_ROT_SPEED, glm::vec3(0.f, 1.f, 0.f), glm::vec3(0.f, 0.f, 0.f));
+	SceneTransform *small_terrain_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(50.f, 175.f, -50.f)));
+	small_terrain_scale->add_child(terrain_model);
+	small_terrain_anim->add_child(small_terrain_scale);
+	small_terrain_translate->add_child(small_terrain_anim);
+	root->add_child(small_terrain_translate);
+
+	SceneGroup *small_tree_1 = Tree::generate_tree(scene, cylinder_geo, diamond_geo, 2, 0, 20.f, 2.f, branch_material, leaf_material, false, glm::vec3(0.f), 777);
+	SceneGroup *small_tree_2 = Tree::generate_tree(scene, cylinder_geo, diamond_geo, 3, 0, 20.f, 2.f, branch_material, leaf_material, false, glm::vec3(0.f), 777);
+	SceneGroup *small_tree_3 = Tree::generate_tree(scene, cylinder_geo, diamond_geo, 4, 0, 20.f, 2.f, branch_material, leaf_material, false, glm::vec3(0.f), 777);
+	SceneGroup *small_tree_4 = Tree::generate_tree(scene, cylinder_geo, diamond_geo, 5, 0, 20.f, 2.f, branch_material, leaf_material, false, glm::vec3(0.f), 777);
+	SceneGroup *small_tree_5 = Tree::generate_tree(scene, cylinder_geo, diamond_geo, 6, 0, 20.f, 2.f, branch_material, leaf_material, false, glm::vec3(0.f), 777);
+	SceneGroup *small_tree_6 = Tree::generate_tree(scene, cylinder_geo, diamond_geo, 7, 1, 20.f, 2.f, branch_material, leaf_material, false, glm::vec3(0.f), 777);
+	SceneGroup *small_trees[6] = { small_tree_1, small_tree_2, small_tree_3, small_tree_4, small_tree_5, small_tree_6 };
+	for (int i = 0; i < 6; ++i)
+	{
+		SceneTransform *small_tree_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(0.05f)));
+		SceneAnimation *small_tree_anim = new SceneAnimation(scene, 0.f, FLT_MAX, 0.f, SMALL_ROT_SPEED, glm::vec3(0.f, 1.f, 0.f), glm::vec3(0.f, 0.f, 0.f));
+		SceneTransform *small_tree_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(-50.f + (i * 5.f), 175.f, -50.f)));
+		small_tree_scale->add_child(small_trees[i]);
+		small_tree_anim->add_child(small_tree_scale);
+		small_tree_translate->add_child(small_tree_anim);
+		root->add_child(small_tree_translate);
+	}
 }
 
 void Greed::go()
