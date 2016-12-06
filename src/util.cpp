@@ -145,7 +145,7 @@ void Util::seed(unsigned int s)
 
 float Util::random(float min, float max)
 {
-	float random = ((float)rand()) / (float)RAND_MAX;
+	float random = ((float)rand()) / (float)(RAND_MAX + 1);
 	float diff = max - min;
 	float r = random * diff;
 	return min + r;

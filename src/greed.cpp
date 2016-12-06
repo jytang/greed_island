@@ -149,6 +149,8 @@ void Greed::setup_scene()
 	const GLfloat   TREE_SCALE = 1.5f;
 	const GLfloat   PATH_WIDTH = 90.f;
 	const GLfloat   FOREST_RADIUS = ISLAND_SIZE / 1.1f;
+	const GLint		NUM_BUILDINGS = 5;
+	const GLfloat	VILLAGE_DIAMETER_TRUE = ((float)VILLAGE_DIAMETER / HEIGHT_MAP_SIZE) * TERRAIN_SIZE * TERRAIN_SCALE;
 	const GLfloat   WATER_SCALE = ISLAND_SIZE * 4;
 	const GLint     CAM_OFFSET = 20;
 
@@ -220,8 +222,8 @@ void Greed::setup_scene()
 	SceneGroup *forest = new SceneGroup(scene);
 	for (int i = 0; i < NUM_TREES; ++i) {
 		//SceneGroup *tree = tree_types[i % tree_types.size()];
-		leaf_material.diffuse = leaf_material.ambient = leaf_colors[(int)Util::random(0,6)];
-		branch_material.diffuse = branch_material.ambient = branch_colors[(int)Util::random(0, 4)];
+		leaf_material.diffuse = leaf_material.ambient = leaf_colors[(int)Util::random(0,7)];
+		branch_material.diffuse = branch_material.ambient = branch_colors[(int)Util::random(0, 5)];
 		bool animated = false;
 		if (i % (NUM_TREES / (int) (NUM_TREES*PERCENT_TREE_ANIM)) == 0)
 			animated = true;
@@ -257,26 +259,32 @@ void Greed::setup_scene()
 	root->add_child(forest);
 	std::cerr << "Done." << std::endl;
 
-	/*
-	Material cube_material;
-	cube_material.diffuse = cube_material.ambient = color::red;
-	Mesh cube_mesh = { cube_geometry, cube_material, ShaderManager::get_default() };
-	SceneModel *cube_model = new SceneModel(scene);
-	cube_model->add_mesh(cube_mesh);
-	SceneTransform *cube_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(20.f)));
-	cube_scale->add_child(cube_model);
-	SceneTransform *cube_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.f, Terrain::height_lookup(0, 0, ISLAND_SIZE * 2)+20.f, 0.f)));
-	cube_translate->add_child(cube_scale);
-	root->add_child(cube_translate);
-	*/
-	
-	//Generate Buildings: Test
-	SceneModel *building_model = ShapeGrammar::generate_building(scene, 0);
-	SceneTransform *building_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(1.f)));	
-	SceneTransform *building_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.f, Terrain::height_lookup(0, 0, ISLAND_SIZE * 2), 30.f)));
-	building_scale->add_child(building_model);
-	building_translate->add_child(building_scale);
-	//root->add_child(building_translate);
+	// Village
+	SceneGroup *village = new SceneGroup(scene);
+	for (int i = 0; i < NUM_BUILDINGS; ++i)
+	{
+
+		std::cerr << "House " << i << std::endl;
+
+		float x, z;
+
+		float angle = ((350.f / (NUM_BUILDINGS)) * i) + 130.f; //Circles around, starting from the far side
+		float distance = VILLAGE_DIAMETER_TRUE / 3.f;
+
+		x = glm::cos(glm::radians(angle)) * distance;
+		z = glm::sin(glm::radians(angle)) * distance;
+
+		float y = Terrain::height_lookup(x, z, ISLAND_SIZE * 2);
+		glm::vec3 location = { x, y, z };
+
+		SceneModel *building = ShapeGrammar::generate_building(scene, 0);
+
+		SceneTransform *building_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), location));
+		building_translate->add_child(building);
+		village->add_child(building_translate);
+	}
+	root->add_child(village);
+	std::cerr << "Done." << std::endl;
 
 	// Small-scale showcase.
 	const GLfloat SMALL_ROT_SPEED = 0.3f;
