@@ -9,6 +9,9 @@
       <UniqueIdentifier>{a8f79e1d-4661-4452-80a1-d8e2d30f73f1}</UniqueIdentifier>
       <Extensions>h</Extensions>
     </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{5a6f5576-0663-4583-af9b-cd3686a94888}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -77,6 +80,18 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="shaders\basic\frag.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\basic\vert.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\shadow\frag.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\shadow\vert.glsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\window.h">

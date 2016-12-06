@@ -25,14 +25,15 @@ void SceneModel::draw(glm::mat4 m)
 		mesh.shader->send_mesh_model(mesh.to_world);
 
         mesh.shader->set_material(mesh.material);
-		if (!mesh.no_culling)
-		{
+		if (mesh.no_culling)
+			glDisable(GL_CULL_FACE);
+		else {
 			glEnable(GL_CULL_FACE);
 			glCullFace(GL_BACK);
 		}
-		else
-			glDisable(GL_CULL_FACE);				
         mesh.shader->draw(mesh.geometry, m);
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_BACK);
 	}
 }
 
