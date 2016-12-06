@@ -104,7 +104,7 @@ glm::mat4 Scene::frustum_ortho()
 	const float FRINGE_Z = 100.f;
 
 	static bool once = false;
-	glm::mat4 light_view = glm::lookAt(light_pos, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+	glm::mat4 light_view = glm::lookAt(light_positions[0], glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
 	glm::vec3 corners_lightspace[8];
 
 	for (int i = 0; i < 8; ++i)

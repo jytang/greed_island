@@ -7,6 +7,7 @@
 #include "scene_group.h"
 #include "shader.h"
 #include "plane.h"
+#include <vector>
 
 class Scene
 {
@@ -14,7 +15,7 @@ public:
 	SceneGroup *root;
 	SceneCamera *camera;
 	glm::mat4 P;
-	glm::vec3 light_pos;
+	std::vector<glm::vec3> light_positions;
 	Plane frustum_planes[6];
 	glm::vec3 frustum_corners[8];
 

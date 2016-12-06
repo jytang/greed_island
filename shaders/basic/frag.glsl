@@ -1,4 +1,6 @@
 #version 330 core
+#define MAX_SHADOW_MAPS 10
+
 struct Material {
     vec3 diffuse;
     vec3 specular;
@@ -18,11 +20,13 @@ in vec4 frag_pos_light;
 
 out vec4 color;
 
-uniform sampler2D shadow_map;
+uniform sampler2D shadow_maps[MAX_SHADOW_MAPS];
+uniform DirLight lights[MAX_SHADOW_MAPS];
+uniform int num_lights_f;
+uniform bool shadows_enabled;
+
 uniform vec3 eye_pos;
 uniform Material material;
-uniform DirLight dir_light;
-uniform bool shadows_enabled;
 
 vec3 colorify(vec3 normal, vec3 view_dir, vec3 light_dir, vec3 light_intensity, float ambient_coeff);
 float calc_shadows(vec4 pos_from_light, vec3 light_dir);
@@ -31,10 +35,8 @@ void main()
 {
     vec3 normal = normalize(frag_normal);
     vec3 view_dir = normalize(eye_pos - frag_pos);
-	vec3 light_dir = normalize(-dir_light.direction);
-    vec3 light_intensity = dir_light.color;
-    vec3 result = colorify(normal, view_dir, light_dir, light_intensity, dir_light.ambient_coeff);
 
+    vec3 result = colorify(normal, view_dir);
     color = vec4(result, 1.0f);
 }
 
@@ -66,8 +68,11 @@ float calc_shadows(vec4 pos_from_light, vec3 light_dir)
 	return shadow;
 }
 
-vec3 colorify(vec3 normal, vec3 view_dir, vec3 light_dir, vec3 light_intensity, float ambient_coeff)
+vec3 colorify(vec3 normal, vec3 view_dir)
 {
+	vec3 light_dir = normalize(-dir_light.direction);
+    vec3 light_intensity = dir_light.color;
+
     // Diffuse: c_d = c_l * k_d * dot(n, L)
     vec3 diffuse = light_intensity * material.diffuse *
         max(dot(normal, light_dir), 0.0);
@@ -77,7 +82,7 @@ vec3 colorify(vec3 normal, vec3 view_dir, vec3 light_dir, vec3 light_intensity, 
         pow(max(dot(normal, normalize(light_dir + view_dir)), 0.0), material.shininess);
 
     // Ambient: c_a (ambient color) * k_a (coeff)
-    vec3 ambient = material.ambient * ambient_coeff;
+    vec3 ambient = material.ambient * dir_light.ambient_coeff;
 
 	float shadow = 0;
 	if (shadows_enabled)

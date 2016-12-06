@@ -34,6 +34,7 @@ glm::vec3 last_cursor_pos;
 
 const GLfloat ISLAND_SIZE = 600.f;
 const GLfloat PLAYER_HEIGHT = 20.f;
+const unsigned int NUM_LIGHTS = 2;
 
 Greed::Greed() {}
 
@@ -96,7 +97,8 @@ void Greed::setup_scene()
 
 	scene = island_scene;
 	camera = scene->camera;
-	scene->light_pos = glm::vec3(0.f, ISLAND_SIZE*2, ISLAND_SIZE);
+	scene->light_positions[0] = glm::vec3(0.f, ISLAND_SIZE*2, ISLAND_SIZE);
+	scene->light_positions[1] = glm::vec3(ISLAND_SIZE, ISLAND_SIZE * 2, 0.f);
 	SceneGroup *root = scene->root;
 	
 	// Set all cameras to be the same.
@@ -212,18 +214,11 @@ void Greed::setup_scene()
 	desert_scene->root->add_child(beach_translate);
 
 	std::cerr << "Generating Forest" << std::endl;
-
-	std::vector<SceneGroup *> tree_types;
-	/*for (int i = 0; i < NUM_TREE_TYPES; ++i) {
-		tree_types.push_back(Tree::generate_tree(scene, cylinder_geo, diamond_geo, 9, 0));
-	}*/
-
 	glm::vec3 leaf_colors[] = {color::olive_green, color::olive_green, color::olive_green, color::autumn_orange, color::purple, color::bone_white, color::indian_red};
 	glm::vec3 branch_colors[] = { color::brown, color::wood_saddle, color::wood_sienna, color::wood_tan, color::wood_tan_light };
 	Material branch_material, leaf_material;
 	SceneGroup *forest = new SceneGroup(scene);
 	for (int i = 0; i < NUM_TREES; ++i) {
-		//SceneGroup *tree = tree_types[i % tree_types.size()];
 		leaf_material.diffuse = leaf_material.ambient = leaf_colors[(int)Util::random(0,6)];
 		branch_material.diffuse = branch_material.ambient = branch_colors[(int)Util::random(0, 4)];
 		bool animated = false;
@@ -253,26 +248,9 @@ void Greed::setup_scene()
 		// END NASTY CODE
 
 		forest->add_child(tree);
-
-		//SceneTransform *tree_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), location));
-		//tree_translate->add_child(tree);
-		//root->add_child(tree_translate);
 	}
 	root->add_child(forest);
 	std::cerr << "Done." << std::endl;
-
-	/*
-	Material cube_material;
-	cube_material.diffuse = cube_material.ambient = color::red;
-	Mesh cube_mesh = { cube_geometry, cube_material, ShaderManager::get_default() };
-	SceneModel *cube_model = new SceneModel(scene);
-	cube_model->add_mesh(cube_mesh);
-	SceneTransform *cube_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(20.f)));
-	cube_scale->add_child(cube_model);
-	SceneTransform *cube_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.f, Terrain::height_lookup(0, 0, ISLAND_SIZE * 2)+20.f, 0.f)));
-	cube_translate->add_child(cube_scale);
-	root->add_child(cube_translate);
-	*/
 	
 	//Generate Buildings: Test
 	SceneModel *building_model = ShapeGrammar::generate_building(scene, 0);
@@ -343,7 +321,7 @@ void Greed::go()
 				glViewport(0, 0, width / 3, height / 3);
 				ShaderManager::get_shader_program("debug_shadow")->use();
 				glActiveTexture(GL_TEXTURE0);
-				glBindTexture(GL_TEXTURE_2D, ((ShadowShader *)ShaderManager::get_shader_program("shadow"))->shadow_map_tex);
+				glBindTexture(GL_TEXTURE_2D, ((ShadowShader *)ShaderManager::get_shader_program("shadow"))->depth_textures[0]);
 				Util::render_quad();
 			}
 		}
@@ -357,14 +335,23 @@ void Greed::go()
 void Greed::shadow_pass()
 {
 	ShadowShader * ss = (ShadowShader *) ShaderManager::get_shader_program("shadow");
-	glViewport(0, 0, ss->size, ss->size);
-	glBindFramebuffer(GL_FRAMEBUFFER, ss->FBO);
-	glClear(GL_DEPTH_BUFFER_BIT);
-	ss->use();
-	ss->light_pos = scene->light_pos;
-	ss->light_proj = scene->frustum_ortho();//glm::ortho(-ISLAND_SIZE, ISLAND_SIZE, -ISLAND_SIZE, ISLAND_SIZE, -ISLAND_SIZE, ISLAND_SIZE);
-	// Render using scene graph.
-	scene->pass(ss);
+	
+	//ss->light_projs[0] = scene->frustum_ortho(); //glm::ortho(-ISLAND_SIZE, ISLAND_SIZE, -ISLAND_SIZE, ISLAND_SIZE, -ISLAND_SIZE, ISLAND_SIZE);
+
+	for (int i = 0; i < NUM_LIGHTS; ++i)
+	{
+		ss->curr = i;
+
+		glViewport(0, 0, ss->sizes[i], ss->sizes[i]);
+		glBindFramebuffer(GL_FRAMEBUFFER, ss->FBOs[i]);
+		glClear(GL_DEPTH_BUFFER_BIT);
+		ss->use();
+		ss->light_positions[i] = scene->light_positions[i];
+		ss->light_projs[i] = scene->frustum_ortho();
+		// Render using scene graph.
+		scene->pass(ss);
+	}
+
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 

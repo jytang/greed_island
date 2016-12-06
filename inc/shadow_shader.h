@@ -2,16 +2,20 @@
 #include "shader.h"
 
 #include <glm/glm.hpp>
+#include <vector>
 
 class ShadowShader :
 	public Shader
 {
 public:
-	GLuint FBO, shadow_map_tex;
-	unsigned int size;
-	glm::mat4 light_matrix;
-	glm::vec3 light_pos;
-	glm::mat4 light_proj;
+	std::vector<GLuint> FBOs;
+	std::vector<GLuint> depth_textures;
+	std::vector<glm::mat4> light_matrices;
+	std::vector<glm::vec3> light_positions;
+	std::vector<glm::mat4> light_projs;
+	std::vector<unsigned int> sizes;
+
+	unsigned int curr;
 
 	ShadowShader(GLuint shader_id);
 	void set_material(Material m);

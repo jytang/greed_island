@@ -4,6 +4,8 @@
 
 #include <iostream>
 
+const unsigned int NUM_LIGHTS = 2;
+
 BasicShader::BasicShader(GLuint shader_id) : Shader(shader_id) {}
 
 void BasicShader::set_material(Material m)
@@ -17,19 +19,24 @@ void BasicShader::set_material(Material m)
 
 void BasicShader::draw(Geometry *g, glm::mat4 to_world)
 {
+	glUniform1i(glGetUniformLocation(shader_id, "num_lights_v"), NUM_LIGHTS);
+	glUniform1i(glGetUniformLocation(shader_id, "num_lights_f"), NUM_LIGHTS);
+
 	// Bind depth texture from shadow shader, if it exists.
 	ShadowShader * ss = (ShadowShader *) ShaderManager::get_shader_program("shadow");
 	if (ss)
 	{
-		glUniformMatrix4fv(glGetUniformLocation(shader_id, "light_matrix"), 1, GL_FALSE, &ss->light_matrix[0][0]);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, ss->shadow_map_tex);
+		for (int i = 0; i < NUM_LIGHTS; ++i) {
+			glUniformMatrix4fv(glGetUniformLocation(shader_id, "light_matrix"), 1, GL_FALSE, &ss->light_matrices[i][0][0]);
+			glActiveTexture(GL_TEXTURE0 + i);
+			glBindTexture(GL_TEXTURE_2D, ss->depth_textures[i]);
 
-		// Basic lighting
-		glm::vec3 light_pos = ss->light_pos;
-		glUniform3f(glGetUniformLocation(shader_id, "dir_light.direction"), -light_pos.x, -light_pos.y, -light_pos.z);
-		glUniform3f(glGetUniformLocation(shader_id, "dir_light.color"), 1.f, 1.f, 1.f);
-		glUniform1f(glGetUniformLocation(shader_id, "dir_light.ambient_coeff"), 0.2f);
+			// Basic lighting
+			glm::vec3 light_pos = ss->light_positions[i];
+			glUniform3f(glGetUniformLocation(shader_id, "dir_light.direction"), -light_pos.x, -light_pos.y, -light_pos.z);
+			glUniform3f(glGetUniformLocation(shader_id, "dir_light.color"), 1.f, 1.f, 1.f);
+			glUniform1f(glGetUniformLocation(shader_id, "dir_light.ambient_coeff"), 0.2f);
+		}
 	}
 
 	// Send camera position for shading
