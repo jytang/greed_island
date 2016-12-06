@@ -21,4 +21,8 @@ namespace color
 	const glm::vec3 indian_red = { 205.f / 255.f, 92.f / 255.f, 92.f / 255.f };
 
 	const glm::vec3 brown = { 0.447059, 0.294118, 0.192157 };
+	const glm::vec3 wood_tan = { 139.f / 255.f, 90.f / 255.f, 43.f / 255.f };
+	const glm::vec3 wood_tan_light = { 255.f / 255.f, 165.f / 255.f, 79.f / 255.f };
+	const glm::vec3 wood_sienna = { 160.f / 255.f, 82.f / 255.f, 45.f / 255.f };
+	const glm::vec3 wood_saddle = { 139.f / 255.f, 69.f / 255.f, 19.f / 255.f };
 }

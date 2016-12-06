@@ -25,13 +25,14 @@ SceneCamera* camera;
 bool keys[1024];
 bool lmb_down = false;
 bool rmb_down = false;
-bool shift_down = false;
 bool debug_shadows = false;
 bool vr_on = false;
+bool mouse_moved = false;
 const GLfloat FAR_PLANE = 1000.f;
 glm::vec3 last_cursor_pos;
 
 const GLfloat ISLAND_SIZE = 600.f;
+const GLfloat PLAYER_HEIGHT = 20.f;
 
 Greed::Greed() {}
 
@@ -94,6 +95,7 @@ void Greed::setup_scene()
 
 	scene = island_scene;
 	camera = scene->camera;
+	scene->light_pos = glm::vec3(0.f, ISLAND_SIZE*2, ISLAND_SIZE);
 	SceneGroup *root = scene->root;
 	
 	// Set all cameras to be the same.
@@ -140,21 +142,18 @@ void Greed::setup_scene()
 	const GLuint    TERRAIN_RESOLUTION = 200;
 	const GLfloat   BEACH_HEIGHT = 10.f;
 	const GLuint    NUM_TREES = 200;
-	const GLfloat   PERCENT_TREE_ANIM = 1.f;
+	const GLfloat   PERCENT_TREE_ANIM = 0.9f;
 	const GLuint    NUM_TREE_TYPES = 10;
-	const GLfloat   PATH_WIDTH = 80.f;
-	const GLfloat   FOREST_RADIUS = ISLAND_SIZE / 1.2f;
+	const GLfloat   TREE_SCALE = 1.5f;
+	const GLfloat   PATH_WIDTH = 90.f;
+	const GLfloat   FOREST_RADIUS = ISLAND_SIZE / 1.1f;
 	const GLfloat   WATER_SCALE = ISLAND_SIZE * 4;
-	const GLint     CAM_OFFSET = 10;
-
-	camera->cam_pos = glm::vec3(0.f, BEACH_HEIGHT, ISLAND_SIZE - CAM_OFFSET);
-	camera->recalculate();
+	const GLint     CAM_OFFSET = 20;
 
 	// Water Plane
 	Geometry *plane_geo = GeometryGenerator::generate_plane(1.f);
 	Material water_material;
 	water_material.diffuse = water_material.ambient = color::ocean_blue;
-	water_material.shadows = false;
 	Mesh water_mesh = { plane_geo, water_material, ShaderManager::get_default(), glm::mat4(1.f) };
 	SceneModel *water_model = new SceneModel(scene);
 	water_model->add_mesh(water_mesh);
@@ -167,6 +166,10 @@ void Greed::setup_scene()
 	// New Terrain Method using Awesomeness
 	std::cerr << "Generating Height Map" << std::endl;
 	Terrain::generate_height_map(HEIGHT_MAP_SIZE, HEIGHT_MAP_MAX, VILLAGE_DIAMETER, HEIGHT_RANDOMNESS_SCALE, 0);
+
+	float cam_height = Terrain::height_lookup(0.f, ISLAND_SIZE - CAM_OFFSET, ISLAND_SIZE * 2);
+	camera->cam_pos = glm::vec3(0.f, cam_height+PLAYER_HEIGHT, ISLAND_SIZE - CAM_OFFSET);
+	camera->recalculate();
 
 	std::cerr << "Generating Land Terrain" << std::endl;
 	// Second Parameter Below is Resolution^2 of Island, LOWER TO RUN FASTER
@@ -197,7 +200,6 @@ void Greed::setup_scene()
 	// Beach Plane
 	Geometry *beach_geo = GeometryGenerator::generate_bezier_plane(ISLAND_SIZE*1.5f, 50, 150, 0.1f, 0);
 	Material beach_material = sand_material;
-	beach_material.shadows = false;
 	Mesh beach_mesh = { beach_geo, beach_material, ShaderManager::get_default(), glm::mat4(1.f) };
 	SceneModel *beach_model = new SceneModel(scene);
 	beach_model->add_mesh(beach_mesh);
@@ -215,13 +217,14 @@ void Greed::setup_scene()
 		tree_types.push_back(Tree::generate_tree(scene, cylinder_geo, diamond_geo, 9, 0));
 	}*/
 
-	glm::vec3 leaf_colors[8] = {color::autumn_orange, color::olive_green, color::olive_green, color::olive_green, color::olive_green, color::purple, color::bone_white, color::indian_red};
+	glm::vec3 leaf_colors[] = {color::olive_green, color::olive_green, color::olive_green, color::autumn_orange, color::purple, color::bone_white, color::indian_red};
+	glm::vec3 branch_colors[] = { color::brown, color::wood_saddle, color::wood_sienna, color::wood_tan, color::wood_tan_light };
 	Material branch_material, leaf_material;
-	branch_material.diffuse = branch_material.ambient = color::brown;
 	SceneGroup *forest = new SceneGroup(scene);
 	for (int i = 0; i < NUM_TREES; ++i) {
 		//SceneGroup *tree = tree_types[i % tree_types.size()];
-		leaf_material.diffuse = leaf_material.ambient = leaf_colors[i%8];
+		leaf_material.diffuse = leaf_material.ambient = leaf_colors[(int)Util::random(0,6)];
+		branch_material.diffuse = branch_material.ambient = branch_colors[(int)Util::random(0, 4)];
 		bool animated = false;
 		if (i % (NUM_TREES / (int) (NUM_TREES*PERCENT_TREE_ANIM)) == 0)
 			animated = true;
@@ -241,11 +244,11 @@ void Greed::setup_scene()
 		SceneGroup *tree = Tree::generate_tree(scene, cylinder_geo, diamond_geo, 7, 1, 20.f, 2.f, branch_material, leaf_material, animated, location, 0);
 		
 		// THIS IS NASTY CODE:
-		((SceneModel *)(tree->children[0]))->meshes[0].to_world = glm::translate(glm::mat4(1.f), location) * glm::scale(glm::mat4(1.f), glm::vec3(1.f));
+		((SceneModel *)(tree->children[0]))->meshes[0].to_world = glm::translate(glm::mat4(1.f), location) * glm::scale(glm::mat4(1.f), glm::vec3(TREE_SCALE));
 		if (animated)
-			((SceneModel *)((SceneAnimation *)(tree->children[1]))->children[0])->meshes[0].to_world = glm::translate(glm::mat4(1.f), location) * glm::scale(glm::mat4(1.f), glm::vec3(1.f));
+			((SceneModel *)((SceneAnimation *)(tree->children[1]))->children[0])->meshes[0].to_world = glm::translate(glm::mat4(1.f), location) * glm::scale(glm::mat4(1.f), glm::vec3(TREE_SCALE));
 		else
-			((SceneModel *)(tree->children[1]))->meshes[0].to_world = glm::translate(glm::mat4(1.f), location) * glm::scale(glm::mat4(1.f), glm::vec3(1.f));
+			((SceneModel *)(tree->children[1]))->meshes[0].to_world = glm::translate(glm::mat4(1.f), location) * glm::scale(glm::mat4(1.f), glm::vec3(TREE_SCALE));
 		// END NASTY CODE
 
 		forest->add_child(tree);
@@ -256,11 +259,6 @@ void Greed::setup_scene()
 	}
 	root->add_child(forest);
 	std::cerr << "Done." << std::endl;
-
-	SceneGroup *bush = Tree::generate_tree(scene, sphere_geo, sphere_geo, 3, 3, 80.f, 1.f, leaf_material, leaf_material, false, glm::vec3(0), 0);
-	SceneTransform *bush_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.f, Terrain::height_lookup(0, 0, ISLAND_SIZE * 2), 0.f)));
-	bush_translate->add_child(bush);
-	//root->add_child(bush_translate);
 
 	Material cube_material;
 	cube_material.diffuse = cube_material.ambient = color::red;
@@ -353,7 +351,7 @@ void Greed::shadow_pass()
 	glClear(GL_DEPTH_BUFFER_BIT);
 	ss->use();
 	ss->light_pos = scene->light_pos;
-	ss->light_proj = scene->frustum_ortho();
+	ss->light_proj = scene->frustum_ortho();//glm::ortho(-ISLAND_SIZE, ISLAND_SIZE, -ISLAND_SIZE, ISLAND_SIZE, -ISLAND_SIZE, ISLAND_SIZE);
 	// Render using scene graph.
 	scene->pass(ss);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -421,8 +419,8 @@ void Greed::vr_render()
 void Greed::handle_movement()
 {
 	const GLfloat EDGE_THRESH = 20.f;
-	const GLfloat PLAYER_HEIGHT = 20.f;
-	const GLfloat cam_step = 2.00f;
+	const GLfloat BASE_CAM_SPEED = 2.f;
+	GLfloat cam_step = keys[GLFW_KEY_LEFT_SHIFT] ? 5*BASE_CAM_SPEED : BASE_CAM_SPEED;
 	glm::vec3 displacement(0.f);
 	if (keys[GLFW_KEY_W])
 		displacement += cam_step * camera->cam_front;
@@ -531,9 +529,6 @@ void Greed::key_callback(GLFWwindow* window, int key, int scancode, int action, 
 		case GLFW_KEY_R:
 			camera->reset();
 			break;
-		case GLFW_KEY_LEFT_SHIFT:
-			shift_down = true;
-			break;
 		case GLFW_KEY_Q:
 			debug_shadows = !debug_shadows;
 			break;
@@ -550,20 +545,23 @@ void Greed::key_callback(GLFWwindow* window, int key, int scancode, int action, 
 	else if (action == GLFW_RELEASE)
 	{
 		keys[key] = false;
-		switch (key) {
-		case GLFW_KEY_LEFT_SHIFT:
-			shift_down = false;
-		default:
-			break;
-		}
 	}
 }
 
 void Greed::cursor_position_callback(GLFWwindow* window, double x_pos, double y_pos)
 {
 	glm::vec3 current_cursor_pos(x_pos, y_pos, 0);
+	
+	// First movement detected.
+	if (!mouse_moved)
+	{
+		mouse_moved = true;
+		last_cursor_pos = current_cursor_pos;
+		return;
+	}
+
 	glm::vec3 cursor_delta = current_cursor_pos - last_cursor_pos;
-	if (lmb_down && shift_down) {
+	if (lmb_down && keys[GLFW_KEY_LEFT_CONTROL]) {
 		int dir = cursor_delta.x > 0 ? 1 : -1;
 		float rot_angle = dir * glm::length(cursor_delta) * 0.001f;
 		scene->light_pos = glm::vec3(glm::rotate(glm::mat4(1.0f), rot_angle, glm::vec3(0.f, 0.f, 1.f)) * glm::vec4(scene->light_pos, 1.0f));
@@ -585,7 +583,7 @@ void Greed::cursor_position_callback(GLFWwindow* window, double x_pos, double y_
 		camera->recalculate();
 		*/
 	}
-	else if (!shift_down) {
+	else if (!keys[GLFW_KEY_LEFT_CONTROL]) {
 		// Look around.
 		GLfloat xoffset = cursor_delta.x;
 		GLfloat yoffset = cursor_delta.y;

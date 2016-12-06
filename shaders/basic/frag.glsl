@@ -40,15 +40,28 @@ void main()
 
 float calc_shadows(vec4 pos_from_light, vec3 light_dir)
 {
-	//return 0;
 	vec3 clip_coords = pos_from_light.xyz / pos_from_light.w;
 	// Transform to range of [0, 1] to fit depth map
-	clip_coords = clip_coords * 0.5 + 0.5; 
-	float closest_depth = texture(shadow_map, clip_coords.xy).r;
+	clip_coords = clip_coords * 0.5 + 0.5;
 	float current_depth = clip_coords.z;
 
+	if (current_depth > 1.0) {
+		return 0.0;
+	}
+
 	float bias = max(0.05 * (1.0 - dot(normalize(frag_normal), light_dir)), 0.005);  
-	float shadow = current_depth - bias > closest_depth ? 1.0 : 0.0;
+	float shadow = 0.0;
+
+	vec2 texelSize = 1.0 / textureSize(shadow_map, 0);
+	for(int x = -1; x <= 1; ++x)
+	{
+		for(int y = -1; y <= 1; ++y)
+		{
+			float pcfDepth = texture(shadow_map, clip_coords.xy + vec2(x, y) * texelSize).r; 
+			shadow += current_depth - bias > pcfDepth ? 1.0 : 0.0;       
+		}    
+	}
+	shadow /= 9.0;
 
 	return shadow;
 }
