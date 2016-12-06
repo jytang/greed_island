@@ -7,6 +7,7 @@
 #include "scene_transform.h"
 #include "scene_animation.h"
 #include "tree.h"
+#include "shape_grammar.h"
 
 #include "util.h"
 #include "colors.h"
@@ -260,6 +261,7 @@ void Greed::setup_scene()
 	root->add_child(forest);
 	std::cerr << "Done." << std::endl;
 
+	/*
 	Material cube_material;
 	cube_material.diffuse = cube_material.ambient = color::red;
 	Mesh cube_mesh = { cube_geometry, cube_material, ShaderManager::get_default() };
@@ -270,6 +272,15 @@ void Greed::setup_scene()
 	SceneTransform *cube_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.f, Terrain::height_lookup(0, 0, ISLAND_SIZE * 2)+20.f, 0.f)));
 	cube_translate->add_child(cube_scale);
 	root->add_child(cube_translate);
+	*/
+	
+	//Generate Buildings: Test
+	SceneModel *building_model = ShapeGrammar::generate_building(scene, 0);
+	SceneTransform *building_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(1.f)));	
+	SceneTransform *building_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.f, Terrain::height_lookup(0, 0, ISLAND_SIZE * 2), 30.f)));
+	building_scale->add_child(building_model);
+	building_translate->add_child(building_scale);
+	root->add_child(building_translate);
 }
 
 void Greed::go()
