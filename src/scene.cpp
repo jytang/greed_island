@@ -1,10 +1,10 @@
 #include "scene.h"
+#include "util.h"
 
 Scene::Scene()
 {
 	root = new SceneGroup(this);
 	camera = new SceneCamera(this);
-	light_pos = glm::vec3(0.f, 2.f, 1.f);
 }
 
 Scene::~Scene()
@@ -99,6 +99,11 @@ void Scene::update_frustum_planes()
 
 glm::mat4 Scene::frustum_ortho()
 {
+	const float FRINGE_X = 100.f;
+	const float FRINGE_Y = 100.f;
+	const float FRINGE_Z = 100.f;
+
+	static bool once = false;
 	glm::mat4 light_view = glm::lookAt(light_pos, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
 	glm::vec3 corners_lightspace[8];
 
@@ -125,6 +130,5 @@ glm::mat4 Scene::frustum_ortho()
 			min.z = corners_lightspace[i].z;
 	}
 
-	//return glm::ortho(min.x, max.x, min.y, max.y, 0.1f, 30.f);
-	return glm::ortho(-600.f, 600.f, -600.f, 600.f, -300.f, 300.f);
+	return glm::ortho(min.x-FRINGE_X, max.x+FRINGE_X, min.y-FRINGE_Y, max.y+FRINGE_Y, -max.z-FRINGE_Z, -min.z+FRINGE_Z);
 }
