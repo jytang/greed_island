@@ -142,7 +142,7 @@ void Greed::setup_scene()
 	const GLfloat   TERRAIN_SCALE = ISLAND_SIZE / 60;
 	const GLuint    TERRAIN_RESOLUTION = 200;
 	const GLfloat   BEACH_HEIGHT = 10.f;
-	const GLuint    NUM_TREES = 200;
+	const GLuint    NUM_TREES = 10;
 	const GLfloat   PERCENT_TREE_ANIM = 0.9f;
 	const GLuint    NUM_TREE_TYPES = 10;
 	const GLfloat   TREE_SCALE = 1.5f;
