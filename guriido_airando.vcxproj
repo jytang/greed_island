@@ -158,6 +158,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="shaders\basic\frag.glsl" />
+    <None Include="shaders\basic\vert.glsl" />
+    <None Include="shaders\shadow\frag.glsl" />
+    <None Include="shaders\shadow\vert.glsl" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\basic_shader.h" />

@@ -396,7 +396,10 @@ void Greed::shadow_pass()
 	ss->light_pos = scene->light_pos;
 	ss->light_proj = scene->frustum_ortho();//glm::ortho(-ISLAND_SIZE, ISLAND_SIZE, -ISLAND_SIZE, ISLAND_SIZE, -ISLAND_SIZE, ISLAND_SIZE);
 	// Render using scene graph.
+	glDisable(GL_CULL_FACE);
 	scene->pass(ss);
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
