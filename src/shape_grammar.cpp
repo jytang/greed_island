@@ -2,7 +2,7 @@
 #include "util.h"
 
 const float DOOR_HEIGHT = 25.0f; //Should be larger than size of human
-const float DOOR_WIDTH = 18.0f;
+const float DOOR_WIDTH = 30.0f;
 const float MIN_HEIGHT = 26.0f; //Random Temporary Values
 const float MAX_HEIGHT = 35.0f;
 const float MIN_WIDTH = 80.0f;
@@ -231,7 +231,115 @@ void ShapeGrammar::create_base(SceneModel * building)
 	}
 	else if (base_type == HEMISPHERE)
 	{
+		//Randomize Height and Width
+		float diameter = Util::random(MIN_DIAMETER, MAX_DIAMETER);
+		float height = Util::random(MIN_HEIGHT, MAX_HEIGHT);
+		float radius = diameter / 2.f;
+		//float divisions = ceilf(2.f * glm::pi<float>() * radius / DOOR_WIDTH) * 2.f; //Two Division is the width of the door
+		float divisions = (float)NUM_DIVISIONS;
+		float width_per_division = 2.f * glm::pi<float>() * radius / divisions;
+		float num_divisions_for_width = ceilf(DOOR_WIDTH / width_per_division);
+		float num_divisions_for_height = ceilf(DOOR_HEIGHT / width_per_division) * 2;
 
+		//Make Geometry: Vertices, Normals, Indices, Triangles for Box		
+		Geometry *hemisphere = new Geometry();
+
+		float fstacks = divisions;
+		float fslices = divisions;
+		float pi = glm::pi<float>();
+
+		glm::vec3 v0, v1, v2, v3;
+
+		for (float i = (num_divisions_for_width / 2.0f); i < divisions + (num_divisions_for_width / 2.0f); i++)
+		{
+			if (i >= divisions - (num_divisions_for_width / 2.0f)) //For Door
+			{
+				for (float j = (divisions / 2) + (num_divisions_for_height); j < divisions; j++)
+				{
+					//Vertices, like a square
+					v0 = { radius * sin(2.0f * pi * i / fstacks) * sin(pi * (j + 1.0f) / fslices),
+						radius * -cos(pi * (j + 1.0f) / fslices),
+						radius * cos(2.0f * pi * i / fstacks) * sin(pi * (j + 1.0f) / fslices) };
+
+					v1 = { radius * sin(2.0f * pi * (i + 1.0) / fstacks) * sin(pi * j / fslices),
+						radius * -cos(pi * j / fslices),
+						radius * cos(2.0f * pi * (i + 1.0) / fstacks) * sin(pi * j / fslices) };
+
+					v2 = { radius * sin(2.0f * pi * (i + 1.0) / fstacks) * sin(pi * (j + 1.0) / fslices),
+						radius * -cos(pi * (j + 1.0) / fslices),
+						radius * cos(2.0f * pi * (i + 1.0) / fstacks) * sin(pi * (j + 1.0) / fslices) };
+
+					v3 = { radius * sin(2.0f * pi * i / fstacks) * sin(pi * j / fslices),
+						radius * -cos(pi * j / fslices),
+						radius * cos(2.0f * pi * i / fstacks) * sin(pi * j / fslices) };
+
+					//Bottom Left Triangle
+					hemisphere->vertices.push_back(v0);
+					hemisphere->normals.push_back(glm::normalize(v0));
+					hemisphere->vertices.push_back(v1);
+					hemisphere->normals.push_back(glm::normalize(v1));
+					hemisphere->vertices.push_back(v2);
+					hemisphere->normals.push_back(glm::normalize(v2));
+
+					//Bottom Right Triangle
+					hemisphere->vertices.push_back(v0);
+					hemisphere->normals.push_back(glm::normalize(v0));
+					hemisphere->vertices.push_back(v3);
+					hemisphere->normals.push_back(glm::normalize(v3));
+					hemisphere->vertices.push_back(v1);
+					hemisphere->normals.push_back(glm::normalize(v1));
+				}
+			}
+			else //For Everything Else
+			{
+				for (float j = (divisions / 2); j < divisions; j++)
+				{
+					//Vertices, like a square
+					v0 = { radius * sin(2.0f * pi * i / fstacks) * sin(pi * (j + 1.0f) / fslices),
+						radius * -cos(pi * (j + 1.0f) / fslices),
+						radius * cos(2.0f * pi * i / fstacks) * sin(pi * (j + 1.0f) / fslices) };
+
+					v1 = { radius * sin(2.0f * pi * (i + 1.0) / fstacks) * sin(pi * j / fslices),
+						radius * -cos(pi * j / fslices),
+						radius * cos(2.0f * pi * (i + 1.0) / fstacks) * sin(pi * j / fslices) };
+
+					v2 = { radius * sin(2.0f * pi * (i + 1.0) / fstacks) * sin(pi * (j + 1.0) / fslices),
+						radius * -cos(pi * (j + 1.0) / fslices),
+						radius * cos(2.0f * pi * (i + 1.0) / fstacks) * sin(pi * (j + 1.0) / fslices) };
+
+					v3 = { radius * sin(2.0f * pi * i / fstacks) * sin(pi * j / fslices),
+						radius * -cos(pi * j / fslices),
+						radius * cos(2.0f * pi * i / fstacks) * sin(pi * j / fslices) };
+
+					//Bottom Left Triangle
+					hemisphere->vertices.push_back(v0);
+					hemisphere->normals.push_back(glm::normalize(v0));
+					hemisphere->vertices.push_back(v1);
+					hemisphere->normals.push_back(glm::normalize(v1));
+					hemisphere->vertices.push_back(v2);
+					hemisphere->normals.push_back(glm::normalize(v2));
+
+					//Bottom Right Triangle
+					hemisphere->vertices.push_back(v0);
+					hemisphere->normals.push_back(glm::normalize(v0));
+					hemisphere->vertices.push_back(v3);
+					hemisphere->normals.push_back(glm::normalize(v3));
+					hemisphere->vertices.push_back(v1);
+					hemisphere->normals.push_back(glm::normalize(v1));
+				}
+			}			
+		}
+
+		for (int i = 0; i < hemisphere->vertices.size(); i++)
+			hemisphere->indices.push_back(i);
+
+		hemisphere->populate_buffers();
+		Mesh hemisphere_mesh = { hemisphere, random_material(), ShaderManager::get_default() };
+		hemisphere_mesh.no_culling = true;
+
+		building->add_mesh(hemisphere_mesh);
+
+		//No More added levels
 	}
 
 	//TODO: Garbage Collector for Created Geometries
@@ -387,6 +495,8 @@ void ShapeGrammar::add_cylinder(SceneModel * building, float last_height, float 
 	int next_level = (int)Util::random(0, (float)num_variations) % num_variations;
 	next_level++; //Startng from Cylinder (1)
 
+	next_level = HEMISPHERE;
+
 	switch (next_level)
 	{
 	case CYLINDER:
@@ -411,7 +521,68 @@ void ShapeGrammar::add_cylinder(SceneModel * building, float last_height, float 
 
 void ShapeGrammar::add_hemisphere(SceneModel * building, float last_height, float last_width, float offset)
 {
+	//Randomize Height and Width
+	float diameter = last_width;
+	float height = Util::random(MIN_HEIGHT, MAX_HEIGHT);
+	float radius = diameter / 2.f;
+	float divisions = (float)NUM_DIVISIONS;
 
+	//Make Geometry: Vertices, Normals, Indices, Triangles for Box		
+	Geometry *hemisphere = new Geometry();
+
+	float fstacks = divisions;
+	float fslices = divisions;
+	float pi = glm::pi<float>();
+
+	glm::vec3 v0, v1, v2, v3;
+
+	for (float i = offset; i <= divisions; i++)
+	{
+		for (float j = (divisions / 2); j < divisions; j++)
+		{
+			//Vertices, like a square
+			v0 = { radius * sin(2.0f * pi * i / fstacks) * sin(pi * (j + 1.0f) / fslices),
+				radius * -cos(pi * (j + 1.0f) / fslices) + last_height,
+				radius * cos(2.0f * pi * i / fstacks) * sin(pi * (j + 1.0f) / fslices) };
+
+			v1 = { radius * sin(2.0f * pi * (i + 1.0) / fstacks) * sin(pi * j / fslices),
+				radius * -cos(pi * j / fslices) + last_height,
+				radius * cos(2.0f * pi * (i + 1.0) / fstacks) * sin(pi * j / fslices) };
+
+			v2 = { radius * sin(2.0f * pi * (i + 1.0) / fstacks) * sin(pi * (j + 1.0) / fslices),
+				radius * -cos(pi * (j + 1.0) / fslices) + last_height,
+				radius * cos(2.0f * pi * (i + 1.0) / fstacks) * sin(pi * (j + 1.0) / fslices) };
+
+			v3 = { radius * sin(2.0f * pi * i / fstacks) * sin(pi * j / fslices),
+				radius * -cos(pi * j / fslices) + last_height,
+				radius * cos(2.0f * pi * i / fstacks) * sin(pi * j / fslices) };
+
+			//Bottom Left Triangle
+			hemisphere->vertices.push_back(v0);
+			hemisphere->normals.push_back(glm::normalize(v0));
+			hemisphere->vertices.push_back(v1);
+			hemisphere->normals.push_back(glm::normalize(v1));
+			hemisphere->vertices.push_back(v2);
+			hemisphere->normals.push_back(glm::normalize(v2));
+
+			//Bottom Right Triangle
+			hemisphere->vertices.push_back(v0);
+			hemisphere->normals.push_back(glm::normalize(v0));
+			hemisphere->vertices.push_back(v3);
+			hemisphere->normals.push_back(glm::normalize(v3));
+			hemisphere->vertices.push_back(v1);
+			hemisphere->normals.push_back(glm::normalize(v1));
+		}
+	}
+
+	for (int i = 0; i < hemisphere->vertices.size(); i++)
+		hemisphere->indices.push_back(i);
+
+	hemisphere->populate_buffers();
+	Mesh hemisphere_mesh = { hemisphere, random_material(), ShaderManager::get_default() };
+	hemisphere_mesh.no_culling = true;
+
+	building->add_mesh(hemisphere_mesh);
 }
 
 void ShapeGrammar::add_pyramid(SceneModel * building, float last_height, float last_width)
