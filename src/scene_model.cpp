@@ -25,6 +25,13 @@ void SceneModel::draw(glm::mat4 m)
 		mesh.shader->send_mesh_model(mesh.to_world);
 
         mesh.shader->set_material(mesh.material);
+		if (!mesh.no_culling)
+		{
+			glEnable(GL_CULL_FACE);
+			glCullFace(GL_BACK);
+		}
+		else
+			glDisable(GL_CULL_FACE);				
         mesh.shader->draw(mesh.geometry, m);
 	}
 }
@@ -69,7 +76,7 @@ void SceneModel::combine_meshes()
 		}
 		for (unsigned int i : mesh.geometry->indices)
 			mega_geometry->indices.push_back(i+index_offset);
-		index_offset += mesh.geometry->indices.size();
+		index_offset += (unsigned int) mesh.geometry->indices.size();
 	}
 	mega_geometry->populate_buffers();
 	meshes.clear();

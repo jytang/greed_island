@@ -11,4 +11,5 @@ struct Mesh
 	Material material;
 	Shader *shader;
 	glm::mat4 to_world;
+	bool no_culling;
 };
