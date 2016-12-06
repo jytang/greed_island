@@ -177,19 +177,19 @@ void Greed::setup_scene()
 
 	std::cerr << "Generating Land Terrain" << std::endl;
 	// Second Parameter Below is Resolution^2 of Island, LOWER TO RUN FASTER
-	Geometry *land_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, BEACH_HEIGHT, HEIGHT_MAP_MAX * 0.8f - 0.2f);
+	Geometry *land_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, BEACH_HEIGHT, HEIGHT_MAP_MAX * 0.8f - 0.2f, false);
 	Material land_material;
 	land_material.diffuse = land_material.ambient = color::windwaker_green;
 	Mesh land_mesh = { land_geo, land_material, ShaderManager::get_default(), glm::mat4(1.f) };	
 
 	std::cerr << "Generating Plateau Terrain" << std::endl;
-	Geometry *plateau_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, HEIGHT_MAP_MAX * 0.8f - 0.2f, HEIGHT_MAP_MAX);
+	Geometry *plateau_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, HEIGHT_MAP_MAX * 0.8f - 0.2f, HEIGHT_MAP_MAX, false);
 	Material plateau_material;
 	plateau_material.diffuse = plateau_material.ambient = color::bone_white;
 	Mesh plateau_mesh = { plateau_geo, plateau_material, ShaderManager::get_default(), glm::mat4(1.f) };
 
 	std::cerr << "Generating Sand Terrain" << std::endl;
-	Geometry *sand_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, 0.0f, BEACH_HEIGHT);
+	Geometry *sand_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, 0.0f, BEACH_HEIGHT, true);
 	Material sand_material;
 	sand_material.diffuse = sand_material.ambient = color::windwaker_sand;
 	Mesh sand_mesh = { sand_geo, sand_material, ShaderManager::get_default(), glm::mat4(1.f) };
@@ -355,6 +355,20 @@ void Greed::go()
 		glfwGetFramebufferSize(window, &width, &height);
 		scene->update_frustum_planes();
 		scene->update_frustum_corners(width, height, FAR_PLANE);
+
+		// Rotate sun.
+		if (keys[GLFW_KEY_LEFT_ALT])
+		{
+			float sun_step = 0.005f;
+
+			if (scene->light_pos.y < 10.f)
+				sun_step *= 2;
+			else
+				sun_step *= glm::max(scene->light_pos.y / (ISLAND_SIZE * 2), 0.2f);
+			
+			sun_step *= scene->light_pos.y < 0 ? 3 : 1;
+			scene->light_pos = glm::vec3(glm::rotate(glm::mat4(1.0f), sun_step, glm::vec3(0.f, 0.f, 1.f)) * glm::vec4(scene->light_pos, 1.0f));
+		}
 
 		// First pass: shadowmap.
 		shadow_pass();

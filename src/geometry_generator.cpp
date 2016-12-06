@@ -287,7 +287,7 @@ Geometry * GeometryGenerator::generate_plane(GLfloat scale)
 	return plane;
 }
 
-Geometry * GeometryGenerator::generate_terrain(GLfloat size, GLint num_points_side, GLfloat min_height, GLfloat max_height)
+Geometry * GeometryGenerator::generate_terrain(GLfloat size, GLint num_points_side, GLfloat min_height, GLfloat max_height, bool normals_up)
 {
 	//Experimenting. Assumed that height map is already set up and size is same as height map size
 
@@ -332,20 +332,31 @@ Geometry * GeometryGenerator::generate_terrain(GLfloat size, GLint num_points_si
 			terrain->vertices.push_back(v3);
 			terrain->vertices.push_back(v4);
 
-			//Get Normals for each vertex pushed (Right hand rule ftw)
-			glm::vec3 n1 = glm::cross(v2 - v4, v1 - v4);
-			glm::vec3 n2 = glm::cross(v1 - v2, v4 - v2);
-			glm::vec3 n3 = glm::cross(v4 - v1, v2 - v1);
-			glm::vec3 n4 = glm::cross(v3 - v1, v4 - v1);
-			glm::vec3 n5 = glm::cross(v4 - v3, v1 - v3);
-			glm::vec3 n6 = glm::cross(v1 - v4, v3 - v4);
+			if (normals_up)
+			{
+				terrain->normals.push_back(glm::vec3(0.f, 1.f, 0.f));
+				terrain->normals.push_back(glm::vec3(0.f, 1.f, 0.f));
+				terrain->normals.push_back(glm::vec3(0.f, 1.f, 0.f));
+				terrain->normals.push_back(glm::vec3(0.f, 1.f, 0.f));
+				terrain->normals.push_back(glm::vec3(0.f, 1.f, 0.f));
+				terrain->normals.push_back(glm::vec3(0.f, 1.f, 0.f));
+			}
+			else {
+				//Get Normals for each vertex pushed (Right hand rule ftw)
+				glm::vec3 n1 = glm::cross(v2 - v4, v1 - v4);
+				glm::vec3 n2 = glm::cross(v1 - v2, v4 - v2);
+				glm::vec3 n3 = glm::cross(v4 - v1, v2 - v1);
+				glm::vec3 n4 = glm::cross(v3 - v1, v4 - v1);
+				glm::vec3 n5 = glm::cross(v4 - v3, v1 - v3);
+				glm::vec3 n6 = glm::cross(v1 - v4, v3 - v4);
 
-			terrain->normals.push_back(n1);
-			terrain->normals.push_back(n2);
-			terrain->normals.push_back(n3);
-			terrain->normals.push_back(n4);
-			terrain->normals.push_back(n5);
-			terrain->normals.push_back(n6);
+				terrain->normals.push_back(n1);
+				terrain->normals.push_back(n2);
+				terrain->normals.push_back(n3);
+				terrain->normals.push_back(n4);
+				terrain->normals.push_back(n5);
+				terrain->normals.push_back(n6);
+			}
 		}
 	}
 
