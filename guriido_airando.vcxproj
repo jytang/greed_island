@@ -92,7 +92,7 @@
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(ProjectDir)/lib/soil/lib/x64/SOIL.lib;$(ProjectDir)\lib\openvr\lib\win64\openvr_api.lib;opengl32.lib;glu32.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(ProjectDir)\lib\soil\lib\x64\SOIL.lib;$(ProjectDir)\lib\openvr\lib\win64\openvr_api.lib;opengl32.lib;glu32.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>
       </AdditionalLibraryDirectories>
     </Link>
@@ -128,7 +128,7 @@
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>$(ProjectDir)/lib/soil/lib/x64/SOIL.lib;$(ProjectDir)\lib\openvr\lib\win64\openvr_api.lib;opengl32.lib;glu32.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(ProjectDir)\lib\soil\lib\x64\SOIL.lib;$(ProjectDir)\lib\openvr\lib\win64\openvr_api.lib;opengl32.lib;glu32.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>
       </AdditionalLibraryDirectories>
     </Link>

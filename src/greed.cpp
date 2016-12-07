@@ -203,19 +203,19 @@ void Greed::generate_map()
 
 	std::cerr << "Generating Land" << std::endl;
 	// Second Parameter Below is Resolution^2 of Island, LOWER TO RUN FASTER
-	land_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, BEACH_HEIGHT, HEIGHT_MAP_MAX * 0.8f, false);
+	land_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, BEACH_HEIGHT, HEIGHT_MAP_MAX * 0.8f, false, GRASS);
 	Material land_material;
 	land_material.diffuse = land_material.ambient = color::windwaker_green;
 	Mesh land_mesh = { land_geo, land_material, ShaderManager::get_default(), glm::mat4(1.f) };
 
 	std::cerr << "Generating Plateau" << std::endl;
-	plateau_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, HEIGHT_MAP_MAX * 0.8f, HEIGHT_MAP_MAX, false);
+	plateau_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, HEIGHT_MAP_MAX * 0.8f, HEIGHT_MAP_MAX, false, ROCK);
 	Material plateau_material;
 	plateau_material.diffuse = plateau_material.ambient = color::bone_white;
 	Mesh plateau_mesh = { plateau_geo, plateau_material, ShaderManager::get_default(), glm::mat4(1.f) };
 
 	std::cerr << "Generating Sand" << std::endl;
-	sand_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, 0.0f, BEACH_HEIGHT, true);
+	sand_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, 0.0f, BEACH_HEIGHT, true, SAND);
 	Material sand_material;
 	sand_material.diffuse = sand_material.ambient = color::windwaker_sand;
 	Mesh sand_mesh = { sand_geo, sand_material, ShaderManager::get_default(), glm::mat4(1.f) };
@@ -391,7 +391,7 @@ void Greed::setup_scene()
 	root->add_child(water_translate);
 
 	// Curvy beach plane, named Bezier Beach Resort
-	Geometry *beach_geo = GeometryGenerator::generate_bezier_plane(ISLAND_SIZE*1.5f, 50, 150, 0.1f, 0);
+	Geometry *beach_geo = GeometryGenerator::generate_bezier_plane(ISLAND_SIZE*1.5f, 50, 150, 0.1f, SAND, 0);
 	Material beach_material;
 	beach_material.diffuse = beach_material.ambient = color::windwaker_sand;
 	beach_material.shadows = false;
@@ -433,6 +433,7 @@ void Greed::setup_scene()
 		root->add_child(controller_2_transform);
 	}
 
+	/*
 	//For Testing Textures	
 	Material cube_material;
 	cube_material.diffuse = cube_material.ambient = color::ocean_blue;
@@ -444,6 +445,7 @@ void Greed::setup_scene()
 	cube_scale->add_child(cube_model);
 	cube_translate->add_child(cube_scale);
 	root->add_child(cube_translate);
+	*/
 }
 
 void Greed::go()
