@@ -6,6 +6,16 @@
 #include <string>
 #include <glm/glm.hpp>
 
+#include "scene_transform.h"
+
+#define TRACKPAD 0
+#define TRIGGER 1
+
+#define TRACKPAD_ID 4294967296
+#define TRIGGER_ID 8589934592
+#define BUTTON_ID 2
+#define GRIP_ID 4
+
 struct vr_vars {
 	int numEyes = 2;
 	vr::TrackedDevicePose_t trackedDevicePose[vr::k_unMaxTrackedDeviceCount];
@@ -30,4 +40,5 @@ public:
 	static vr::IVRSystem* initOpenVR(uint32_t& hmdWidth, uint32_t& hmdHeight);
 	static void ProcessVREvent(const vr::VREvent_t & event);
 	static glm::mat4 ConvertSteamVRMatrixToMatrix4(const vr::HmdMatrix34_t &matPose);
+	//static void vr_update_controllers(SceneTransform *)
 };

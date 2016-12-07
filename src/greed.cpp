@@ -40,14 +40,14 @@ bool keys[1024];
 bool lmb_down = false;
 bool rmb_down = false;
 bool debug_shadows = false;
-bool vr_on = false;
 bool mouse_moved = false;
 bool shadows_on = true;
 glm::vec3 last_cursor_pos;
 
 const GLfloat FAR_PLANE = 1000.f;
+const GLfloat FOV = 45.f;
 const GLfloat ISLAND_SIZE = 600.f;
-const GLfloat PLAYER_HEIGHT = 20.f;
+const GLfloat PLAYER_HEIGHT = 1.f;
 // Procedural generation parameters
 const GLuint    HEIGHT_MAP_POWER = 8;
 const GLuint    HEIGHT_MAP_SIZE = (unsigned int)glm::pow(2, HEIGHT_MAP_POWER) + 1;
@@ -69,6 +69,10 @@ const GLint		NUM_BUILDINGS = 5;
 const GLfloat	VILLAGE_DIAMETER_TRUE = ((float)VILLAGE_DIAMETER / HEIGHT_MAP_SIZE) * TERRAIN_SIZE * TERRAIN_SCALE;
 const GLfloat   WATER_SCALE = ISLAND_SIZE * 4;
 const GLint     CAM_OFFSET = 20;
+
+bool vr_on = false;
+SceneTransform *controller_1_translate;
+SceneTransform *controller_2_translate;
 
 Greed::Greed() {}
 
@@ -308,6 +312,7 @@ void Greed::generate_miniatures()
 		small_tree_translate->add_child(small_tree_anim);
 		small_forest->add_child(small_tree_translate);
 	}
+
 	SceneTransform *small_forest_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(-80.f, 175.f, -40.f)));
 	small_forest_translate->add_child(small_forest);
 	root->add_child(small_forest_translate);
@@ -386,6 +391,24 @@ void Greed::setup_scene()
 	generate_forest();
 	generate_village();
 	generate_miniatures();
+
+	//Show Vive Controllers using Two Blue Spheres
+	if (vr_on)
+	{
+		Material sphere_material;
+		sphere_material.diffuse = sphere_material.ambient = color::ocean_blue;
+		Mesh sphere_mesh = { sphere_geo, sphere_material, ShaderManager::get_default() };
+		SceneModel *sphere_model = new SceneModel(scene);
+		sphere_model->add_mesh(sphere_mesh);
+		SceneTransform *sphere_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(1.f, 1.0f, 1.f)));
+		controller_1_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 0.f, 0.0f)));
+		controller_2_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 0.f, 0.0f)));
+		sphere_scale->add_child(sphere_model);
+		controller_1_translate->add_child(sphere_scale);
+		controller_2_translate->add_child(sphere_scale);
+		root->add_child(controller_1_translate);
+		root->add_child(controller_2_translate);
+	}
 }
 
 void Greed::go()
@@ -423,7 +446,10 @@ void Greed::go()
 		}
 		if (curr_time - move_prev_ticks > 1.f / 60.f)
 		{
-			handle_movement();
+			if (vr_on)
+				handle_movement_vr();					
+			else
+				handle_movement();
 			move_prev_ticks = curr_time;
 		}
 
@@ -454,7 +480,22 @@ void Greed::go()
 
 		if (vr_on)
 		{
-			vr_render();
+
+			//Update Controller Positions
+			//vr_update_controllers();
+
+			//Update any objects relying on controller positions
+				//Including Controller's Spheres and Grabbed Objects
+
+			vr_render(); //Render Scene
+
+			/*// Mirror to the window //CURRENTLY DOESN"T WORK
+			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, GL_NONE);
+			glViewport(0, 0, width, height);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			glBlitFramebuffer(0, 0, GreedVR::vars.framebufferWidth, GreedVR::vars.framebufferHeight, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, GL_NONE);
+			*/
 		}
 		else {
 			scene->render();
@@ -504,6 +545,8 @@ void Greed::vr_render()
 	projectionMatrix.push_back(glm::mat4(1.0f));
 	projectionMatrix.push_back(glm::mat4(1.0f));
 	vr::VRCompositor()->WaitGetPoses(GreedVR::vars.trackedDevicePose, vr::k_unMaxTrackedDeviceCount, nullptr, 0);
+
+	//Get Head and Eye Matrices
 	const vr::HmdMatrix34_t headMatrix = GreedVR::vars.trackedDevicePose[vr::k_unTrackedDeviceIndex_Hmd].mDeviceToAbsoluteTracking;
 	const vr::HmdMatrix34_t& ltMatrix = GreedVR::vars.hmd->GetEyeToHeadTransform(vr::Eye_Left);
 	const vr::HmdMatrix34_t& rtMatrix = GreedVR::vars.hmd->GetEyeToHeadTransform(vr::Eye_Right);
@@ -522,6 +565,22 @@ void Greed::vr_render()
 			projectionMatrix[1][c][r] = rtProj.m[r][c];
 		}
 	}
+
+	/*Useless Code
+	glm::mat4 bodyToWorldMatrix = glm::mat4(1.0f); //Useless
+	glm::vec3 head_center = glm::vec3(0.f, 0.f, 0.f);
+
+	//Get Body Matrix (for Room Space)	
+	if (GreedVR::vars.trackedDevicePose[vr::k_unTrackedDeviceIndex_Hmd].bPoseIsValid)
+	{
+		bodyToWorldMatrix = GreedVR::ConvertSteamVRMatrixToMatrix4(GreedVR::vars.trackedDevicePose[vr::k_unTrackedDeviceIndex_Hmd].mDeviceToAbsoluteTracking);
+
+		head_center = glm::vec3(bodyToWorldMatrix * glm::vec4(0, 0, 0, 1));
+
+		//fprintf(stderr, "Printing for device %u: Center is %f\t%f\t%f\n", vr::k_unTrackedDeviceIndex_Hmd, center.x, center.y, center.z);
+	}	
+	*/
+
 	for (int eye = 0; eye < GreedVR::vars.numEyes; ++eye) {
 		glBindFramebuffer(GL_FRAMEBUFFER, GreedVR::vars.framebuffer[eye]);
 		glViewport(0, 0, GreedVR::vars.framebufferWidth, GreedVR::vars.framebufferHeight);
@@ -529,22 +588,17 @@ void Greed::vr_render()
 		glm::mat4 proj = projectionMatrix[eye];
 		glm::mat4 head = glm::inverse(eyeToHead[eye]) * glm::inverse(headToBodyMatrix);
 
-		scene->P = proj;
-		camera->V = head;
+		camera->cam_front = glm::mat3(glm::transpose(head)) * glm::vec3(0.f, 0.f, -1.f);
+		camera->cam_front.y = 0.f;
+
+		scene->P = proj;		
+		camera->V = head * glm::inverse(glm::translate(glm::mat4(1.0f), camera->cam_pos));// *glm::inverse(glm::translate(glm::mat4(1.f), head_center * 10.f));
 		scene->render();
 
-		//RenderControllerAxes(trackedDevicePose);
 
 		const vr::Texture_t tex = { reinterpret_cast<void*>(intptr_t(GreedVR::vars.colorRenderTarget[eye])), vr::API_OpenGL, vr::ColorSpace_Gamma };
 		vr::VRCompositor()->Submit(vr::EVREye(eye), &tex);
-	}
-
-	// Mirror to the window
-	/*glBindFramebuffer(GL_DRAW_FRAMEBUFFER, GL_NONE);
-	glViewport(0, 0, Window::width, Window::height);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glBlitFramebuffer(0, 0, framebufferWidth, framebufferHeight, 0, 0, Window::width, Window::height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
-	glBindFramebuffer(GL_READ_FRAMEBUFFER, GL_NONE);*/
+	}	
 
 	//Process VR Event
 	vr::VREvent_t event;
@@ -607,6 +661,108 @@ void Greed::handle_movement()
 	camera->recalculate();
 }
 
+void Greed::handle_movement_vr()
+{
+	// check if somebody else has input focus
+	if (GreedVR::vars.hmd->IsInputFocusCapturedByAnotherProcess())
+		return;
+
+	std::vector<float> vertdataarray;
+	unsigned int controllerVertcount = 0;
+	int trackedControllerCount = 0;
+
+	for (vr::TrackedDeviceIndex_t unTrackedDevice = vr::k_unTrackedDeviceIndex_Hmd + 1; unTrackedDevice < vr::k_unMaxTrackedDeviceCount; ++unTrackedDevice)
+	{
+		//Preliminary Checks
+		if (!GreedVR::vars.hmd->IsTrackedDeviceConnected(unTrackedDevice))
+			continue;
+		if (GreedVR::vars.hmd->GetTrackedDeviceClass(unTrackedDevice) != vr::TrackedDeviceClass_Controller)
+			continue;
+		trackedControllerCount += 1;
+		if (!GreedVR::vars.trackedDevicePose[unTrackedDevice].bPoseIsValid)
+			continue;
+
+		//Get Controller State
+		vr::VRControllerState_t pControllerState;
+		if (!GreedVR::vars.hmd->GetControllerState(unTrackedDevice, &pControllerState, sizeof(pControllerState)))
+			continue;
+		
+		//Testing
+		fprintf(stderr, "Controller Pressed: %llu\n", (unsigned long long) pControllerState.ulButtonPressed);
+		fprintf(stderr, "Controller Touched: %llu\n", (unsigned long long) pControllerState.ulButtonTouched);				
+		fprintf(stderr, "Controller Test 1: %f\n", (float)pControllerState.rAxis[TRACKPAD].x);
+		fprintf(stderr, "Controller Test 1: %f\n", (float)pControllerState.rAxis[TRACKPAD].y);
+		fprintf(stderr, "Controller Test 0: %f\n", (float)pControllerState.rAxis[TRIGGER].x);
+		
+
+		const GLfloat EDGE_THRESH = 20.f;
+		const GLfloat BASE_CAM_SPEED = 2.f;
+		GLfloat cam_step = keys[GLFW_KEY_LEFT_SHIFT] ? 5 * BASE_CAM_SPEED : BASE_CAM_SPEED;
+		glm::vec3 displacement(0.f);		
+
+		// Fix height to be based on heightmap.
+		float last_height = Terrain::height_lookup(camera->cam_pos.x, camera->cam_pos.z, ISLAND_SIZE * 2);
+
+		if (pControllerState.ulButtonPressed == TRACKPAD_ID)
+		{
+			//fprintf(stderr, "TRACKPAD PRESSED\n");
+			if (pControllerState.rAxis[TRACKPAD].y > 0.0f)
+			{
+				displacement += cam_step * camera->cam_front;
+			}
+			else if (pControllerState.rAxis[TRACKPAD].y < 0.0f)
+			{
+				displacement -= cam_step * camera->cam_front;
+			}
+		}
+
+		glm::vec3 new_pos = camera->cam_pos + displacement;		
+
+		// Check horizontal bounds.
+		if (new_pos.x < -ISLAND_SIZE || new_pos.x > ISLAND_SIZE || new_pos.z < -ISLAND_SIZE || new_pos.z > ISLAND_SIZE)
+			return;
+
+		// Smoother edge movement.
+		if (new_pos.x < -ISLAND_SIZE + EDGE_THRESH)
+		{
+			float diff = glm::abs(-ISLAND_SIZE - new_pos.x);
+			displacement *= diff / EDGE_THRESH;
+		}
+		else if (new_pos.x > ISLAND_SIZE - EDGE_THRESH)
+		{
+			float diff = glm::abs(ISLAND_SIZE - new_pos.x);
+			displacement *= diff / EDGE_THRESH;
+		}
+		if (new_pos.z < -ISLAND_SIZE + EDGE_THRESH)
+		{
+			float diff = glm::abs(-ISLAND_SIZE - new_pos.z);
+			displacement *= diff / EDGE_THRESH;
+		}
+		else if (new_pos.z > ISLAND_SIZE - EDGE_THRESH)
+		{
+			float diff = glm::abs(ISLAND_SIZE - new_pos.z);
+			displacement *= diff / EDGE_THRESH;
+		}
+		new_pos = camera->cam_pos + displacement;
+
+		// Recheck height.
+		float new_height = Terrain::height_lookup(new_pos.x, new_pos.z, ISLAND_SIZE * 2);
+		new_pos.y = new_height + PLAYER_HEIGHT;
+
+		//Check if Slope is Climable
+
+		//float MAX_SLOPE = 1.4f;
+		float slope = (new_height - last_height) / (glm::distance(glm::vec2(camera->cam_pos.x, camera->cam_pos.z), glm::vec2(new_pos.x, new_pos.z)));
+		fprintf(stderr, "Slope is: %f\n", slope);
+		//if (slope < MAX_SLOPE)
+		//{
+			camera->cam_pos = new_pos;
+		//}
+			
+
+	}	
+}
+
 void Greed::setup_callbacks()
 {
 	glfwSetErrorCallback(error_callback);
@@ -644,7 +800,7 @@ void Greed::resize_callback(GLFWwindow* window, int width, int height)
 	glViewport(0, 0, width, height);
 
 	if (height > 0)
-		scene->P = glm::perspective(45.0f, (float)width / (float)height, 0.1f, FAR_PLANE);
+		scene->P = glm::perspective(FOV, (float)width / (float)height, 0.1f, FAR_PLANE);
 }
 
 void Greed::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
