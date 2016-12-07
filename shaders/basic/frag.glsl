@@ -40,7 +40,6 @@ void main()
 	vec3 result;
 	if (texture_enabled){
 		vec3 tex_color = vec3(texture(texture_map, frag_tex_coord));
-		//vec3 tex_color = material.diffuse;
 		result = colorify_tex(normal, view_dir, light_dir, light_intensity, dir_light.ambient_coeff, tex_color);
 	}
 	else
@@ -103,7 +102,7 @@ vec3 colorify_tex(vec3 normal, vec3 view_dir, vec3 light_dir, vec3 light_intensi
         max(dot(normal, light_dir), 0.0);
 
     // Specular: c_s = c_l * k_s * dot(n, h)^s
-    vec3 specular = light_intensity * tex_color *
+    vec3 specular = light_intensity * material.specular *
         pow(max(dot(normal, normalize(light_dir + view_dir)), 0.0), material.shininess);
 
     // Ambient: c_a (ambient color) * k_a (coeff)

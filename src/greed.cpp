@@ -207,7 +207,8 @@ void Greed::setup_scenes()
 		}
 	}
 
-	//For Testing Textures
+	/*
+	//For Testing Textures	
 	Geometry *cube_geo = GeometryGenerator::generate_cube(1.f, true);
 	Material cube_material;
 	cube_material.diffuse = cube_material.ambient = color::ocean_blue;
@@ -219,6 +220,7 @@ void Greed::setup_scenes()
 	cube_scale->add_child(cube_model);
 	cube_translate->add_child(cube_scale);
 	scene->root->add_child(cube_translate);
+	*/
 }
 
 void Greed::go()

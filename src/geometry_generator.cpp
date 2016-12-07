@@ -77,14 +77,7 @@ Geometry * GeometryGenerator::generate_cube(GLfloat scale, bool has_normals)
 			cube->normals.push_back(glm::vec3(0.f, 0.f, 1.f));
 		for (int i = 0; i < 6; ++i)
 			cube->normals.push_back(glm::vec3(0.f, -1.f, 0.f));
-	}
-
-	cube->tex_coords.push_back(glm::vec2(0, 0));
-	cube->tex_coords.push_back(glm::vec2(1, 0));
-	cube->tex_coords.push_back(glm::vec2(1, 1));
-	cube->tex_coords.push_back(glm::vec2(1, 1));
-	cube->tex_coords.push_back(glm::vec2(0, 1));
-	cube->tex_coords.push_back(glm::vec2(0, 0));
+	}	
 
 	for (int i = 0; i < cube->vertices.size(); ++i)
 		cube->indices.push_back(i);
@@ -295,7 +288,8 @@ Geometry * GeometryGenerator::generate_plane(GLfloat scale)
 	return plane;
 }
 
-Geometry * GeometryGenerator::generate_terrain(GLfloat size, GLint num_points_side, GLfloat min_height, GLfloat max_height, bool normals_up, std::vector<std::vector<GLfloat> > &height_map)
+
+Geometry * GeometryGenerator::generate_terrain(GLfloat size, GLint num_points_side, GLfloat min_height, GLfloat max_height, bool normals_up, int texture_type, std::vector<std::vector<GLfloat> > &height_map)
 {
 	//Experimenting. Assumed that height map is already set up and size is same as height map size
 
@@ -366,23 +360,13 @@ Geometry * GeometryGenerator::generate_terrain(GLfloat size, GLint num_points_si
 				terrain->normals.push_back(n6);
 			}
 
-			/*
-			terrain->tex_coords.push_back(glm::vec2(1, 1));
-			terrain->tex_coords.push_back(glm::vec2(1, 0));
-			terrain->tex_coords.push_back(glm::vec2(0, 0));
+			
 			terrain->tex_coords.push_back(glm::vec2(0, 0));
 			terrain->tex_coords.push_back(glm::vec2(0, 1));
 			terrain->tex_coords.push_back(glm::vec2(1, 1));
-			*/
-
-			/*
-			terrain->tex_coords.push_back(glm::vec2(0, 0));
+			terrain->tex_coords.push_back(glm::vec2(1, 1));
 			terrain->tex_coords.push_back(glm::vec2(1, 0));
-			terrain->tex_coords.push_back(glm::vec2(1, 1));
-			terrain->tex_coords.push_back(glm::vec2(1, 1));
-			terrain->tex_coords.push_back(glm::vec2(0, 1));
 			terrain->tex_coords.push_back(glm::vec2(0, 0));
-			*/
 
 		}
 	}
@@ -391,99 +375,19 @@ Geometry * GeometryGenerator::generate_terrain(GLfloat size, GLint num_points_si
 	for (int i = 0; i < terrain->vertices.size(); i++)
 		terrain->indices.push_back(i);
 
-	//terrain->attach_texture("assets\\textures\\Grass.tga");
+	if(texture_type == GRASS)
+		terrain->attach_texture("assets/textures/Grass1.tga");
+	else if (texture_type == ROCK)
+		terrain->attach_texture("assets/textures/Rock1.tga");
+	else if (texture_type == SAND)
+		terrain->attach_texture("assets/textures/Soil1.tga");
 	terrain->populate_buffers();
 	geometries.push_back(terrain);
 
 	return terrain;
 }
 
-/* DEPRICATED, DOES NOT WORK ANYMORE, JUST FOR REFERENCE
-Geometry * GeometryGenerator::generate_grid(GLint size_modifier, GLfloat max_height, GLint village_diameter, GLfloat scale, GLuint seed = 0)
-{		
-	/*Note to self regarding terrain's smoothness: AustinPuk
-		The reason why the current terrain has such low resolution is becuase after generating the height map,
-		I just made a 1:1 relation of the height map's points to the vertices. This is actually pretty inefficient
-		since the height map takes exponentially longer to calculate with more points, but we do not necessarily
-		need more points on the height map itself to have a smoother, more realistic surface. Instead, I should
-		really be using the height map as a proper lookup table and make the grid an aribtrary sized resolution of
-		vertices, and then choosing the height of each pixel in the height map based on an averaged/nearest-neighor
-		approach to get smoother surfaces.		
-		This shouldn't take long to fix. In fact, I'll do it now....	
-	star/
-
-	//Create 2D Array of size (2^n + 1) for Height Map
-	unsigned int size = (unsigned int)glm::pow(2, size_modifier) + 1;
-
-	Geometry *terrain = new Geometry();
-
-	Terrain::generate_height_map(size, max_height, village_diameter, scale, seed);
-
-	//Create array of points using height map lookup function
-	//Grid is same size as height map, and scales with height map size
-	int middle = (size - 1) / 2;
-	int min_x = -middle;
-	int min_z = -middle;
-	int max_x = middle;
-	int max_z = middle;
-			
-	float land_threshold = 20.0f;
-	
-	//Goes Square by Square
-	for (int x = min_x; x < max_x; x++)
-	{
-		for (int z = min_z; z < max_z; z++)
-		{
-			float h1 = Terrain::height_lookup(x + middle, z + middle);
-			float h2 = Terrain::height_lookup(x + 1 + middle, z + middle);
-			float h3 = Terrain::height_lookup(x + middle, z + 1 + middle);
-			float h4 = Terrain::height_lookup(x + 1 + middle, z + 1 + middle);
-
-			if (h1 < land_threshold)
-				continue;
-
-			glm::vec3 v1 = glm::vec3(x, h1, z); //Upper Left
-			glm::vec3 v2 = glm::vec3(x + 1, h2, z); //Upper Right
-			glm::vec3 v3 = glm::vec3(x, h3, z + 1); //Lower Left
-			glm::vec3 v4 = glm::vec3(x + 1, h4, z + 1);  //Lower Right)
-
-			//Make Two Triangles for Square
-			terrain->vertices.push_back(v4);
-			terrain->vertices.push_back(v2);
-			terrain->vertices.push_back(v1);
-			terrain->vertices.push_back(v1);
-			terrain->vertices.push_back(v3);
-			terrain->vertices.push_back(v4);
-
-			//Get Normals for each vertex pushed (Right hand rule ftw)
-			glm::vec3 n1 = glm::cross(v2 - v4, v1 - v4); 
-			glm::vec3 n2 = glm::cross(v1 - v2, v4 - v2);
-			glm::vec3 n3 = glm::cross(v4 - v1, v2 - v1);
-			glm::vec3 n4 = glm::cross(v3 - v1, v4 - v1);
-			glm::vec3 n5 = glm::cross(v4 - v3, v1 - v3);
-			glm::vec3 n6 = glm::cross(v1 - v4, v3 - v4);		
-
-			terrain->normals.push_back(n1);
-			terrain->normals.push_back(n2);
-			terrain->normals.push_back(n3);
-			terrain->normals.push_back(n4);
-			terrain->normals.push_back(n5);
-			terrain->normals.push_back(n6);
-		}
-	}		
-
-	//Indices are just in order to make it easier
-	for (int i = 0; i < terrain->vertices.size(); i++)
-		terrain->indices.push_back(i);	
-	
-	terrain->populate_buffers();
-	geometries.push_back(terrain);		
-
-	return terrain;
-}
-*/
-
-Geometry * GeometryGenerator::generate_bezier_plane(GLfloat radius, GLuint num_curves, GLuint segmentation, GLfloat waviness, unsigned int seed = 0)
+Geometry * GeometryGenerator::generate_bezier_plane(GLfloat radius, GLuint num_curves, GLuint segmentation, GLfloat waviness, int texture_type, unsigned int seed = 0)
 {
 	Geometry *bez_plane = new Geometry();
 	bez_plane->draw_type = GL_TRIANGLE_FAN;
@@ -531,6 +435,17 @@ Geometry * GeometryGenerator::generate_bezier_plane(GLfloat radius, GLuint num_c
 	// Indices
 	for (int i = 0; i < bez_plane->vertices.size(); ++i)
 		bez_plane->indices.push_back(i);
+
+	if (texture_type == SAND)
+	{
+		bez_plane->tex_coords.push_back(glm::vec2(0.5f, 0.f));
+		for (int i = 1; i < bez_plane->vertices.size(); i += 2)
+		{
+			bez_plane->tex_coords.push_back(glm::vec2(0.f, 1.f));
+			bez_plane->tex_coords.push_back(glm::vec2(1.f, 1.f));
+		}
+		bez_plane->attach_texture("assets/textures/Soil1.tga");
+	}		
 
 	bez_plane->populate_buffers();
 	geometries.push_back(bez_plane);
