@@ -1,5 +1,6 @@
 #include "scene.h"
 #include "util.h"
+#include "terrain.h"
 
 #include "global.h"
 const GLfloat PLAYER_HEIGHT = Global::PLAYER_HEIGHT;
@@ -24,6 +25,47 @@ void Scene::render()
 void Scene::pass(Shader * s)
 {
 	root->pass(glm::mat4(1.f), s);
+}
+
+void Scene::displace_cam(glm::vec3 displacement)
+{
+	const GLfloat   SIZE = get_size(); // Base on current scene size.
+	const GLfloat   EDGE_LEEWAY = SIZE / 6.f;
+	const GLfloat   MOVE_BOUNDS = SIZE + EDGE_LEEWAY;
+	const GLfloat   EDGE_THRESH = SIZE / 30.f;
+
+	glm::vec3 new_pos = camera->cam_pos + displacement;
+	// Check horizontal bounds.
+	if (new_pos.x < -MOVE_BOUNDS || new_pos.x > MOVE_BOUNDS || new_pos.z < -MOVE_BOUNDS || new_pos.z > MOVE_BOUNDS)
+		return;
+
+	// Smoother edge movement.
+	if (new_pos.x < -MOVE_BOUNDS + EDGE_THRESH) {
+		float diff = glm::abs(-MOVE_BOUNDS - new_pos.x);
+		displacement *= diff / EDGE_THRESH;
+	}
+	else if (new_pos.x > MOVE_BOUNDS - EDGE_THRESH) {
+		float diff = glm::abs(MOVE_BOUNDS - new_pos.x);
+		displacement *= diff / EDGE_THRESH;
+	}
+	if (new_pos.z < -MOVE_BOUNDS + EDGE_THRESH) {
+		float diff = glm::abs(-MOVE_BOUNDS - new_pos.z);
+		displacement *= diff / EDGE_THRESH;
+	}
+	else if (new_pos.z > MOVE_BOUNDS - EDGE_THRESH) {
+		float diff = glm::abs(MOVE_BOUNDS - new_pos.z);
+		displacement *= diff / EDGE_THRESH;
+	}
+	new_pos = camera->cam_pos + displacement;
+
+	// Fix height.
+	float new_height = 0.f;
+	if (Util::within_rect(glm::vec2(new_pos.x, new_pos.z), glm::vec2(-SIZE, SIZE), glm::vec2(SIZE, -SIZE)))
+		new_height = Terrain::height_lookup(new_pos.x, new_pos.z, SIZE * 2, height_map);
+	new_pos.y = new_height + PLAYER_HEIGHT;
+
+	camera->cam_pos = new_pos;
+	camera->recalculate();
 }
 
 void Scene::update_frustum_corners(int width, int height, GLfloat far)

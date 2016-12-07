@@ -135,9 +135,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\basic_shader.cpp" />
+    <ClCompile Include="src\desert_scene.cpp" />
+    <ClCompile Include="src\fire_scene.cpp" />
     <ClCompile Include="src\geometry.cpp" />
     <ClCompile Include="src\geometry_generator.cpp" />
     <ClCompile Include="src\greed.cpp" />
+    <ClCompile Include="src\island_scene.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\scene.cpp" />
     <ClCompile Include="src\scene_animation.cpp" />
@@ -150,6 +153,8 @@
     <ClCompile Include="src\shadow_shader.cpp" />
     <ClCompile Include="src\shape_grammar.cpp" />
     <ClCompile Include="src\skybox_shader.cpp" />
+    <ClCompile Include="src\snow_scene.cpp" />
+    <ClCompile Include="src\space_scene.cpp" />
     <ClCompile Include="src\terrain.cpp" />
     <ClCompile Include="src\tree.cpp" />
     <ClCompile Include="src\util.cpp" />
@@ -166,9 +171,12 @@
   <ItemGroup>
     <ClInclude Include="inc\basic_shader.h" />
     <ClInclude Include="inc\colors.h" />
+    <ClInclude Include="inc\desert_scene.h" />
+    <ClInclude Include="inc\fire_scene.h" />
     <ClInclude Include="inc\geometry.h" />
     <ClInclude Include="inc\global.h" />
     <ClInclude Include="inc\greed.h" />
+    <ClInclude Include="inc\island_scene.h" />
     <ClInclude Include="inc\material.h" />
     <ClInclude Include="inc\geometry_generator.h" />
     <ClInclude Include="inc\mesh.h" />
@@ -185,6 +193,8 @@
     <ClInclude Include="inc\shadow_shader.h" />
     <ClInclude Include="inc\shape_grammar.h" />
     <ClInclude Include="inc\skybox_shader.h" />
+    <ClInclude Include="inc\snow_scene.h" />
+    <ClInclude Include="inc\space_scene.h" />
     <ClInclude Include="inc\terrain.h" />
     <ClInclude Include="inc\tree.h" />
     <ClInclude Include="inc\util.h" />

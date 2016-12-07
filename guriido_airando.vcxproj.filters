@@ -77,6 +77,21 @@
     <ClCompile Include="src\shape_grammar.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\island_scene.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\desert_scene.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fire_scene.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\snow_scene.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\space_scene.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -170,6 +185,21 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="inc\global.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\island_scene.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\desert_scene.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\fire_scene.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\snow_scene.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\space_scene.h">
       <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>
