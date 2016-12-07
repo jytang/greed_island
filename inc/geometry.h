@@ -8,6 +8,7 @@ class Geometry
 public:
 	bool has_texture;
 	bool has_normals;
+	bool add_texture_noise; //For Water Specifically
 	GLuint texture;
 	std::vector<glm::vec3> vertices;
 	std::vector<glm::vec3> normals;

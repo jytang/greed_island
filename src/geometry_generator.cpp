@@ -83,7 +83,7 @@ Geometry * GeometryGenerator::generate_cube(GLfloat scale, bool has_normals)
 		cube->indices.push_back(i);
 
 	cube->has_normals = has_normals;
-	cube->attach_texture("test");
+	//cube->attach_texture("test");
 	cube->populate_buffers();
 	geometries.push_back(cube);
 	return cube;
@@ -255,36 +255,72 @@ Geometry * GeometryGenerator::generate_cylinder(GLfloat radius, GLfloat height, 
 
 }
 
-Geometry * GeometryGenerator::generate_plane(GLfloat scale)
+Geometry * GeometryGenerator::generate_plane(GLfloat scale, int texture_type)
 {
 	Geometry *plane = new Geometry();
 
-	//Setting Y-Offset as 0, change by Rotating World
-	glm::vec3 v0 = { scale, 0, scale };
-	glm::vec3 v1 = { -scale, 0, scale };
-	glm::vec3 v2 = { scale, 0, -scale };
-	glm::vec3 v3 = { -scale, 0, -scale };
+	if (texture_type == WATER)
+	{
+		//Gotta go Square by Square for a texture
 
-	glm::vec3 n = {0, 1.0f, 0};
+		float divisions = 10.f;
+		float step = (scale * 2) / divisions;
 
-	plane->vertices.push_back(v0);
-	plane->vertices.push_back(v1);
-	plane->vertices.push_back(v2);
-	plane->vertices.push_back(v3);
+		for (float i = -scale; i <= scale - step; i += step)
+		{
+			for (float j = -scale; j <= scale - step; j += step)
+			{
+				glm::vec3 v0 = { i, 0, j }; //Top Left
+				glm::vec3 v1 = { i + step, 0, j }; //Top Right
+				glm::vec3 v2 = { i, 0, j + step }; //Bottom Left
+				glm::vec3 v3 = { i + step, 0, j + step }; //Bottom Right
 
-	for (int i = 0; i < 4; i++)
+				plane->vertices.push_back(v0);
+				plane->vertices.push_back(v2);
+				plane->vertices.push_back(v1);
+				plane->vertices.push_back(v1);
+				plane->vertices.push_back(v2);
+				plane->vertices.push_back(v3);
+
+				plane->tex_coords.push_back(glm::vec2(0, 0));
+				plane->tex_coords.push_back(glm::vec2(0, 1.f));
+				plane->tex_coords.push_back(glm::vec2(1.f, 0));
+				plane->tex_coords.push_back(glm::vec2(1.f, 0));
+				plane->tex_coords.push_back(glm::vec2(0, 1.f));
+				plane->tex_coords.push_back(glm::vec2(1.f, 1.f));
+			}
+		}		
+
+		plane->attach_texture("assets/textures/WaterWW.png");
+		plane->add_texture_noise = true;
+	}
+	else
+	{
+		//Setting Y-Offset as 0, change by Rotating World
+		glm::vec3 v0 = { scale, 0, scale };
+		glm::vec3 v1 = { -scale, 0, scale };
+		glm::vec3 v2 = { scale, 0, -scale };
+		glm::vec3 v3 = { -scale, 0, -scale };
+
+		plane->vertices.push_back(v0);
+		plane->vertices.push_back(v2);
+		plane->vertices.push_back(v1);
+		plane->vertices.push_back(v1);
+		plane->vertices.push_back(v2);
+		plane->vertices.push_back(v3);
+	}
+
+	glm::vec3 n = { 0, 1.0f, 0 };
+
+	for (int i = 0; i < plane->vertices.size(); i++)
 		plane->normals.push_back(n);
 
-	plane->indices.push_back(0);
-	plane->indices.push_back(2);
-	plane->indices.push_back(1);
-	plane->indices.push_back(1);
-	plane->indices.push_back(2);
-	plane->indices.push_back(3);
+	for (int i = 0; i < plane->vertices.size(); i++)
+		plane->indices.push_back(i);
 
 	plane->populate_buffers();
 	geometries.push_back(plane);
-
+	
 	return plane;
 }
 
@@ -307,6 +343,10 @@ Geometry * GeometryGenerator::generate_terrain(GLfloat size, GLint num_points_si
 
 	float step_size =  size / (float) num_points_side;
 
+	float tex_step_size = (1.f / (float)num_points_side) * 10.f;
+	float s = 0.f;
+	float t = 0.f;
+
 	//Goes Square by Square
 	for (float x = min_x; x <= (max_x - step_size); x += step_size)
 	{
@@ -327,10 +367,10 @@ Geometry * GeometryGenerator::generate_terrain(GLfloat size, GLint num_points_si
 			glm::vec3 v4 = glm::vec3(x + step_size, h4, z + step_size);  //Lower Right
 
 	        //Make Two Triangles for Square
-			terrain->vertices.push_back(v4);
+			terrain->vertices.push_back(v1);
+			terrain->vertices.push_back(v3);
 			terrain->vertices.push_back(v2);
-			terrain->vertices.push_back(v1);
-			terrain->vertices.push_back(v1);
+			terrain->vertices.push_back(v2);
 			terrain->vertices.push_back(v3);
 			terrain->vertices.push_back(v4);
 
@@ -359,16 +399,18 @@ Geometry * GeometryGenerator::generate_terrain(GLfloat size, GLint num_points_si
 				terrain->normals.push_back(n5);
 				terrain->normals.push_back(n6);
 			}
-
 			
-			terrain->tex_coords.push_back(glm::vec2(0, 0));
-			terrain->tex_coords.push_back(glm::vec2(0, 1));
-			terrain->tex_coords.push_back(glm::vec2(1, 1));
-			terrain->tex_coords.push_back(glm::vec2(1, 1));
-			terrain->tex_coords.push_back(glm::vec2(1, 0));
-			terrain->tex_coords.push_back(glm::vec2(0, 0));
+			terrain->tex_coords.push_back(glm::vec2(s, t));
+			terrain->tex_coords.push_back(glm::vec2(s, t + tex_step_size));
+			terrain->tex_coords.push_back(glm::vec2(s + tex_step_size, t));
+			terrain->tex_coords.push_back(glm::vec2(s + tex_step_size, t));
+			terrain->tex_coords.push_back(glm::vec2(s, t + tex_step_size));
+			terrain->tex_coords.push_back(glm::vec2(s + tex_step_size, t + tex_step_size));
 
+			t += tex_step_size;
 		}
+		t = 0.f;
+		s += tex_step_size;
 	}
 
 	//Indices are just in order to make it easier
@@ -376,11 +418,11 @@ Geometry * GeometryGenerator::generate_terrain(GLfloat size, GLint num_points_si
 		terrain->indices.push_back(i);
 
 	if(texture_type == GRASS)
-		terrain->attach_texture("assets/textures/Grass1.tga");
+		terrain->attach_texture("assets/textures/GrassWW2.dds");
 	else if (texture_type == ROCK)
-		terrain->attach_texture("assets/textures/Rock1.tga");
+		terrain->attach_texture("assets/textures/StoneWW.png");
 	else if (texture_type == SAND)
-		terrain->attach_texture("assets/textures/Soil1.tga");
+		terrain->attach_texture("assets/textures/SandWW2.dds");
 	terrain->populate_buffers();
 	geometries.push_back(terrain);
 
@@ -444,7 +486,7 @@ Geometry * GeometryGenerator::generate_bezier_plane(GLfloat radius, GLuint num_c
 			bez_plane->tex_coords.push_back(glm::vec2(0.f, 1.f));
 			bez_plane->tex_coords.push_back(glm::vec2(1.f, 1.f));
 		}
-		bez_plane->attach_texture("assets/textures/Soil1.tga");
+		bez_plane->attach_texture("assets/textures/SandWW2.dds");
 	}		
 
 	bez_plane->populate_buffers();

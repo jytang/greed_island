@@ -26,6 +26,8 @@ uniform Material material;
 uniform DirLight dir_light;
 uniform bool shadows_enabled;
 uniform bool texture_enabled;
+uniform bool texture_noise;
+uniform vec2 noise;
 
 vec3 colorify(vec3 normal, vec3 view_dir, vec3 light_dir, vec3 light_intensity, float ambient_coeff);
 vec3 colorify_tex(vec3 normal, vec3 view_dir, vec3 light_dir, vec3 light_intensity, float ambient_coeff, vec3 tex_color);
@@ -38,8 +40,12 @@ void main()
 	vec3 light_dir = normalize(-dir_light.direction);
     vec3 light_intensity = dir_light.color;
 	vec3 result;
-	if (texture_enabled){
-		vec3 tex_color = vec3(texture(texture_map, frag_tex_coord));
+	if (texture_enabled){		
+		vec3 tex_color;
+		if(texture_noise)
+			tex_color = vec3(texture(texture_map, frag_tex_coord + noise));
+		else
+			tex_color = vec3(texture(texture_map, frag_tex_coord));
 		result = colorify_tex(normal, view_dir, light_dir, light_intensity, dir_light.ambient_coeff, tex_color);
 	}
 	else

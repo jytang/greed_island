@@ -45,7 +45,7 @@ glm::vec3 last_cursor_pos;
 
 const GLfloat PLAYER_HEIGHT = Global::PLAYER_HEIGHT;
 
-const GLfloat FAR_PLANE = 50.f * PLAYER_HEIGHT;
+const GLfloat FAR_PLANE = 200.f * PLAYER_HEIGHT;
 const GLfloat FOV = 45.f;
 
 const GLfloat   BASE_CAM_SPEED = PLAYER_HEIGHT / 10.f;

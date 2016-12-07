@@ -1,10 +1,15 @@
 #include "basic_shader.h"
 #include "shader_manager.h"
 #include "shadow_shader.h"
+#include "util.h"
 
 #include <iostream>
 
 BasicShader::BasicShader(GLuint shader_id) : Shader(shader_id) {}
+
+//Adds Noise to Water Texture
+float noise0 = 0.f;
+float noise1 = 0.f;
 
 void BasicShader::set_material(Material m)
 {
@@ -43,13 +48,20 @@ void BasicShader::draw(Geometry *g, glm::mat4 to_world)
 	glUniformMatrix4fv(glGetUniformLocation(shader_id, "mesh_model"), 1, GL_FALSE, &mesh_model[0][0]);
 
 	glUniform1i(glGetUniformLocation(shader_id, "texture_enabled"), g->has_texture);
-
+	glUniform1i(glGetUniformLocation(shader_id, "texture_noise"), g->add_texture_noise);
 	//Bind Texture
 	if (g->has_texture)
 	{
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, g->texture);
 		glUniform1i(glGetUniformLocation(shader_id, "texture_map"), 1);
+
+		if (g->add_texture_noise)
+		{
+			noise0 += Util::random(0, 0.001f);
+			noise1 += Util::random(0, 0.001f);
+			glUniform2f(glGetUniformLocation(shader_id, "noise"), noise0, noise1);
+		}			
 	}
 
 	// Bind geometry and draw
