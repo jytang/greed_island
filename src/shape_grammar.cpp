@@ -1,14 +1,16 @@
 #include "shape_grammar.h"
 #include "util.h"
+#include "global.h"
 
-const float DOOR_HEIGHT = 25.0f; //Should be larger than size of human
-const float DOOR_WIDTH = 20.0f;
-const float MIN_HEIGHT = 27.0f; //Random Temporary Values
-const float MAX_HEIGHT = 35.0f;
-const float MIN_WIDTH = 40.0f;
-const float MAX_WIDTH = 50.0f;
-const float MIN_DIAMETER = 60.0f;
-const float MAX_DIAMETER = 70.0f;
+const float PLAYER_HEIGHT = Global::PLAYER_HEIGHT;
+const float DOOR_HEIGHT = 25.0f/20.f * PLAYER_HEIGHT; //Should be larger than size of human
+const float DOOR_WIDTH = 20.0f/20.f * PLAYER_HEIGHT;
+const float MIN_HEIGHT = 27.0f/20.f * PLAYER_HEIGHT; //Random Temporary Values
+const float MAX_HEIGHT = 35.0f/20.f * PLAYER_HEIGHT;
+const float MIN_WIDTH = 40.0f/20.f * PLAYER_HEIGHT;
+const float MAX_WIDTH = 50.0f/20.f * PLAYER_HEIGHT;
+const float MIN_DIAMETER = 60.0f/20.f * PLAYER_HEIGHT;
+const float MAX_DIAMETER = 70.0f/20.f * PLAYER_HEIGHT;
 const int NUM_DIVISIONS = 15;
 
 //Main Generation Function

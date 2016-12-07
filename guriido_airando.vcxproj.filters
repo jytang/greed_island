@@ -169,5 +169,8 @@
     <ClInclude Include="inc\shape_grammar.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="inc\global.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

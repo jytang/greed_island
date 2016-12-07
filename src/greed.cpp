@@ -12,9 +12,12 @@
 
 #include "util.h"
 #include "colors.h"
+#include "global.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+
+bool vr_on = true;
 
 /* global vars */
 vr_vars GreedVR::vars;
@@ -44,33 +47,39 @@ bool mouse_moved = false;
 bool shadows_on = true;
 glm::vec3 last_cursor_pos;
 
-const GLfloat FAR_PLANE = 1000.f;
+const GLfloat PLAYER_HEIGHT = Global::PLAYER_HEIGHT;
+
+const GLfloat FAR_PLANE = 50.f * PLAYER_HEIGHT;
 const GLfloat FOV = 45.f;
-const GLfloat ISLAND_SIZE = 600.f;
-const GLfloat PLAYER_HEIGHT = 1.f;
+
 // Procedural generation parameters
 const GLuint    HEIGHT_MAP_POWER = 8;
 const GLuint    HEIGHT_MAP_SIZE = (unsigned int)glm::pow(2, HEIGHT_MAP_POWER) + 1;
-const GLfloat   HEIGHT_MAP_MAX = 200.f;
-const GLfloat   HEIGHT_RANDOMNESS_SCALE = 200.f;
-const GLint     VILLAGE_DIAMETER = 60;
-const GLfloat   TERRAIN_SIZE = ISLAND_SIZE / 5;
-const GLfloat   TERRAIN_SCALE = ISLAND_SIZE / 60;
+const GLint     VILLAGE_DIAMETER = (int) (0.23f * HEIGHT_MAP_SIZE);
 const GLuint    TERRAIN_RESOLUTION = 200;
-const GLfloat   BEACH_HEIGHT = 10.f;
-const GLuint    NUM_TREES = 200;
+const GLuint    NUM_TREES = 100;
 const GLfloat   PERCENT_TREE_ANIM = 0.9f;
-const GLuint    NUM_TREE_TYPES = 10;
 const GLfloat   TREE_SCALE = 1.5f;
-const GLfloat   PATH_WIDTH = 90.f;
-const GLfloat   FOREST_RADIUS = ISLAND_SIZE / 1.1f;
-const GLfloat   FOREST_INNER_CIRCLE = VILLAGE_DIAMETER*TERRAIN_SCALE / 3;
 const GLint		NUM_BUILDINGS = 5;
-const GLfloat	VILLAGE_DIAMETER_TRUE = ((float)VILLAGE_DIAMETER / HEIGHT_MAP_SIZE) * TERRAIN_SIZE * TERRAIN_SCALE;
-const GLfloat   WATER_SCALE = ISLAND_SIZE * 4;
-const GLint     CAM_OFFSET = 20;
 
-bool vr_on = false;
+const GLfloat   ISLAND_SIZE = 30.f * PLAYER_HEIGHT;
+const GLfloat   HEIGHT_MAP_MAX = 10.f * PLAYER_HEIGHT;
+const GLfloat   HEIGHT_RANDOMNESS_SCALE = HEIGHT_MAP_MAX;
+const GLfloat   TERRAIN_SIZE = ISLAND_SIZE / 5.f;
+const GLfloat   TERRAIN_SCALE = ISLAND_SIZE / (TERRAIN_SIZE / 2);
+const GLfloat	VILLAGE_DIAMETER_TRUE = ((float)VILLAGE_DIAMETER / HEIGHT_MAP_SIZE) * TERRAIN_SIZE * TERRAIN_SCALE;
+const GLfloat   BEACH_HEIGHT = ISLAND_SIZE / 60.f;
+const GLfloat   PATH_WIDTH = ISLAND_SIZE / 7.f;
+const GLfloat   FOREST_RADIUS = ISLAND_SIZE / 1.1f;
+const GLfloat   FOREST_INNER_CIRCLE = VILLAGE_DIAMETER_TRUE/2 + ISLAND_SIZE/10.f;
+const GLfloat   WATER_SCALE = ISLAND_SIZE * 4;
+
+const GLint     CAM_OFFSET = ISLAND_SIZE / 30.f;
+const GLfloat   BASE_CAM_SPEED = PLAYER_HEIGHT / 10.f;
+const GLfloat   EDGE_LEEWAY = ISLAND_SIZE / 6.f;
+const GLfloat   MOVE_BOUNDS = ISLAND_SIZE + EDGE_LEEWAY;
+const GLfloat   EDGE_THRESH = ISLAND_SIZE / 30.f;
+
 SceneTransform *controller_1_translate;
 SceneTransform *controller_2_translate;
 
@@ -189,13 +198,13 @@ void Greed::generate_map()
 
 	std::cerr << "Generating Land" << std::endl;
 	// Second Parameter Below is Resolution^2 of Island, LOWER TO RUN FASTER
-	land_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, BEACH_HEIGHT, HEIGHT_MAP_MAX * 0.8f - 0.2f, false);
+	land_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, BEACH_HEIGHT, HEIGHT_MAP_MAX * 0.8f, false);
 	Material land_material;
 	land_material.diffuse = land_material.ambient = color::windwaker_green;
 	Mesh land_mesh = { land_geo, land_material, ShaderManager::get_default(), glm::mat4(1.f) };
 
 	std::cerr << "Generating Plateau" << std::endl;
-	plateau_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, HEIGHT_MAP_MAX * 0.8f - 0.2f, HEIGHT_MAP_MAX, false);
+	plateau_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, HEIGHT_MAP_MAX * 0.8f, HEIGHT_MAP_MAX, false);
 	Material plateau_material;
 	plateau_material.diffuse = plateau_material.ambient = color::bone_white;
 	Mesh plateau_mesh = { plateau_geo, plateau_material, ShaderManager::get_default(), glm::mat4(1.f) };
@@ -264,21 +273,24 @@ void Greed::generate_miniatures()
 	small_land_material.diffuse = small_land_material.ambient = color::windwaker_green;
 	small_land_material.shadows = false;
 	Mesh small_land_mesh = { land_geo, small_land_material, ShaderManager::get_default(), glm::mat4(1.f) };
+	small_land_mesh.no_culling = true;
 	Material small_plateau_material;
 	small_plateau_material.diffuse = small_plateau_material.ambient = color::bone_white;
 	small_plateau_material.shadows = false;
 	Mesh small_plateau_mesh = { plateau_geo, small_plateau_material, ShaderManager::get_default(), glm::mat4(1.f) };
+	small_plateau_mesh.no_culling = true;
 	Material small_sand_material;
 	small_sand_material.diffuse = small_sand_material.ambient = color::windwaker_sand;
 	small_sand_material.shadows = false;
 	Mesh small_sand_mesh = { sand_geo, small_sand_material, ShaderManager::get_default(), glm::mat4(1.f) };
+	small_sand_mesh.no_culling = true;
 	SceneModel *small_terrain_model = new SceneModel(scene);
 	small_terrain_model->add_mesh(small_land_mesh);
 	small_terrain_model->add_mesh(small_sand_mesh);
 	small_terrain_model->add_mesh(small_plateau_mesh);
 	SceneTransform *small_terrain_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(0.05f, 0.05f / 10.f, 0.05f)));
 	SceneAnimation *small_terrain_anim = new SceneAnimation(scene, 0.f, FLT_MAX, 0.f, SMALL_ROT_SPEED, glm::vec3(0.f, 1.f, 0.f), glm::vec3(0.f, 0.f, 0.f));
-	SceneTransform *small_terrain_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(80.f, 175.f, -40.f)));
+	SceneTransform *small_terrain_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(4.f, HEIGHT_MAP_MAX-2.f, -2.f)));
 	small_terrain_scale->add_child(small_terrain_model);
 	small_terrain_anim->add_child(small_terrain_scale);
 	small_terrain_translate->add_child(small_terrain_anim);
@@ -298,7 +310,7 @@ void Greed::generate_miniatures()
 	SceneGroup *small_tree_6 = Tree::generate_tree(scene, cylinder_geo, diamond_geo, 7, 1, 20.f, 2.f, branch_material, leaf_material, false, glm::vec3(0.f), 777);
 	SceneGroup *small_trees[6] = { small_tree_1, small_tree_2, small_tree_3, small_tree_4, small_tree_5, small_tree_6 };
 	SceneGroup *small_forest = new SceneGroup();
-	float SMALL_FOREST_RADIUS = 5.f;
+	float SMALL_FOREST_RADIUS = 0.25f;
 	for (int i = 0; i < 6; ++i)
 	{
 		SceneTransform *small_tree_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(0.05f)));
@@ -313,7 +325,7 @@ void Greed::generate_miniatures()
 		small_forest->add_child(small_tree_translate);
 	}
 
-	SceneTransform *small_forest_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(-80.f, 175.f, -40.f)));
+	SceneTransform *small_forest_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(-4.f, HEIGHT_MAP_MAX-2.f, -2.f)));
 	small_forest_translate->add_child(small_forest);
 	root->add_child(small_forest_translate);
 	std::cerr << "Done." << std::endl;
@@ -367,7 +379,7 @@ void Greed::setup_scene()
 	SceneModel *water_model = new SceneModel(scene);
 	water_model->add_mesh(water_mesh);
 	SceneTransform *water_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(WATER_SCALE, 1.0f, WATER_SCALE)));
-	SceneTransform *water_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, -2.f, 0.0f)));
+	SceneTransform *water_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, -0.5f * PLAYER_HEIGHT, 0.0f)));
 	water_scale->add_child(water_model);
 	water_translate->add_child(water_scale);
 	root->add_child(water_translate);
@@ -376,11 +388,12 @@ void Greed::setup_scene()
 	Geometry *beach_geo = GeometryGenerator::generate_bezier_plane(ISLAND_SIZE*1.5f, 50, 150, 0.1f, 0);
 	Material beach_material;
 	beach_material.diffuse = beach_material.ambient = color::windwaker_sand;
+	beach_material.shadows = false;
 	Mesh beach_mesh = { beach_geo, beach_material, ShaderManager::get_default(), glm::mat4(1.f) };
 	SceneModel *beach_model = new SceneModel(scene);
 	beach_model->add_mesh(beach_mesh);
 	SceneTransform *beach_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(1.0f, 1.0f, 1.0f)));
-	SceneTransform *beach_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, -1.1f, 0.0f)));
+	SceneTransform *beach_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, -0.01f * PLAYER_HEIGHT, 0.0f)));
 	beach_scale->add_child(beach_model);
 	beach_translate->add_child(beach_scale);
 	root->add_child(beach_translate);
@@ -440,7 +453,7 @@ void Greed::go()
 		double curr_time = glfwGetTime();
 		if (curr_time - prev_ticks > 1.f)
 		{
-			std::cerr << "FPS: " << frame << std::endl;
+			//std::cerr << "FPS: " << frame << std::endl;
 			frame = 0;
 			prev_ticks = curr_time;
 		}
@@ -460,12 +473,12 @@ void Greed::go()
 		// Rotate sun.
 		if (keys[GLFW_KEY_LEFT_ALT])
 		{
-			float sun_step = 0.005f;
+			float sun_step = 0.005f * PLAYER_HEIGHT;
 
-			if (scene->light_pos.y < 10.f)
+			if (scene->light_pos.y < 0.5f * PLAYER_HEIGHT)
 				sun_step *= 2;
 			else
-				sun_step *= glm::max(scene->light_pos.y / (ISLAND_SIZE * 2), 0.2f);
+				sun_step *= glm::max(scene->light_pos.y / (ISLAND_SIZE * 2), 0.01f * PLAYER_HEIGHT);
 			
 			sun_step *= scene->light_pos.y < 0 ? 3 : 1;
 			scene->light_pos = glm::vec3(glm::rotate(glm::mat4(1.0f), sun_step, glm::vec3(0.f, 0.f, 1.f)) * glm::vec4(scene->light_pos, 1.0f));
@@ -566,8 +579,8 @@ void Greed::vr_render()
 		}
 	}
 
-	/*Useless Code
-	glm::mat4 bodyToWorldMatrix = glm::mat4(1.0f); //Useless
+	//Useless
+	glm::mat4 bodyToWorldMatrix = glm::mat4(1.0f);
 	glm::vec3 head_center = glm::vec3(0.f, 0.f, 0.f);
 
 	//Get Body Matrix (for Room Space)	
@@ -579,7 +592,8 @@ void Greed::vr_render()
 
 		//fprintf(stderr, "Printing for device %u: Center is %f\t%f\t%f\n", vr::k_unTrackedDeviceIndex_Hmd, center.x, center.y, center.z);
 	}	
-	*/
+	
+
 
 	for (int eye = 0; eye < GreedVR::vars.numEyes; ++eye) {
 		glBindFramebuffer(GL_FRAMEBUFFER, GreedVR::vars.framebuffer[eye]);
@@ -592,7 +606,7 @@ void Greed::vr_render()
 		camera->cam_front.y = 0.f;
 
 		scene->P = proj;		
-		camera->V = head * glm::inverse(glm::translate(glm::mat4(1.0f), camera->cam_pos));// *glm::inverse(glm::translate(glm::mat4(1.f), head_center * 10.f));
+		camera->V = head * glm::inverse(glm::translate(glm::mat4(1.0f), camera->cam_pos));
 		scene->render();
 
 
@@ -610,10 +624,6 @@ void Greed::vr_render()
 
 void Greed::handle_movement()
 {
-	const GLfloat EDGE_LEEWAY = 100.f;
-	const GLfloat MOVE_BOUNDS = ISLAND_SIZE + EDGE_LEEWAY;
-	const GLfloat EDGE_THRESH = 20.f;
-	const GLfloat BASE_CAM_SPEED = 2.f;
 	GLfloat cam_step = keys[GLFW_KEY_LEFT_SHIFT] ? 5*BASE_CAM_SPEED : BASE_CAM_SPEED;
 	glm::vec3 displacement(0.f);
 	if (keys[GLFW_KEY_W])
@@ -688,15 +698,14 @@ void Greed::handle_movement_vr()
 			continue;
 		
 		//Testing
+		/*
 		fprintf(stderr, "Controller Pressed: %llu\n", (unsigned long long) pControllerState.ulButtonPressed);
 		fprintf(stderr, "Controller Touched: %llu\n", (unsigned long long) pControllerState.ulButtonTouched);				
 		fprintf(stderr, "Controller Test 1: %f\n", (float)pControllerState.rAxis[TRACKPAD].x);
-		fprintf(stderr, "Controller Test 1: %f\n", (float)pControllerState.rAxis[TRACKPAD].y);
+		fprintf(stderr, "Controller Test 1: %f\n", (float)pControllerState.rAxis[TRACKPAD].y);		
 		fprintf(stderr, "Controller Test 0: %f\n", (float)pControllerState.rAxis[TRIGGER].x);
+		*/
 		
-
-		const GLfloat EDGE_THRESH = 20.f;
-		const GLfloat BASE_CAM_SPEED = 2.f;
 		GLfloat cam_step = keys[GLFW_KEY_LEFT_SHIFT] ? 5 * BASE_CAM_SPEED : BASE_CAM_SPEED;
 		glm::vec3 displacement(0.f);		
 
@@ -719,47 +728,43 @@ void Greed::handle_movement_vr()
 		glm::vec3 new_pos = camera->cam_pos + displacement;		
 
 		// Check horizontal bounds.
-		if (new_pos.x < -ISLAND_SIZE || new_pos.x > ISLAND_SIZE || new_pos.z < -ISLAND_SIZE || new_pos.z > ISLAND_SIZE)
+		if (new_pos.x < -MOVE_BOUNDS || new_pos.x > MOVE_BOUNDS || new_pos.z < -MOVE_BOUNDS || new_pos.z > MOVE_BOUNDS)
 			return;
 
 		// Smoother edge movement.
-		if (new_pos.x < -ISLAND_SIZE + EDGE_THRESH)
-		{
-			float diff = glm::abs(-ISLAND_SIZE - new_pos.x);
+		if (new_pos.x < -MOVE_BOUNDS + EDGE_THRESH) {
+			float diff = glm::abs(-MOVE_BOUNDS - new_pos.x);
 			displacement *= diff / EDGE_THRESH;
 		}
-		else if (new_pos.x > ISLAND_SIZE - EDGE_THRESH)
-		{
-			float diff = glm::abs(ISLAND_SIZE - new_pos.x);
+		else if (new_pos.x > MOVE_BOUNDS - EDGE_THRESH) {
+			float diff = glm::abs(MOVE_BOUNDS - new_pos.x);
 			displacement *= diff / EDGE_THRESH;
 		}
-		if (new_pos.z < -ISLAND_SIZE + EDGE_THRESH)
-		{
-			float diff = glm::abs(-ISLAND_SIZE - new_pos.z);
+		if (new_pos.z < -MOVE_BOUNDS + EDGE_THRESH) {
+			float diff = glm::abs(-MOVE_BOUNDS - new_pos.z);
 			displacement *= diff / EDGE_THRESH;
 		}
-		else if (new_pos.z > ISLAND_SIZE - EDGE_THRESH)
-		{
-			float diff = glm::abs(ISLAND_SIZE - new_pos.z);
+		else if (new_pos.z > MOVE_BOUNDS - EDGE_THRESH) {
+			float diff = glm::abs(MOVE_BOUNDS - new_pos.z);
 			displacement *= diff / EDGE_THRESH;
 		}
-		new_pos = camera->cam_pos + displacement;
+		new_pos = camera->cam_pos + displacement;		
 
 		// Recheck height.
-		float new_height = Terrain::height_lookup(new_pos.x, new_pos.z, ISLAND_SIZE * 2);
-		new_pos.y = new_height + PLAYER_HEIGHT;
+		float new_height = 0.f;
+		if (Util::within_rect(glm::vec2(new_pos.x, new_pos.z), glm::vec2(-ISLAND_SIZE, ISLAND_SIZE), glm::vec2(ISLAND_SIZE, -ISLAND_SIZE)))
+			new_height = Terrain::height_lookup(new_pos.x, new_pos.z, ISLAND_SIZE * 2);
+		new_pos.y = new_height;
 
 		//Check if Slope is Climable
 
 		//float MAX_SLOPE = 1.4f;
 		float slope = (new_height - last_height) / (glm::distance(glm::vec2(camera->cam_pos.x, camera->cam_pos.z), glm::vec2(new_pos.x, new_pos.z)));
-		fprintf(stderr, "Slope is: %f\n", slope);
+		//fprintf(stderr, "Slope is: %f\n", slope);
 		//if (slope < MAX_SLOPE)
 		//{
 			camera->cam_pos = new_pos;
 		//}
-			
-
 	}	
 }
 
