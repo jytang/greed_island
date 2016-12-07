@@ -48,7 +48,7 @@ const GLfloat skybox_vertices[] = {
 	1.0f, -1.0f,  1.0f
 };
 
-const int NUM_SKYBOXES = 6;
+const int NUM_SKYBOXES = 5;
 
 SkyboxShader::SkyboxShader(GLuint shader_id) : Shader(shader_id)
 {
@@ -89,10 +89,9 @@ void SkyboxShader::load_cubemap()
 
 	std::vector<std::string> skybox_names;
 	skybox_names.push_back("low-res-cloudy");
-	skybox_names.push_back("space");
 	skybox_names.push_back("sahara");
 	skybox_names.push_back("snow");
-	skybox_names.push_back("desert-sorbin");
+	skybox_names.push_back("space");
 	skybox_names.push_back("violent-days");
 
 	for (int i = 0; i < NUM_SKYBOXES; ++i)

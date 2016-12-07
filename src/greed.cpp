@@ -24,7 +24,9 @@ vr_vars GreedVR::vars;
 Scene* scene;
 Scene* island_scene;
 Scene* desert_scene;
-Scene* transition_scene;
+Scene* snow_scene;
+Scene* space_scene;
+Scene* fire_scene;
 std::vector<Scene*> scenes;
 SceneCamera* camera;
 SceneGroup *forest;
@@ -114,7 +116,6 @@ Greed::~Greed() {}
 void Greed::destroy()
 {
 	// Free memory here.
-	//delete(transition_scene);
 	delete(island_scene);
 	ShaderManager::destroy();
 	GeometryGenerator::clean_up();
@@ -191,7 +192,7 @@ void Greed::generate_forest()
 			x = glm::cos(glm::radians(angle)) * distance;
 			z = glm::sin(glm::radians(angle)) * distance;
 		} while (Util::within_rect(glm::vec2(x, z), glm::vec2(-PATH_WIDTH / 2, FOREST_RADIUS), glm::vec2(PATH_WIDTH / 2, 0)));
-		float y = Terrain::height_lookup(x, z, ISLAND_SIZE * 2);
+		float y = Terrain::height_lookup(x, z, ISLAND_SIZE * 2, scene->height_map);
 		glm::vec3 location = { x, y, z };
 
 		// Ugly code below.
@@ -220,26 +221,26 @@ void Greed::generate_map()
 		map->remove_all();
 	}
 
-	Terrain::generate_height_map(HEIGHT_MAP_SIZE, HEIGHT_MAP_MAX, VILLAGE_DIAMETER, HEIGHT_RANDOMNESS_SCALE, 0);
-	float cam_height = Terrain::height_lookup(0.f, ISLAND_SIZE - CAM_OFFSET, ISLAND_SIZE * 2);
+	scene->height_map = Terrain::generate_height_map(HEIGHT_MAP_SIZE, HEIGHT_MAP_MAX, VILLAGE_DIAMETER, HEIGHT_RANDOMNESS_SCALE, 0);
+	float cam_height = Terrain::height_lookup(0.f, ISLAND_SIZE - CAM_OFFSET, ISLAND_SIZE * 2, scene->height_map);
 	camera->cam_pos.y = cam_height + PLAYER_HEIGHT;
 	camera->recalculate();
 
 	// Mainland
 	// Second Parameter Below is Resolution^2 of Island, LOWER TO RUN FASTER
-	land_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, BEACH_HEIGHT, HEIGHT_MAP_MAX * 0.8f, false);
+	land_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, BEACH_HEIGHT, HEIGHT_MAP_MAX * 0.8f, false, scene->height_map);
 	Material land_material;
 	land_material.diffuse = land_material.ambient = color::windwaker_green;
 	Mesh land_mesh = { land_geo, land_material, ShaderManager::get_default(), glm::mat4(1.f) };
 
 	// Plateau/village
-	plateau_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, HEIGHT_MAP_MAX * 0.8f, HEIGHT_MAP_MAX, false);
+	plateau_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, HEIGHT_MAP_MAX * 0.8f, HEIGHT_MAP_MAX, false, scene->height_map);
 	Material plateau_material;
 	plateau_material.diffuse = plateau_material.ambient = color::bone_white;
 	Mesh plateau_mesh = { plateau_geo, plateau_material, ShaderManager::get_default(), glm::mat4(1.f) };
 
 	// Beachfront
-	sand_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, 0.0f, BEACH_HEIGHT, true);
+	sand_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, 0.0f, BEACH_HEIGHT, true, scene->height_map);
 	Material sand_material;
 	sand_material.diffuse = sand_material.ambient = color::windwaker_sand;
 	Mesh sand_mesh = { sand_geo, sand_material, ShaderManager::get_default(), glm::mat4(1.f) };
@@ -273,7 +274,7 @@ void Greed::generate_village()
 		float x = glm::cos(glm::radians(angle)) * distance;
 		float z = -glm::sin(glm::radians(angle)) * distance;
 
-		float y = Terrain::height_lookup(x, z, ISLAND_SIZE * 2);
+		float y = Terrain::height_lookup(x, z, ISLAND_SIZE * 2, scene->height_map);
 		glm::vec3 location = { x, y, z };
 
 		float rot = glm::radians(-90.f + angle);
@@ -415,11 +416,15 @@ void Greed::generate_miniatures()
 void Greed::setup_scene()
 {
 	island_scene = new Scene();
-	transition_scene = new Scene();
 	desert_scene = new Scene();
+	snow_scene = new Scene();
+	space_scene = new Scene();
+	fire_scene = new Scene();
 	scenes.push_back(island_scene);
-	scenes.push_back(transition_scene);
 	scenes.push_back(desert_scene);
+	scenes.push_back(snow_scene);
+	scenes.push_back(space_scene);
+	scenes.push_back(fire_scene);
 
 	scene = island_scene;
 	SceneGroup *root = scene->root;
@@ -428,9 +433,7 @@ void Greed::setup_scene()
 	camera = scene->camera;
 	// Set all cameras to be the same.
 	for (Scene* s : scenes)
-	{
 		s->camera = camera;
-	}
 	// Initial position
 	camera->cam_pos = glm::vec3(0.f, 0.f, ISLAND_SIZE - CAM_OFFSET);
 	camera->recalculate();
@@ -449,8 +452,9 @@ void Greed::setup_scene()
 	Mesh skybox_mesh = { nullptr, default_material, ShaderManager::get_shader_program("skybox"), glm::mat4(1.f) };
 	SceneModel *skybox_model = new SceneModel(scene);
 	skybox_model->add_mesh(skybox_mesh);
-	root->add_child(skybox_model);
-	transition_scene->root->add_child(skybox_model);
+	
+	for (Scene* s : scenes)
+		s->root->add_child(skybox_model);
 
 	// Infinite water plane stretching to the horizon
 	Geometry *plane_geo = GeometryGenerator::generate_plane(1.f);
@@ -479,7 +483,6 @@ void Greed::setup_scene()
 	beach_scale->add_child(beach_model);
 	beach_translate->add_child(beach_scale);
 	root->add_child(beach_translate);
-	desert_scene->root->add_child(beach_translate);
 	
 	// Generate everything.
 	generate_map();
@@ -784,7 +787,7 @@ void Greed::handle_movement()
 	// Fix height.
 	float new_height = 0.f;
 	if (Util::within_rect(glm::vec2(new_pos.x, new_pos.z), glm::vec2(-ISLAND_SIZE, ISLAND_SIZE), glm::vec2(ISLAND_SIZE, -ISLAND_SIZE)))
-		new_height = Terrain::height_lookup(new_pos.x, new_pos.z, ISLAND_SIZE * 2);
+		new_height = Terrain::height_lookup(new_pos.x, new_pos.z, ISLAND_SIZE * 2, scene->height_map);
 	new_pos.y = new_height + PLAYER_HEIGHT;
 
 	camera->cam_pos = new_pos;
@@ -830,7 +833,7 @@ void Greed::handle_movement_vr()
 		glm::vec3 displacement(0.f);		
 
 		// Fix height to be based on heightmap.
-		float last_height = Terrain::height_lookup(camera->cam_pos.x, camera->cam_pos.z, ISLAND_SIZE * 2);
+		float last_height = Terrain::height_lookup(camera->cam_pos.x, camera->cam_pos.z, ISLAND_SIZE * 2, scene->height_map);
 
 		if (pControllerState.ulButtonPressed == TRACKPAD_ID)
 		{
@@ -873,7 +876,7 @@ void Greed::handle_movement_vr()
 		// Recheck height.
 		float new_height = 0.f;
 		if (Util::within_rect(glm::vec2(new_pos.x, new_pos.z), glm::vec2(-ISLAND_SIZE, ISLAND_SIZE), glm::vec2(ISLAND_SIZE, -ISLAND_SIZE)))
-			new_height = Terrain::height_lookup(new_pos.x, new_pos.z, ISLAND_SIZE * 2);
+			new_height = Terrain::height_lookup(new_pos.x, new_pos.z, ISLAND_SIZE * 2, scene->height_map);
 		new_pos.y = new_height;
 
 		//Check if Slope is Climable
@@ -945,9 +948,6 @@ void Greed::key_callback(GLFWwindow* window, int key, int scancode, int action, 
 			break;
 		case GLFW_KEY_C:
 			next_scene();
-			break;
-		case GLFW_KEY_Z:
-			next_skybox();
 			break;
 		case GLFW_KEY_X:
 			shadows_on = !shadows_on;

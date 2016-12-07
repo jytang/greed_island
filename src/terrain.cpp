@@ -1,11 +1,9 @@
 #include "terrain.h"
 #include "util.h"
 
-std::vector<std::vector<GLfloat> > Terrain::height_map;
-
-void Terrain::generate_height_map(GLuint size, GLfloat max_height, GLint village_diameter, GLfloat scale, GLuint seed = 0)
+std::vector<std::vector<GLfloat> > Terrain::generate_height_map(GLuint size, GLfloat max_height, GLint village_diameter, GLfloat scale, GLuint seed = 0)
 {
-	height_map.clear();
+	std::vector<std::vector<GLfloat> > height_map;
 	unsigned int middle = ((size - 1) / 2); //Size is always odd
 	
 	//All points initialized at -1
@@ -81,7 +79,7 @@ void Terrain::generate_height_map(GLuint size, GLfloat max_height, GLint village
 	unsigned int stepsize = size - 1;
 
 	//Recursively creates height map
-	diamond_square(stepsize, size, scale);
+	diamond_square(stepsize, size, scale, height_map);
 
 	//Depresses the Plateau for a cooler effect!
 	max_height *= 0.8f; //Amount of depression.
@@ -123,9 +121,11 @@ void Terrain::generate_height_map(GLuint size, GLfloat max_height, GLint village
 			}			
 		}
 	}
+
+	return height_map;
 }
 
-void Terrain::diamond_square(unsigned int step, unsigned int size, float scale)
+void Terrain::diamond_square(unsigned int step, unsigned int size, float scale, std::vector<std::vector<GLfloat> > &height_map)
 {
 	if (step <= 1)
 		return;
@@ -136,7 +136,7 @@ void Terrain::diamond_square(unsigned int step, unsigned int size, float scale)
 	{
 		for (unsigned int y = halfstep; y < size; y += step)
 		{
-			diamond_step(x, y, step, size, Util::random(-1.f, 1.f) * scale);
+			diamond_step(x, y, step, size, Util::random(-1.f, 1.f) * scale, height_map);
 		}
 	}
 
@@ -145,9 +145,9 @@ void Terrain::diamond_square(unsigned int step, unsigned int size, float scale)
 		for (unsigned int y = 0; y < size; y += step)
 		{
 			if (x + halfstep < size)
-				square_step(x + halfstep, y, step, size, Util::random(-1.f, 1.f)  *scale);
+				square_step(x + halfstep, y, step, size, Util::random(-1.f, 1.f)  *scale, height_map);
 			if (y + halfstep < size)
-				square_step(x, y + halfstep, step, size, Util::random(-1.f, 1.f)  *scale);
+				square_step(x, y + halfstep, step, size, Util::random(-1.f, 1.f)  *scale, height_map);
 		}
 	}
 
@@ -157,10 +157,10 @@ void Terrain::diamond_square(unsigned int step, unsigned int size, float scale)
 
 	scale *= (float)glm::pow(2.f, -roughness);
 
-	diamond_square(step / 2, size, scale);
+	diamond_square(step / 2, size, scale, height_map);
 }
 
-void Terrain::diamond_step(unsigned int x, unsigned int y, unsigned int step, unsigned int size, float scale)
+void Terrain::diamond_step(unsigned int x, unsigned int y, unsigned int step, unsigned int size, float scale, std::vector<std::vector<GLfloat> > &height_map)
 {
 	if (height_map[x][y] != -1)
 		return;
@@ -208,7 +208,7 @@ void Terrain::diamond_step(unsigned int x, unsigned int y, unsigned int step, un
 		height_map[x][y] = 0;
 }
 
-void Terrain::square_step(unsigned int x, unsigned int y, unsigned int step, unsigned int size, float scale)
+void Terrain::square_step(unsigned int x, unsigned int y, unsigned int step, unsigned int size, float scale, std::vector<std::vector<GLfloat> > &height_map)
 {
 	if (height_map[x][y] != -1)
 		return;
@@ -259,7 +259,7 @@ void Terrain::square_step(unsigned int x, unsigned int y, unsigned int step, uns
 		height_map[x][y] = 0;
 }
 
-float Terrain::height_lookup(float x, float y, float length)
+float Terrain::height_lookup(float x, float y, float length, std::vector<std::vector<GLfloat> > &height_map)
 {
 	//Assumes that terrain will be centered at origin and that terrain is square
 
