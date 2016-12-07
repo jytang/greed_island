@@ -18,6 +18,7 @@ private:
 
 	void handle_movement();
 	void handle_movement_vr();
+	void handle_helicopter();
 	void vr_render();
 	void setup_scene();
 	void setup_callbacks();

@@ -50,6 +50,7 @@ bool mouse_moved = false;
 bool shadows_on = true;
 bool god_mode = false;
 bool helicopter_mode = false;
+float helicopter_angle;
 glm::vec3 last_cursor_pos;
 
 const GLfloat PLAYER_HEIGHT = Global::PLAYER_HEIGHT;
@@ -87,14 +88,17 @@ const GLfloat   BASE_CAM_SPEED = PLAYER_HEIGHT / 10.f;
 const GLfloat   EDGE_LEEWAY = ISLAND_SIZE / 6.f;
 const GLfloat   MOVE_BOUNDS = ISLAND_SIZE + EDGE_LEEWAY;
 const GLfloat   EDGE_THRESH = ISLAND_SIZE / 30.f;
+const GLfloat   HELI_HEIGHT = ISLAND_SIZE;
+const GLfloat   HELI_SPEED = 0.5f;
+const GLfloat   HELI_SLOW_THRESH = 20.f;
 
 // Miniature Parameters
 const GLfloat SMALL_ROT_SPEED = 0.3f;
 const GLfloat SMALL_MAP_SCALE = 0.15f;
-const GLuint NUM_SMALL_TREES = 6;
+const GLuint  NUM_SMALL_TREES = 6;
 const GLfloat SMALL_TREE_SCALE = 0.1f;
 const GLfloat SMALL_FOREST_RADIUS = 1.5f;
-const GLuint NUM_SMALL_BUILDINGS = 5;
+const GLuint  NUM_SMALL_BUILDINGS = 5;
 const GLfloat SMALL_BUILDING_SCALE = 0.1f;
 const GLfloat SMALL_VILLAGE_RADIUS = 1.5f;
 
@@ -153,7 +157,7 @@ void Greed::setup_shaders()
 
 void Greed::generate_forest()
 {
-	std::cerr << "Generating Forest" << std::endl;
+	std::cerr << "Generating Forest...";
 
 	if (!forest)
 	{
@@ -168,13 +172,15 @@ void Greed::generate_forest()
 	glm::vec3 branch_colors[] = { color::brown, color::wood_saddle, color::wood_sienna, color::wood_tan, color::wood_tan_light };
 	Material branch_material, leaf_material;
 	for (int i = 0; i < NUM_TREES; ++i) {
+		if (i % 49 == 0)
+			std::cerr << " . ";
+
+		// Randomise colours, animation, location.
 		leaf_material.diffuse = leaf_material.ambient = leaf_colors[(int)Util::random(0, 7)];
 		branch_material.diffuse = branch_material.ambient = branch_colors[(int)Util::random(0, 5)];
 		bool animated = false;
 		if (i % (NUM_TREES / (int)(NUM_TREES*PERCENT_TREE_ANIM)) == 0)
 			animated = true;
-		if (i % 50 == 0)
-			std::cerr << "Tree " << i << std::endl;
 		float x, z;
 		do {
 			float angle = Util::random(0, 360);
@@ -185,20 +191,23 @@ void Greed::generate_forest()
 		} while (Util::within_rect(glm::vec2(x, z), glm::vec2(-PATH_WIDTH / 2, FOREST_RADIUS), glm::vec2(PATH_WIDTH / 2, 0)));
 		float y = Terrain::height_lookup(x, z, ISLAND_SIZE * 2);
 		glm::vec3 location = { x, y, z };
+
+		// Ugly code below.
 		SceneGroup *tree = Tree::generate_tree(scene, cylinder_geo, diamond_geo, 7, 1, 20.f, 2.f, branch_material, leaf_material, animated, location, 0);
 		((SceneModel *)(tree->children[0]))->meshes[0].to_world = glm::translate(glm::mat4(1.f), location) * glm::scale(glm::mat4(1.f), glm::vec3(TREE_SCALE));
 		if (animated)
 			((SceneModel *)((SceneAnimation *)(tree->children[1]))->children[0])->meshes[0].to_world = glm::translate(glm::mat4(1.f), location) * glm::scale(glm::mat4(1.f), glm::vec3(TREE_SCALE));
 		else
 			((SceneModel *)(tree->children[1]))->meshes[0].to_world = glm::translate(glm::mat4(1.f), location) * glm::scale(glm::mat4(1.f), glm::vec3(TREE_SCALE));
+		// Phew.
 		forest->add_child(tree);
 	}
-	std::cerr << "Done." << std::endl;
+	std::cerr << "OK." << std::endl;
 }
 
 void Greed::generate_map()
 {
-	std::cerr << "Generating Map" << std::endl;
+	std::cerr << "Generating Map...";
 
 	if (!map)
 	{
@@ -214,20 +223,20 @@ void Greed::generate_map()
 	camera->cam_pos.y = cam_height + PLAYER_HEIGHT;
 	camera->recalculate();
 
-	std::cerr << "Generating Land" << std::endl;
+	// Mainland
 	// Second Parameter Below is Resolution^2 of Island, LOWER TO RUN FASTER
 	land_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, BEACH_HEIGHT, HEIGHT_MAP_MAX * 0.8f, false);
 	Material land_material;
 	land_material.diffuse = land_material.ambient = color::windwaker_green;
 	Mesh land_mesh = { land_geo, land_material, ShaderManager::get_default(), glm::mat4(1.f) };
 
-	std::cerr << "Generating Plateau" << std::endl;
+	// Plateau/village
 	plateau_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, HEIGHT_MAP_MAX * 0.8f, HEIGHT_MAP_MAX, false);
 	Material plateau_material;
 	plateau_material.diffuse = plateau_material.ambient = color::bone_white;
 	Mesh plateau_mesh = { plateau_geo, plateau_material, ShaderManager::get_default(), glm::mat4(1.f) };
 
-	std::cerr << "Generating Sand" << std::endl;
+	// Beachfront
 	sand_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, 0.0f, BEACH_HEIGHT, true);
 	Material sand_material;
 	sand_material.diffuse = sand_material.ambient = color::windwaker_sand;
@@ -238,12 +247,12 @@ void Greed::generate_map()
 	terrain_model->add_mesh(sand_mesh);
 	terrain_model->add_mesh(plateau_mesh);
 	map->add_child(terrain_model);
-	std::cerr << "Done." << std::endl;
+	std::cerr << "OK." << std::endl;
 }
 
 void Greed::generate_village()
 {
-	std::cerr << "Generating Village" << std::endl;
+	std::cerr << "Generating Village...";
 
 	if (!village)
 	{
@@ -256,8 +265,6 @@ void Greed::generate_village()
 
 	for (int i = 0; i < NUM_BUILDINGS; ++i)
 	{
-		std::cerr << "House " << i << std::endl;
-
 		float angle = ((360.f / (NUM_BUILDINGS)) * i) - 54.f; //Circles around, starting from the right
 		float distance = VILLAGE_DIAMETER_TRUE / 3.f;
 
@@ -276,7 +283,7 @@ void Greed::generate_village()
 		building_translate->add_child(building_rotate);
 		village->add_child(building_translate);
 	}
-	std::cerr << "Done." << std::endl;
+	std::cerr << "OK." << std::endl;
 }
 
 void Greed::generate_small_map()
@@ -364,7 +371,7 @@ void Greed::generate_small_village()
 
 void Greed::generate_miniatures()
 {
-	std::cerr << "Generating Miniatures" << std::endl;
+	std::cerr << "Generating Miniatures...";
 	SceneGroup *root = scene->root;
 	
 	glm::vec3 pivot_pt(0.f, HEIGHT_MAP_MAX - 2.f, -8.f);
@@ -400,7 +407,7 @@ void Greed::generate_miniatures()
 	small_village_rotate->add_child(small_village_translate);
 	root->add_child(small_village_rotate);
 
-	std::cerr << "Done." << std::endl;
+	std::cerr << "OK." << std::endl;
 }
 
 void Greed::setup_scene()
@@ -532,30 +539,36 @@ void Greed::go()
 		}
 		if (curr_time - move_prev_ticks > 1.f / 60.f)
 		{
-			if (vr_on)
-				handle_movement_vr();					
+			if (helicopter_mode)
+				handle_helicopter();
 			else
-				handle_movement();
+			{
+				if (vr_on)
+					handle_movement_vr();
+				else
+					handle_movement();
+			}
+
+			// Rotate sun.
+			if (keys[GLFW_KEY_LEFT_ALT])
+			{
+				float sun_step = 0.005f * PLAYER_HEIGHT;
+
+				if (scene->light_pos.y < 0.5f * PLAYER_HEIGHT)
+					sun_step *= 2;
+				else
+					sun_step *= glm::max(scene->light_pos.y / (ISLAND_SIZE * 2), 0.1f * PLAYER_HEIGHT);
+
+				sun_step *= scene->light_pos.y < 0 ? 3 : 1;
+				scene->light_pos = glm::vec3(glm::rotate(glm::mat4(1.0f), sun_step, glm::vec3(0.f, 0.f, 1.f)) * glm::vec4(scene->light_pos, 1.0f));
+			}
+
 			move_prev_ticks = curr_time;
 		}
 
 		glfwGetFramebufferSize(window, &width, &height);
 		scene->update_frustum_planes();
 		scene->update_frustum_corners(width, height, FAR_PLANE);
-
-		// Rotate sun.
-		if (keys[GLFW_KEY_LEFT_ALT])
-		{
-			float sun_step = 0.005f * PLAYER_HEIGHT;
-
-			if (scene->light_pos.y < 0.5f * PLAYER_HEIGHT)
-				sun_step *= 2;
-			else
-				sun_step *= glm::max(scene->light_pos.y / (ISLAND_SIZE * 2), 0.01f * PLAYER_HEIGHT);
-			
-			sun_step *= scene->light_pos.y < 0 ? 3 : 1;
-			scene->light_pos = glm::vec3(glm::rotate(glm::mat4(1.0f), sun_step, glm::vec3(0.f, 0.f, 1.f)) * glm::vec4(scene->light_pos, 1.0f));
-		}
 
 		// First pass: shadowmap.
 		shadow_pass();
@@ -695,6 +708,29 @@ void Greed::vr_render()
 	}
 }
 
+void Greed::handle_helicopter()
+{
+	float x = MOVE_BOUNDS*glm::cos(glm::radians(helicopter_angle));
+	float z = -MOVE_BOUNDS*glm::sin(glm::radians(helicopter_angle));
+	float y = HELI_HEIGHT-helicopter_angle*0.1f; // spiral down....
+
+	if (y <= PLAYER_HEIGHT)
+		return;
+
+	float displacement = HELI_SPEED;
+
+	if (y <= PLAYER_HEIGHT + HELI_SLOW_THRESH)
+	{
+		float diff = PLAYER_HEIGHT + HELI_SLOW_THRESH - y;
+		displacement *= glm::max((HELI_SLOW_THRESH - diff) / HELI_SLOW_THRESH, 0.01f);
+	}
+
+	helicopter_angle += displacement;
+
+	camera->cam_pos = glm::vec3(x, y, z);
+	camera->recalculate();
+}
+
 void Greed::handle_movement()
 {
 	GLfloat cam_step = keys[GLFW_KEY_LEFT_SHIFT] ? 3*BASE_CAM_SPEED : BASE_CAM_SPEED;
@@ -710,6 +746,14 @@ void Greed::handle_movement()
 	if (keys[GLFW_KEY_SPACE])
 		displacement += cam_step * camera->cam_up;
 	glm::vec3 new_pos = camera->cam_pos + displacement;
+
+	// Don't limit movement if godmode is on.
+	if (god_mode)
+	{
+		camera->cam_pos = new_pos;
+		camera->recalculate();
+		return;
+	}
 
 	// Check horizontal bounds.
 	if (new_pos.x < -MOVE_BOUNDS || new_pos.x > MOVE_BOUNDS || new_pos.z < -MOVE_BOUNDS || new_pos.z > MOVE_BOUNDS)
@@ -920,6 +964,13 @@ void Greed::key_callback(GLFWwindow* window, int key, int scancode, int action, 
 				generate_small_village();
 			else
 				generate_village();
+			break;
+		case GLFW_KEY_G:
+			god_mode = !god_mode;
+			break;
+		case GLFW_KEY_H:
+			helicopter_mode = !helicopter_mode;
+			helicopter_angle = 0;
 			break;
 		default:
 			break;
