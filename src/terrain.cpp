@@ -4,7 +4,8 @@
 std::vector<std::vector<GLfloat> > Terrain::height_map;
 
 void Terrain::generate_height_map(GLuint size, GLfloat max_height, GLint village_diameter, GLfloat scale, GLuint seed = 0)
-{	
+{
+	height_map.clear();
 	unsigned int middle = ((size - 1) / 2); //Size is always odd
 	
 	//All points initialized at -1
@@ -15,7 +16,7 @@ void Terrain::generate_height_map(GLuint size, GLfloat max_height, GLint village
 		{
 			height_map[i].push_back(-1.f);
 		}
-	}	
+	}
 
 	//fprintf(stderr, "Height Map Size: %d\t%d\t%d\n", size, height_map.size(), height_map[1].size());
 	//fprintf(stderr, "Test Value: %f\n", height_map[0][0]);
