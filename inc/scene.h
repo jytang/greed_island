@@ -17,6 +17,7 @@ public:
 	glm::vec3 light_pos;
 	Plane frustum_planes[6];
 	glm::vec3 frustum_corners[8];
+	std::vector< std::vector<GLfloat> > height_map;
 
 	Scene();
 	~Scene();

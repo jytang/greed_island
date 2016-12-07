@@ -287,7 +287,7 @@ Geometry * GeometryGenerator::generate_plane(GLfloat scale)
 	return plane;
 }
 
-Geometry * GeometryGenerator::generate_terrain(GLfloat size, GLint num_points_side, GLfloat min_height, GLfloat max_height, bool normals_up)
+Geometry * GeometryGenerator::generate_terrain(GLfloat size, GLint num_points_side, GLfloat min_height, GLfloat max_height, bool normals_up, std::vector<std::vector<GLfloat> > &height_map)
 {
 	//Experimenting. Assumed that height map is already set up and size is same as height map size
 
@@ -310,14 +310,14 @@ Geometry * GeometryGenerator::generate_terrain(GLfloat size, GLint num_points_si
 	{
 		for (float z = min_z; z <= (max_z - step_size); z += step_size)
 		{
-			float h1 = Terrain::height_lookup(x, z, size);
+			float h1 = Terrain::height_lookup(x, z, size, height_map);
 
 			if (h1 < min_height || h1 > max_height)
 				continue;
 
-			float h2 = Terrain::height_lookup(x + step_size, z, size);
-			float h3 = Terrain::height_lookup(x, z + step_size, size);
-			float h4 = Terrain::height_lookup(x + step_size, z + step_size, size);			
+			float h2 = Terrain::height_lookup(x + step_size, z, size, height_map);
+			float h3 = Terrain::height_lookup(x, z + step_size, size, height_map);
+			float h4 = Terrain::height_lookup(x + step_size, z + step_size, size, height_map);
 
 			glm::vec3 v1 = glm::vec3(x, h1, z);							//Upper Left
 			glm::vec3 v2 = glm::vec3(x + step_size, h2, z);				//Upper Right
