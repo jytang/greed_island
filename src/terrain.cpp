@@ -1,7 +1,7 @@
 #include "terrain.h"
 #include "util.h"
 
-std::vector<std::vector<GLfloat> > Terrain::generate_height_map(GLuint size, GLfloat max_height, GLint village_diameter, GLfloat scale, GLuint seed = 0)
+std::vector<std::vector<GLfloat> > Terrain::generate_height_map(GLuint size, GLfloat max_height, GLint village_diameter, GLfloat scale, bool ramp, GLuint seed = 0)
 {
 	std::vector<std::vector<GLfloat> > height_map;
 	unsigned int middle = ((size - 1) / 2); //Size is always odd
@@ -98,27 +98,30 @@ std::vector<std::vector<GLfloat> > Terrain::generate_height_map(GLuint size, GLf
 	}	
 
 	//Makes a ramp to the plateau	
-	float start_slope = 1.0f;
-	float end_slope = 20.0f;
-	float widen_offset = 5.0f;
-	unsigned int initial_widen = 5;
-
-	for (unsigned int c = village_mid_c + radius; c < village_mid_c + radius + end_slope; c++)
+	if (ramp)
 	{
-		float ratio = (village_mid_c + radius + end_slope - (float)c) / (end_slope - start_slope);
-		unsigned int widen = (unsigned int) (widen_offset * (1.0f - ratio));
-		unsigned int opening_size = initial_widen + widen;
-		for (unsigned int r = village_mid_r - opening_size; r < village_mid_r + opening_size; r++)
+		float start_slope = 1.0f;
+		float end_slope = 20.0f;
+		float widen_offset = 5.0f;
+		unsigned int initial_widen = 5;
+
+		for (unsigned int c = village_mid_c + radius; c < village_mid_c + radius + end_slope; c++)
 		{
-			if (c <= village_mid_c + radius + start_slope)
+			float ratio = (village_mid_c + radius + end_slope - (float)c) / (end_slope - start_slope);
+			unsigned int widen = (unsigned int)(widen_offset * (1.0f - ratio));
+			unsigned int opening_size = initial_widen + widen;
+			for (unsigned int r = village_mid_r - opening_size; r < village_mid_r + opening_size; r++)
 			{
-				height_map[r][c] = max_height;
+				if (c <= village_mid_c + radius + start_slope)
+				{
+					height_map[r][c] = max_height;
+				}
+				else
+				{
+					float diff = max_height - height_map[r][c];
+					height_map[r][c] = max_height - (diff * (1.f - ratio));
+				}
 			}
-			else
-			{				
-				float diff = max_height - height_map[r][c];				
-				height_map[r][c] = max_height - (diff * (1.f - ratio));
-			}			
 		}
 	}
 

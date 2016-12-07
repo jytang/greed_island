@@ -18,20 +18,12 @@ private:
 
 	void handle_movement();
 	void handle_movement_vr();
-	void handle_helicopter();
 	void vr_render();
-	void setup_scene();
+	void setup_scenes();
 	void setup_callbacks();
 	void setup_opengl();
 	void setup_shaders();
 	void destroy();
-	static void generate_small_map();
-	static void generate_small_forest();
-	static void generate_small_village();
-	static void generate_forest();
-	static void generate_map();
-	static void generate_village();
-	static void generate_miniatures();
 	static void next_skybox();
 	static void change_scene(Scene *);
 	static void next_scene();

@@ -26,5 +26,8 @@ public:
 	void update_frustum_corners(int width, int height, GLfloat);
 	void update_frustum_planes();
 	glm::mat4 frustum_ortho();
-};
+	void displace_cam(glm::vec3 displacement);
 
+	virtual void setup() {}
+	virtual GLfloat get_size() { return 0; }
+};
