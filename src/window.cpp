@@ -13,7 +13,13 @@ GLFWwindow* Window::create_window(int width, int height, const char *window_titl
     glfwWindowHint(GLFW_SAMPLES, 4);
 
     // Create the GLFW window
-    GLFWwindow* window = glfwCreateWindow(width, height, window_title, NULL, NULL);
+	GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+	const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+	glfwWindowHint(GLFW_RED_BITS, mode->redBits);
+	glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
+	glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
+	glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
+    GLFWwindow* window = glfwCreateWindow(mode->width, mode->height, window_title, monitor, NULL);
 
     // Check if the window could not be created
     if (!window)
