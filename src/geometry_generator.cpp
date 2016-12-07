@@ -79,10 +79,18 @@ Geometry * GeometryGenerator::generate_cube(GLfloat scale, bool has_normals)
 			cube->normals.push_back(glm::vec3(0.f, -1.f, 0.f));
 	}
 
+	cube->tex_coords.push_back(glm::vec2(0, 0));
+	cube->tex_coords.push_back(glm::vec2(1, 0));
+	cube->tex_coords.push_back(glm::vec2(1, 1));
+	cube->tex_coords.push_back(glm::vec2(1, 1));
+	cube->tex_coords.push_back(glm::vec2(0, 1));
+	cube->tex_coords.push_back(glm::vec2(0, 0));
+
 	for (int i = 0; i < cube->vertices.size(); ++i)
 		cube->indices.push_back(i);
 
 	cube->has_normals = has_normals;
+	cube->attach_texture("test");
 	cube->populate_buffers();
 	geometries.push_back(cube);
 	return cube;
@@ -357,6 +365,25 @@ Geometry * GeometryGenerator::generate_terrain(GLfloat size, GLint num_points_si
 				terrain->normals.push_back(n5);
 				terrain->normals.push_back(n6);
 			}
+
+			/*
+			terrain->tex_coords.push_back(glm::vec2(1, 1));
+			terrain->tex_coords.push_back(glm::vec2(1, 0));
+			terrain->tex_coords.push_back(glm::vec2(0, 0));
+			terrain->tex_coords.push_back(glm::vec2(0, 0));
+			terrain->tex_coords.push_back(glm::vec2(0, 1));
+			terrain->tex_coords.push_back(glm::vec2(1, 1));
+			*/
+
+			/*
+			terrain->tex_coords.push_back(glm::vec2(0, 0));
+			terrain->tex_coords.push_back(glm::vec2(1, 0));
+			terrain->tex_coords.push_back(glm::vec2(1, 1));
+			terrain->tex_coords.push_back(glm::vec2(1, 1));
+			terrain->tex_coords.push_back(glm::vec2(0, 1));
+			terrain->tex_coords.push_back(glm::vec2(0, 0));
+			*/
+
 		}
 	}
 
@@ -364,6 +391,7 @@ Geometry * GeometryGenerator::generate_terrain(GLfloat size, GLint num_points_si
 	for (int i = 0; i < terrain->vertices.size(); i++)
 		terrain->indices.push_back(i);
 
+	//terrain->attach_texture("assets\\textures\\Grass.tga");
 	terrain->populate_buffers();
 	geometries.push_back(terrain);
 

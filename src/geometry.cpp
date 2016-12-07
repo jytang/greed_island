@@ -1,4 +1,5 @@
 #include "geometry.h"
+#include "SOIL.h"
 
 Geometry::Geometry()
 {
@@ -9,7 +10,7 @@ Geometry::Geometry()
 	glGenBuffers(1, &VBO);
 	glGenBuffers(1, &NBO);
 	glGenBuffers(1, &TBO);
-	glGenBuffers(1, &EBO);
+	glGenBuffers(1, &EBO);	
 }
 
 Geometry::~Geometry() {}
@@ -42,6 +43,26 @@ void Geometry::populate_buffers()
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
+}
+
+void Geometry::attach_texture(const char *texture_loc)
+{
+	has_texture = true;
+
+	glGenTextures(1, &texture);
+
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap_type);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap_type);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter_type);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter_type);
+
+	int width, height;
+	unsigned char * image = SOIL_load_image("assets\textures\Icon.png", &width, &height, 0, SOIL_LOAD_AUTO);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	SOIL_free_image_data(image);
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void Geometry::draw()

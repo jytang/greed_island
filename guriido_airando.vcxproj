@@ -74,11 +74,11 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(ProjectDir)\inc;$(ProjectDir)\lib\openvr\headers</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\lib\soil\src;$(ProjectDir)\inc;$(ProjectDir)\lib\openvr\headers</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(ProjectDir)\lib\openvr\lib\win32\openvr_api.lib;opengl32.lib;glu32.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(ProjectDir)/lib/soil/lib/x86/SOIL.lib;$(ProjectDir)\lib\openvr\lib\win32\openvr_api.lib;opengl32.lib;glu32.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>
       </AdditionalLibraryDirectories>
     </Link>
@@ -88,11 +88,11 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(ProjectDir)\inc;$(ProjectDir)\lib\openvr\headers</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\lib\soil\src;$(ProjectDir)\inc;$(ProjectDir)\lib\openvr\headers</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(ProjectDir)\lib\openvr\lib\win64\openvr_api.lib;opengl32.lib;glu32.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(ProjectDir)/lib/soil/lib/x64/SOIL.lib;$(ProjectDir)\lib\openvr\lib\win64\openvr_api.lib;opengl32.lib;glu32.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>
       </AdditionalLibraryDirectories>
     </Link>
@@ -104,13 +104,13 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(ProjectDir)\inc;$(ProjectDir)\lib\openvr\headers</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\lib\soil\src;$(ProjectDir)\inc;$(ProjectDir)\lib\openvr\headers</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>$(ProjectDir)\lib\openvr\lib\win32\openvr_api.lib;opengl32.lib;glu32.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(ProjectDir)/lib/soil/lib/x86/SOIL.lib;$(ProjectDir)\lib\openvr\lib\win32\openvr_api.lib;opengl32.lib;glu32.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>
       </AdditionalLibraryDirectories>
     </Link>
@@ -122,13 +122,13 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(ProjectDir)\inc;$(ProjectDir)\lib\openvr\headers</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\lib\soil\src;$(ProjectDir)\inc;$(ProjectDir)\lib\openvr\headers</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>$(ProjectDir)\lib\openvr\lib\win64\openvr_api.lib;opengl32.lib;glu32.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(ProjectDir)/lib/soil/lib/x64/SOIL.lib;$(ProjectDir)\lib\openvr\lib\win64\openvr_api.lib;opengl32.lib;glu32.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>
       </AdditionalLibraryDirectories>
     </Link>

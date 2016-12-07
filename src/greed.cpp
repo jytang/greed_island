@@ -17,7 +17,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-bool vr_on = true;
+bool vr_on = false;
 
 /* global vars */
 vr_vars GreedVR::vars;
@@ -75,7 +75,7 @@ const GLfloat   FOREST_RADIUS = ISLAND_SIZE / 1.1f;
 const GLfloat   FOREST_INNER_CIRCLE = VILLAGE_DIAMETER_TRUE/2 + ISLAND_SIZE/10.f;
 const GLfloat   WATER_SCALE = ISLAND_SIZE * 4;
 
-const GLint     CAM_OFFSET = ISLAND_SIZE / 30.f;
+const GLfloat     CAM_OFFSET = ISLAND_SIZE / 30.f;
 const GLfloat   BASE_CAM_SPEED = PLAYER_HEIGHT / 20.f; //PLAYER_HEIGHT / 10.f;
 const GLfloat   EDGE_LEEWAY = ISLAND_SIZE / 6.f;
 const GLfloat   MOVE_BOUNDS = ISLAND_SIZE + EDGE_LEEWAY;
@@ -432,6 +432,18 @@ void Greed::setup_scene()
 		root->add_child(controller_1_transform);
 		root->add_child(controller_2_transform);
 	}
+
+	//For Testing Textures	
+	Material cube_material;
+	cube_material.diffuse = cube_material.ambient = color::ocean_blue;
+	Mesh cube_mesh = { cube_geo, cube_material, ShaderManager::get_default(), glm::mat4(1.f) };
+	SceneModel *cube_model = new SceneModel(scene);
+	cube_model->add_mesh(cube_mesh);
+	SceneTransform *cube_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(5.f)));
+	SceneTransform *cube_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 20.0f, 10.f)));
+	cube_scale->add_child(cube_model);
+	cube_translate->add_child(cube_scale);
+	root->add_child(cube_translate);
 }
 
 void Greed::go()
