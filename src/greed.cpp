@@ -91,6 +91,8 @@ const GLfloat   EDGE_THRESH = ISLAND_SIZE / 30.f;
 const GLfloat   HELI_HEIGHT = ISLAND_SIZE;
 const GLfloat   HELI_SPEED = 0.5f;
 const GLfloat   HELI_SLOW_THRESH = 20.f;
+const GLfloat   EDGE_PAN_THRESH = 5.f;
+const GLfloat   EDGE_PAN_SPEED = 0.5f;
 
 // Miniature Parameters
 const GLfloat SMALL_ROT_SPEED = 0.3f;
@@ -506,7 +508,8 @@ void Greed::setup_scene()
 
 void Greed::go()
 {
-	window = Window::create_window(1280, 720, "Greed Island");
+	window = Window::create_window(0, 0, "Greed Island");
+	//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN); // Don't show cursor
 	setup_callbacks();
 	setup_opengl();
 	if (vr_on) GreedVR::init();
@@ -984,6 +987,8 @@ void Greed::key_callback(GLFWwindow* window, int key, int scancode, int action, 
 
 void Greed::cursor_position_callback(GLFWwindow* window, double x_pos, double y_pos)
 {
+	int width, height;
+	glfwGetFramebufferSize(window, &width, &height);
 	glm::vec3 current_cursor_pos(x_pos, y_pos, 0);
 	
 	// First movement detected.
@@ -1024,6 +1029,11 @@ void Greed::cursor_position_callback(GLFWwindow* window, double x_pos, double y_
 		GLfloat sensitivity = 0.5;
 		xoffset *= sensitivity;
 		yoffset *= sensitivity;
+
+		if (current_cursor_pos.x > width - EDGE_PAN_THRESH)
+			xoffset = EDGE_PAN_SPEED;
+		else if (current_cursor_pos.x < EDGE_PAN_THRESH)
+			xoffset = -EDGE_PAN_SPEED;
 
 		camera->yaw += xoffset;
 		camera->pitch += yoffset;
