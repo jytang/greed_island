@@ -24,6 +24,9 @@ private:
 	void setup_opengl();
 	void setup_shaders();
 	void destroy();
+	static void generate_small_map();
+	static void generate_small_forest();
+	static void generate_small_village();
 	static void generate_forest();
 	static void generate_map();
 	static void generate_village();
