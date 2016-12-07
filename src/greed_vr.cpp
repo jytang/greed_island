@@ -1,9 +1,5 @@
 #include "greed_vr.h"
 
-GreedVR::GreedVR() {}
-
-GreedVR::~GreedVR() {}
-
 void GreedVR::init()
 {
 	vars.hmd = GreedVR::initOpenVR(vars.framebufferWidth, vars.framebufferHeight);
@@ -122,76 +118,30 @@ glm::mat4 GreedVR::ConvertSteamVRMatrixToMatrix4(const vr::HmdMatrix34_t &matPos
 }
 
 
-/*
-void GreedVR::vr_update_controllers(SceneTransform)
+void GreedVR::vr_update_controllers(Scene *scene, SceneTransform * controller_1_transform, SceneTransform * controller_2_transform, glm::mat4 cam_pos_mat)
 {
 	// don't draw controllers if somebody else has input focus
-	if (hmd->IsInputFocusCapturedByAnotherProcess())
+	if (vars.hmd->IsInputFocusCapturedByAnotherProcess())
 		return;
 
-	std::vector<float> vertdataarray;
-	unsigned int controllerVertcount = 0;
 	int trackedControllerCount = 0;
 
 	for (vr::TrackedDeviceIndex_t unTrackedDevice = vr::k_unTrackedDeviceIndex_Hmd + 1; unTrackedDevice < vr::k_unMaxTrackedDeviceCount; ++unTrackedDevice)
 	{
-		if (!hmd->IsTrackedDeviceConnected(unTrackedDevice))
+		if (!vars.hmd->IsTrackedDeviceConnected(unTrackedDevice))
 			continue;
-
-		if (hmd->GetTrackedDeviceClass(unTrackedDevice) != vr::TrackedDeviceClass_Controller)
-		{
+		if (vars.hmd->GetTrackedDeviceClass(unTrackedDevice) != vr::TrackedDeviceClass_Controller)
 			continue;
-		}
-
 		trackedControllerCount += 1;
-
-		if (!trackedDevicePose[unTrackedDevice].bPoseIsValid)
+		if (!vars.trackedDevicePose[unTrackedDevice].bPoseIsValid)
 			continue;
 
-		glm::mat4 mat = ConvertSteamVRMatrixToMatrix4(trackedDevicePose[unTrackedDevice].mDeviceToAbsoluteTracking);
+		glm::mat4 mat = ConvertSteamVRMatrixToMatrix4(vars.trackedDevicePose[unTrackedDevice].mDeviceToAbsoluteTracking);
 
-		glm::vec4 center = mat * glm::vec4(0, 0, 0, 1);
-
-		fprintf(stderr, "Printing for device %u: Center is %f\t%f\t%f\n", unTrackedDevice, center.x, center.y, center.z);
-
-		for (int i = 0; i < 3; ++i)
-		{
-			glm::vec3 color(0, 0, 0);
-			glm::vec4 point(0, 0, 0, 1);
-			point[i] += 0.05f;  // offset in X, Y, Z
-			color[i] = 1.0;  // R, G, B
-			point = mat * point;
-			vertdataarray.push_back(center.x);
-			vertdataarray.push_back(center.y);
-			vertdataarray.push_back(center.z);
-
-			vertdataarray.push_back(color.x);
-			vertdataarray.push_back(color.y);
-			vertdataarray.push_back(color.z);
-
-			vertdataarray.push_back(point.x);
-			vertdataarray.push_back(point.y);
-			vertdataarray.push_back(point.z);
-
-			vertdataarray.push_back(color.x);
-			vertdataarray.push_back(color.y);
-			vertdataarray.push_back(color.z);
-
-			controllerVertcount += 2;
-		}
-
-		glm::vec4 start = mat * glm::vec4(0, 0, -0.02f, 1);
-		glm::vec4 end = mat * glm::vec4(0, 0, -39.f, 1);
-		glm::vec3 color(.92f, .92f, .71f);
-
-		vertdataarray.push_back(start.x); vertdataarray.push_back(start.y); vertdataarray.push_back(start.z);
-		vertdataarray.push_back(color.x); vertdataarray.push_back(color.y); vertdataarray.push_back(color.z);
-
-		vertdataarray.push_back(end.x); vertdataarray.push_back(end.y); vertdataarray.push_back(end.z);
-		vertdataarray.push_back(color.x); vertdataarray.push_back(color.y); vertdataarray.push_back(color.z);
-		controllerVertcount += 2;
+		if (trackedControllerCount == 1)
+			controller_1_transform->transformation = cam_pos_mat * mat;
+		else if (trackedControllerCount == 2)
+			controller_2_transform->transformation = cam_pos_mat * mat;
 	}
-
-	Window::setControllerAxes(vertdataarray, controllerVertcount);
 }
-*/
+

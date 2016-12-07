@@ -12,6 +12,12 @@
     <Filter Include="Shaders">
       <UniqueIdentifier>{5a6f5576-0663-4583-af9b-cd3686a94888}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shaders\basic">
+      <UniqueIdentifier>{54427959-16fc-4f9e-85b9-9f187d58ce92}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\shadow">
+      <UniqueIdentifier>{779b487d-8280-4105-8057-ee2aa29cdcd9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -81,16 +87,16 @@
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="shaders\basic\frag.glsl">
-      <Filter>Shaders</Filter>
+      <Filter>Shaders\basic</Filter>
     </None>
     <None Include="shaders\basic\vert.glsl">
-      <Filter>Shaders</Filter>
+      <Filter>Shaders\basic</Filter>
     </None>
     <None Include="shaders\shadow\frag.glsl">
-      <Filter>Shaders</Filter>
+      <Filter>Shaders\shadow</Filter>
     </None>
     <None Include="shaders\shadow\vert.glsl">
-      <Filter>Shaders</Filter>
+      <Filter>Shaders\shadow</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

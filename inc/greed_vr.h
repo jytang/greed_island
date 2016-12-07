@@ -5,6 +5,7 @@
 #include <openvr.h>
 #include <string>
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 #include "scene_transform.h"
 
@@ -29,9 +30,6 @@ struct vr_vars {
 class GreedVR
 {
 public:
-	GreedVR();
-	~GreedVR();
-
 	static vr_vars vars;
 
 	static void init();
@@ -40,5 +38,5 @@ public:
 	static vr::IVRSystem* initOpenVR(uint32_t& hmdWidth, uint32_t& hmdHeight);
 	static void ProcessVREvent(const vr::VREvent_t & event);
 	static glm::mat4 ConvertSteamVRMatrixToMatrix4(const vr::HmdMatrix34_t &matPose);
-	//static void vr_update_controllers(SceneTransform *)
+	static void vr_update_controllers(Scene * scene, SceneTransform * controller_1_transform, SceneTransform * controller_2_transform, glm::mat4 cam_pos_mat);
 };
