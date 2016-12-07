@@ -50,7 +50,7 @@ glm::vec3 last_cursor_pos;
 
 const GLfloat PLAYER_HEIGHT = Global::PLAYER_HEIGHT;
 
-const GLfloat FAR_PLANE = 50.f * PLAYER_HEIGHT;
+const GLfloat FAR_PLANE = 200.f * PLAYER_HEIGHT;
 const GLfloat FOV = 45.f;
 
 // Procedural generation parameters
@@ -73,7 +73,7 @@ const GLfloat   BEACH_HEIGHT = ISLAND_SIZE / 60.f;
 const GLfloat   PATH_WIDTH = ISLAND_SIZE / 7.f;
 const GLfloat   FOREST_RADIUS = ISLAND_SIZE / 1.1f;
 const GLfloat   FOREST_INNER_CIRCLE = VILLAGE_DIAMETER_TRUE/2 + ISLAND_SIZE/10.f;
-const GLfloat   WATER_SCALE = ISLAND_SIZE * 4;
+const GLfloat   WATER_SCALE = ISLAND_SIZE * 7;
 
 const GLfloat     CAM_OFFSET = ISLAND_SIZE / 30.f;
 const GLfloat   BASE_CAM_SPEED = PLAYER_HEIGHT / 20.f; //PLAYER_HEIGHT / 10.f;
@@ -378,7 +378,7 @@ void Greed::setup_scene()
 	transition_scene->root->add_child(skybox_model);
 
 	// Infinite water plane stretching to the horizon
-	Geometry *plane_geo = GeometryGenerator::generate_plane(1.f);
+	Geometry *plane_geo = GeometryGenerator::generate_plane(1.f, WATER);
 	Material water_material;
 	water_material.diffuse = water_material.ambient = color::ocean_blue;
 	Mesh water_mesh = { plane_geo, water_material, ShaderManager::get_default(), glm::mat4(1.f) };

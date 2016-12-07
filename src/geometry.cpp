@@ -5,6 +5,7 @@ Geometry::Geometry()
 {
 	has_texture = false;
 	has_normals = true;
+	add_texture_noise = false;
 
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
