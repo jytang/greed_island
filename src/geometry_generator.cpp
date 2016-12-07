@@ -93,14 +93,14 @@ Geometry * GeometryGenerator::generate_sphere(GLfloat radius, GLuint divisions)
 
 	Geometry *sphere = new Geometry();
 
-	float fstacks = divisions;
-	float fslices = divisions;
+	float fstacks = (float) divisions;
+	float fslices = (float) divisions;
 	float pi = glm::pi<float>();
 
 	//From Piazza
-	for (int i = 0; i < divisions; i++)
+	for (unsigned int i = 0; i < divisions; i++)
 	{
-		for (int j = 0; j < divisions; j++)
+		for (unsigned int j = 0; j < divisions; j++)
 		{
 			// Top left
 			sphere->vertices.push_back(glm::vec3(

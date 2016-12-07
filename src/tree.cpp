@@ -43,7 +43,7 @@ SceneGroup *Tree::generate_tree(Scene *scene, Geometry *base_branch, Geometry *b
 		tree_group->add_child(leaf_model);
 	}
 
-	int total_iters = (int)(Util::random(num_iterations-1, num_iterations+1));
+	int total_iters = (int)(Util::random((float) num_iterations-1, (float) num_iterations+1));
 
 	tree_system(glm::mat4(1.0f), glm::vec3(0.f, 1.0f, 0.f), glm::vec3(0.f, 0.0f, 1.f), 0.f, 0.f, Util::random(9.f, 11.f), 1, total_iters);
 
@@ -65,7 +65,7 @@ void Tree::tree_system(glm::mat4 last_trans, glm::vec3 last_dir, glm::vec3 z_dir
 	r *= (float)(rand() % 101 / 100.f);
 	//fprintf(stderr, "Random: %f\n", r);
 
-	float scale_value_xz = last_scale * 0.8;
+	float scale_value_xz = last_scale * 0.8f;
 	float scale_value_y = scale_value_xz * Util::random(0.7f, 1.3f);
 
 	if (curr_iter == 0) //Most of the random stuff is kinda just me messing around with numbers.

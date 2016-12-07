@@ -17,6 +17,7 @@ private:
 	GLFWwindow *window;
 
 	void handle_movement();
+	void handle_movement_vr();
 	void vr_render();
 	void setup_scene();
 	void setup_callbacks();
