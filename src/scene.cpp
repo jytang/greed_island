@@ -1,6 +1,9 @@
 #include "scene.h"
 #include "util.h"
 
+#include "global.h"
+const GLfloat PLAYER_HEIGHT = Global::PLAYER_HEIGHT;
+
 Scene::Scene()
 {
 	root = new SceneGroup(this);
@@ -99,9 +102,9 @@ void Scene::update_frustum_planes()
 
 glm::mat4 Scene::frustum_ortho()
 {
-	const float FRINGE_X = 100.f;
-	const float FRINGE_Y = 100.f;
-	const float FRINGE_Z = 100.f;
+	const float FRINGE_X = 5.f * PLAYER_HEIGHT;
+	const float FRINGE_Y = 5.f * PLAYER_HEIGHT;
+	const float FRINGE_Z = 5.f * PLAYER_HEIGHT;
 
 	static bool once = false;
 	glm::mat4 light_view = glm::lookAt(light_pos, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));

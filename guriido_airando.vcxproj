@@ -167,6 +167,7 @@
     <ClInclude Include="inc\basic_shader.h" />
     <ClInclude Include="inc\colors.h" />
     <ClInclude Include="inc\geometry.h" />
+    <ClInclude Include="inc\global.h" />
     <ClInclude Include="inc\greed.h" />
     <ClInclude Include="inc\material.h" />
     <ClInclude Include="inc\geometry_generator.h" />

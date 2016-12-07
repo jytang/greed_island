@@ -1,6 +1,7 @@
 #include "tree.h"
 #include "scene_animation.h"
 #include "util.h"
+#include "global.h"
 
 SceneModel *Tree::branch_model;
 SceneModel *Tree::leaf_model;
@@ -14,6 +15,10 @@ SceneTransform *Tree::scale;
 
 GLfloat angle_delta;
 GLfloat geo_size;
+
+const GLfloat PLAYER_HEIGHT = Global::PLAYER_HEIGHT;
+const GLfloat SCALE_MIN = PLAYER_HEIGHT * 0.4f;
+const GLfloat SCALE_MAX = PLAYER_HEIGHT * 0.55f;
 
 SceneGroup *Tree::generate_tree(Scene *scene, Geometry *base_branch, Geometry *base_leaf, unsigned int num_iterations, unsigned int leaves, GLfloat angle, GLfloat size, Material branch_material, Material leaf_material, bool animated, glm::vec3 location, int seed = 0)
 {
@@ -45,7 +50,7 @@ SceneGroup *Tree::generate_tree(Scene *scene, Geometry *base_branch, Geometry *b
 
 	int total_iters = (int)(Util::random((float) num_iterations-1, (float) num_iterations+1));
 
-	tree_system(glm::mat4(1.0f), glm::vec3(0.f, 1.0f, 0.f), glm::vec3(0.f, 0.0f, 1.f), 0.f, 0.f, Util::random(9.f, 11.f), 1, total_iters);
+	tree_system(glm::mat4(1.0f), glm::vec3(0.f, 1.0f, 0.f), glm::vec3(0.f, 0.0f, 1.f), 0.f, 0.f, Util::random(SCALE_MIN, SCALE_MAX), 1, total_iters);
 
 	branch_model->combine_meshes();
 	leaf_model->combine_meshes();
