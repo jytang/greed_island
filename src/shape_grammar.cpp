@@ -13,9 +13,12 @@ const float MIN_DIAMETER = 60.0f/20.f * PLAYER_HEIGHT;
 const float MAX_DIAMETER = 70.0f/20.f * PLAYER_HEIGHT;
 const int NUM_DIVISIONS = 15;
 
+bool in_shadow;
+
 //Main Generation Function
-SceneModel *ShapeGrammar::generate_building(Scene * scene, int seed)
+SceneModel *ShapeGrammar::generate_building(Scene * scene, bool shadowed, int seed)
 {
+	in_shadow = shadowed;
 	SceneModel *building = new SceneModel(scene);
 
 	//Set seed if necessary
@@ -764,8 +767,9 @@ Material ShapeGrammar::random_material()
 {
 	Material material;
 
-	glm::vec3 leaf_colors[] = { color::olive_green, color::autumn_orange, color::purple, color::bone_white, color::indian_red };
+	glm::vec3 leaf_colors[] = { color::olive_green, color::autumn_orange, color::purple, color::wood_tan_light, color::indian_red };
 	material.diffuse = material.ambient = leaf_colors[(int)Util::random(0, 5)];
+	material.shadows = in_shadow;
 
 	return material;	
 }

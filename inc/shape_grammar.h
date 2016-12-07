@@ -29,6 +29,6 @@ private:
 	static void add_plane(SceneModel *, float, float, int, float offset = 0.0f);
 	static Material random_material();
 public:
-	static SceneModel *generate_building(Scene *, int);
+	static SceneModel *generate_building(Scene *, bool, int);
 };
 
