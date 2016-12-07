@@ -23,6 +23,10 @@ private:
 	void setup_opengl();
 	void setup_shaders();
 	void destroy();
+	static void generate_forest();
+	static void generate_map();
+	static void generate_village();
+	static void generate_miniatures();
 	static void next_skybox();
 	static void change_scene(Scene *);
 	static void next_scene();

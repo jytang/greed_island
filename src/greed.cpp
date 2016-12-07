@@ -24,17 +24,51 @@ Scene* desert_scene;
 Scene* transition_scene;
 std::vector<Scene*> scenes;
 SceneCamera* camera;
+SceneGroup *forest;
+SceneTransform *map;
+SceneGroup *village;
+
+Geometry *cylinder_geo;
+Geometry *diamond_geo;
+Geometry *sphere_geo;
+Geometry *cube_geo;
+Geometry *land_geo;
+Geometry *plateau_geo;
+Geometry *sand_geo;
+
 bool keys[1024];
 bool lmb_down = false;
 bool rmb_down = false;
 bool debug_shadows = false;
 bool vr_on = false;
 bool mouse_moved = false;
-const GLfloat FAR_PLANE = 1000.f;
+bool shadows_on = true;
 glm::vec3 last_cursor_pos;
 
+const GLfloat FAR_PLANE = 1000.f;
 const GLfloat ISLAND_SIZE = 600.f;
 const GLfloat PLAYER_HEIGHT = 20.f;
+// Procedural generation parameters
+const GLuint    HEIGHT_MAP_POWER = 8;
+const GLuint    HEIGHT_MAP_SIZE = (unsigned int)glm::pow(2, HEIGHT_MAP_POWER) + 1;
+const GLfloat   HEIGHT_MAP_MAX = 200.f;
+const GLfloat   HEIGHT_RANDOMNESS_SCALE = 200.f;
+const GLint     VILLAGE_DIAMETER = 60;
+const GLfloat   TERRAIN_SIZE = ISLAND_SIZE / 5;
+const GLfloat   TERRAIN_SCALE = ISLAND_SIZE / 60;
+const GLuint    TERRAIN_RESOLUTION = 200;
+const GLfloat   BEACH_HEIGHT = 10.f;
+const GLuint    NUM_TREES = 200;
+const GLfloat   PERCENT_TREE_ANIM = 0.9f;
+const GLuint    NUM_TREE_TYPES = 10;
+const GLfloat   TREE_SCALE = 1.5f;
+const GLfloat   PATH_WIDTH = 90.f;
+const GLfloat   FOREST_RADIUS = ISLAND_SIZE / 1.1f;
+const GLfloat   FOREST_INNER_CIRCLE = VILLAGE_DIAMETER*TERRAIN_SCALE / 3;
+const GLint		NUM_BUILDINGS = 5;
+const GLfloat	VILLAGE_DIAMETER_TRUE = ((float)VILLAGE_DIAMETER / HEIGHT_MAP_SIZE) * TERRAIN_SIZE * TERRAIN_SCALE;
+const GLfloat   WATER_SCALE = ISLAND_SIZE * 4;
+const GLint     CAM_OFFSET = 20;
 
 Greed::Greed() {}
 
@@ -86,6 +120,200 @@ void Greed::setup_shaders()
 	ShaderManager::set_default("basic");
 }
 
+void Greed::generate_forest()
+{
+	std::cerr << "Generating Forest" << std::endl;
+
+	if (!forest)
+	{
+		forest = new SceneGroup(scene);
+		scene->root->add_child(forest);
+	}
+	else {
+		forest->remove_all();
+	}
+
+	glm::vec3 leaf_colors[] = { color::olive_green, color::olive_green, color::olive_green, color::autumn_orange, color::purple, color::bone_white, color::indian_red };
+	glm::vec3 branch_colors[] = { color::brown, color::wood_saddle, color::wood_sienna, color::wood_tan, color::wood_tan_light };
+	Material branch_material, leaf_material;
+	for (int i = 0; i < NUM_TREES; ++i) {
+		leaf_material.diffuse = leaf_material.ambient = leaf_colors[(int)Util::random(0, 7)];
+		branch_material.diffuse = branch_material.ambient = branch_colors[(int)Util::random(0, 5)];
+		bool animated = false;
+		if (i % (NUM_TREES / (int)(NUM_TREES*PERCENT_TREE_ANIM)) == 0)
+			animated = true;
+		if (i % 50 == 0)
+			std::cerr << "Tree " << i << std::endl;
+		float x, z;
+		do {
+			float angle = Util::random(0, 360);
+			float distance = Util::random(FOREST_INNER_CIRCLE, FOREST_RADIUS);
+
+			x = glm::cos(glm::radians(angle)) * distance;
+			z = glm::sin(glm::radians(angle)) * distance;
+		} while (Util::within_rect(glm::vec2(x, z), glm::vec2(-PATH_WIDTH / 2, FOREST_RADIUS), glm::vec2(PATH_WIDTH / 2, 0)));
+		float y = Terrain::height_lookup(x, z, ISLAND_SIZE * 2);
+		glm::vec3 location = { x, y, z };
+		SceneGroup *tree = Tree::generate_tree(scene, cylinder_geo, diamond_geo, 7, 1, 20.f, 2.f, branch_material, leaf_material, animated, location, 0);
+		((SceneModel *)(tree->children[0]))->meshes[0].to_world = glm::translate(glm::mat4(1.f), location) * glm::scale(glm::mat4(1.f), glm::vec3(TREE_SCALE));
+		if (animated)
+			((SceneModel *)((SceneAnimation *)(tree->children[1]))->children[0])->meshes[0].to_world = glm::translate(glm::mat4(1.f), location) * glm::scale(glm::mat4(1.f), glm::vec3(TREE_SCALE));
+		else
+			((SceneModel *)(tree->children[1]))->meshes[0].to_world = glm::translate(glm::mat4(1.f), location) * glm::scale(glm::mat4(1.f), glm::vec3(TREE_SCALE));
+		forest->add_child(tree);
+	}
+	std::cerr << "Done." << std::endl;
+}
+
+void Greed::generate_map()
+{
+	std::cerr << "Generating Map" << std::endl;
+
+	if (!map)
+	{
+		map = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(TERRAIN_SCALE, 1.f, TERRAIN_SCALE)));
+		scene->root->add_child(map);
+	}
+	else {
+		map->remove_all();
+	}
+
+	Terrain::generate_height_map(HEIGHT_MAP_SIZE, HEIGHT_MAP_MAX, VILLAGE_DIAMETER, HEIGHT_RANDOMNESS_SCALE, 0);
+	float cam_height = Terrain::height_lookup(0.f, ISLAND_SIZE - CAM_OFFSET, ISLAND_SIZE * 2);
+	camera->cam_pos.y = cam_height + PLAYER_HEIGHT;
+	camera->recalculate();
+
+	std::cerr << "Generating Land" << std::endl;
+	// Second Parameter Below is Resolution^2 of Island, LOWER TO RUN FASTER
+	land_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, BEACH_HEIGHT, HEIGHT_MAP_MAX * 0.8f - 0.2f, false);
+	Material land_material;
+	land_material.diffuse = land_material.ambient = color::windwaker_green;
+	Mesh land_mesh = { land_geo, land_material, ShaderManager::get_default(), glm::mat4(1.f) };
+
+	std::cerr << "Generating Plateau" << std::endl;
+	plateau_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, HEIGHT_MAP_MAX * 0.8f - 0.2f, HEIGHT_MAP_MAX, false);
+	Material plateau_material;
+	plateau_material.diffuse = plateau_material.ambient = color::bone_white;
+	Mesh plateau_mesh = { plateau_geo, plateau_material, ShaderManager::get_default(), glm::mat4(1.f) };
+
+	std::cerr << "Generating Sand" << std::endl;
+	sand_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, 0.0f, BEACH_HEIGHT, true);
+	Material sand_material;
+	sand_material.diffuse = sand_material.ambient = color::windwaker_sand;
+	Mesh sand_mesh = { sand_geo, sand_material, ShaderManager::get_default(), glm::mat4(1.f) };
+
+	SceneModel *terrain_model = new SceneModel(scene);
+	terrain_model->add_mesh(land_mesh);
+	terrain_model->add_mesh(sand_mesh);
+	terrain_model->add_mesh(plateau_mesh);
+	map->add_child(terrain_model);
+	std::cerr << "Done." << std::endl;
+}
+
+void Greed::generate_village()
+{
+	std::cerr << "Generating Village" << std::endl;
+
+	if (!village)
+	{
+		village = new SceneGroup(scene);
+		scene->root->add_child(village);
+	}
+	else {
+		village->remove_all();
+	}
+
+	for (int i = 0; i < NUM_BUILDINGS; ++i)
+	{
+		std::cerr << "House " << i << std::endl;
+
+		float angle = ((350.f / (NUM_BUILDINGS)) * i) - 60.f; //Circles around, starting from the right
+		float distance = VILLAGE_DIAMETER_TRUE / 3.f;
+
+		float x = glm::cos(glm::radians(angle)) * distance;
+		float z = -glm::sin(glm::radians(angle)) * distance;
+
+		float y = Terrain::height_lookup(x, z, ISLAND_SIZE * 2);
+		glm::vec3 location = { x, y, z };
+
+		float rot = glm::radians(-90.f + angle);
+
+		SceneModel *building = ShapeGrammar::generate_building(scene, 0);
+		SceneTransform *building_rotate = new SceneTransform(scene, glm::rotate(glm::mat4(1.f), rot, glm::vec3(0.f, 1.f, 0.f)));
+		SceneTransform *building_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), location));
+		building_rotate->add_child(building);
+		building_translate->add_child(building_rotate);
+		village->add_child(building_translate);
+	}
+	std::cerr << "Done." << std::endl;
+}
+
+void Greed::generate_miniatures()
+{
+	std::cerr << "Generating Miniatures" << std::endl;
+	SceneGroup *root = scene->root;
+
+	// Small-scale showcase.
+	const GLfloat SMALL_ROT_SPEED = 0.3f;
+	// Small terrain
+	Material small_land_material;
+	small_land_material.diffuse = small_land_material.ambient = color::windwaker_green;
+	small_land_material.shadows = false;
+	Mesh small_land_mesh = { land_geo, small_land_material, ShaderManager::get_default(), glm::mat4(1.f) };
+	Material small_plateau_material;
+	small_plateau_material.diffuse = small_plateau_material.ambient = color::bone_white;
+	small_plateau_material.shadows = false;
+	Mesh small_plateau_mesh = { plateau_geo, small_plateau_material, ShaderManager::get_default(), glm::mat4(1.f) };
+	Material small_sand_material;
+	small_sand_material.diffuse = small_sand_material.ambient = color::windwaker_sand;
+	small_sand_material.shadows = false;
+	Mesh small_sand_mesh = { sand_geo, small_sand_material, ShaderManager::get_default(), glm::mat4(1.f) };
+	SceneModel *small_terrain_model = new SceneModel(scene);
+	small_terrain_model->add_mesh(small_land_mesh);
+	small_terrain_model->add_mesh(small_sand_mesh);
+	small_terrain_model->add_mesh(small_plateau_mesh);
+	SceneTransform *small_terrain_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(0.05f, 0.05f / 10.f, 0.05f)));
+	SceneAnimation *small_terrain_anim = new SceneAnimation(scene, 0.f, FLT_MAX, 0.f, SMALL_ROT_SPEED, glm::vec3(0.f, 1.f, 0.f), glm::vec3(0.f, 0.f, 0.f));
+	SceneTransform *small_terrain_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(80.f, 175.f, -40.f)));
+	small_terrain_scale->add_child(small_terrain_model);
+	small_terrain_anim->add_child(small_terrain_scale);
+	small_terrain_translate->add_child(small_terrain_anim);
+	root->add_child(small_terrain_translate);
+
+	// Small trees
+	Material branch_material, leaf_material;
+	leaf_material.diffuse = leaf_material.ambient = color::olive_green;
+	branch_material.diffuse = branch_material.ambient = color::wood_sienna;
+	branch_material.shadows = false;
+	leaf_material.shadows = false;
+	SceneGroup *small_tree_1 = Tree::generate_tree(scene, cylinder_geo, diamond_geo, 2, 0, 20.f, 2.f, branch_material, leaf_material, false, glm::vec3(0.f), 777);
+	SceneGroup *small_tree_2 = Tree::generate_tree(scene, cylinder_geo, diamond_geo, 3, 0, 20.f, 2.f, branch_material, leaf_material, false, glm::vec3(0.f), 777);
+	SceneGroup *small_tree_3 = Tree::generate_tree(scene, cylinder_geo, diamond_geo, 4, 0, 20.f, 2.f, branch_material, leaf_material, false, glm::vec3(0.f), 777);
+	SceneGroup *small_tree_4 = Tree::generate_tree(scene, cylinder_geo, diamond_geo, 5, 0, 20.f, 2.f, branch_material, leaf_material, false, glm::vec3(0.f), 777);
+	SceneGroup *small_tree_5 = Tree::generate_tree(scene, cylinder_geo, diamond_geo, 6, 0, 20.f, 2.f, branch_material, leaf_material, false, glm::vec3(0.f), 777);
+	SceneGroup *small_tree_6 = Tree::generate_tree(scene, cylinder_geo, diamond_geo, 7, 1, 20.f, 2.f, branch_material, leaf_material, false, glm::vec3(0.f), 777);
+	SceneGroup *small_trees[6] = { small_tree_1, small_tree_2, small_tree_3, small_tree_4, small_tree_5, small_tree_6 };
+	SceneGroup *small_forest = new SceneGroup();
+	float SMALL_FOREST_RADIUS = 5.f;
+	for (int i = 0; i < 6; ++i)
+	{
+		SceneTransform *small_tree_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(0.05f)));
+		SceneAnimation *small_tree_anim = new SceneAnimation(scene, 0.f, FLT_MAX, 0.f, SMALL_ROT_SPEED, glm::vec3(0.f, 1.f, 0.f), glm::vec3(0.f, 0.f, 0.f));
+		// Display in a half-circle arc.
+		float x = SMALL_FOREST_RADIUS*glm::cos(glm::radians(180.f / 5.f * (5 - i)));
+		float z = -SMALL_FOREST_RADIUS*glm::sin(glm::radians(180.f / 5.f * i));
+		SceneTransform *small_tree_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(x, 0, z)));
+		small_tree_scale->add_child(small_trees[i]);
+		small_tree_anim->add_child(small_tree_scale);
+		small_tree_translate->add_child(small_tree_anim);
+		small_forest->add_child(small_tree_translate);
+	}
+	SceneTransform *small_forest_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(-80.f, 175.f, -40.f)));
+	small_forest_translate->add_child(small_forest);
+	root->add_child(small_forest_translate);
+	std::cerr << "Done." << std::endl;
+}
+
 void Greed::setup_scene()
 {
 	island_scene = new Scene();
@@ -96,20 +324,29 @@ void Greed::setup_scene()
 	scenes.push_back(desert_scene);
 
 	scene = island_scene;
-	camera = scene->camera;
-	scene->light_pos = glm::vec3(0.f, ISLAND_SIZE*2, ISLAND_SIZE);
 	SceneGroup *root = scene->root;
 	
+	// Lights and camera before action.
+	camera = scene->camera;
 	// Set all cameras to be the same.
 	for (Scene* s : scenes)
 	{
 		s->camera = camera;
 	}
+	// Initial position
+	camera->cam_pos = glm::vec3(0.f, 0.f, ISLAND_SIZE - CAM_OFFSET);
+	camera->recalculate();
+	// Light(s)
+	scene->light_pos = glm::vec3(0.f, ISLAND_SIZE*2, ISLAND_SIZE);
+	
+	/* BEGIN ACTUAL OBJECTS TO BE RENDERED */
+	// "Starter" geometry kit
+	cylinder_geo = GeometryGenerator::generate_cylinder(0.25f, 2.f, 3, false);
+	diamond_geo = GeometryGenerator::generate_sphere(2.f, 3);
+	sphere_geo = GeometryGenerator::generate_sphere(1.f, 7);
+	cube_geo = GeometryGenerator::generate_cube(1.f, true);
 
-	// Seed PRNG.
-	Util::seed(0);
-
-	// Do skybox.
+	// Skybox
 	Material default_material;
 	Mesh skybox_mesh = { nullptr, default_material, ShaderManager::get_shader_program("skybox"), glm::mat4(1.f) };
 	SceneModel *skybox_model = new SceneModel(scene);
@@ -117,44 +354,7 @@ void Greed::setup_scene()
 	root->add_child(skybox_model);
 	transition_scene->root->add_child(skybox_model);
 
-	Geometry *cylinder_geo = GeometryGenerator::generate_cylinder(0.25f, 2.f, 3, false);
-	Geometry *diamond_geo = GeometryGenerator::generate_sphere(2.f, 3);
-	Geometry *sphere_geo = GeometryGenerator::generate_sphere(1.f, 7);
-	Geometry *cube_geometry = GeometryGenerator::generate_cube(1.f, true);
-
-	Material sphere_material;
-	sphere_material.diffuse = sphere_material.ambient = color::ocean_blue;
-	Mesh sphere_mesh = { diamond_geo, sphere_material, ShaderManager::get_default(), glm::mat4(1.f) };
-	SceneModel *sphere_model = new SceneModel(scene);
-	sphere_model->add_mesh(sphere_mesh);
-	SceneTransform *sphere_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(1.f, 1.0f, 1.f)));
-	SceneTransform *sphere_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 100.f, 100.0f)));
-	sphere_scale->add_child(sphere_model);
-	sphere_translate->add_child(sphere_scale);
-	//root->add_child(sphere_translate);
-
-	// Procedural generation parameters
-	const GLuint    HEIGHT_MAP_POWER = 8;
-	const GLuint    HEIGHT_MAP_SIZE = (unsigned int)glm::pow(2, HEIGHT_MAP_POWER) + 1;
-	const GLfloat   HEIGHT_MAP_MAX = 200.f;
-	const GLfloat   HEIGHT_RANDOMNESS_SCALE = 200.f;
-	const GLint     VILLAGE_DIAMETER = 60;
-	const GLfloat   TERRAIN_SIZE = ISLAND_SIZE / 5;
-	const GLfloat   TERRAIN_SCALE = ISLAND_SIZE / 60;
-	const GLuint    TERRAIN_RESOLUTION = 200;
-	const GLfloat   BEACH_HEIGHT = 10.f;
-	const GLuint    NUM_TREES = 10;
-	const GLfloat   PERCENT_TREE_ANIM = 0.9f;
-	const GLuint    NUM_TREE_TYPES = 10;
-	const GLfloat   TREE_SCALE = 1.5f;
-	const GLfloat   PATH_WIDTH = 90.f;
-	const GLfloat   FOREST_RADIUS = ISLAND_SIZE / 1.1f;
-	const GLint		NUM_BUILDINGS = 5;
-	const GLfloat	VILLAGE_DIAMETER_TRUE = ((float)VILLAGE_DIAMETER / HEIGHT_MAP_SIZE) * TERRAIN_SIZE * TERRAIN_SCALE;
-	const GLfloat   WATER_SCALE = ISLAND_SIZE * 4;
-	const GLint     CAM_OFFSET = 20;
-
-	// Water Plane
+	// Infinite water plane stretching to the horizon
 	Geometry *plane_geo = GeometryGenerator::generate_plane(1.f);
 	Material water_material;
 	water_material.diffuse = water_material.ambient = color::ocean_blue;
@@ -167,44 +367,10 @@ void Greed::setup_scene()
 	water_translate->add_child(water_scale);
 	root->add_child(water_translate);
 
-	// New Terrain Method using Awesomeness
-	std::cerr << "Generating Height Map" << std::endl;
-	Terrain::generate_height_map(HEIGHT_MAP_SIZE, HEIGHT_MAP_MAX, VILLAGE_DIAMETER, HEIGHT_RANDOMNESS_SCALE, 0);
-
-	float cam_height = Terrain::height_lookup(0.f, ISLAND_SIZE - CAM_OFFSET, ISLAND_SIZE * 2);
-	camera->cam_pos = glm::vec3(0.f, cam_height+PLAYER_HEIGHT, ISLAND_SIZE - CAM_OFFSET);
-	camera->recalculate();
-
-	std::cerr << "Generating Land Terrain" << std::endl;
-	// Second Parameter Below is Resolution^2 of Island, LOWER TO RUN FASTER
-	Geometry *land_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, BEACH_HEIGHT, HEIGHT_MAP_MAX * 0.8f - 0.2f, false);
-	Material land_material;
-	land_material.diffuse = land_material.ambient = color::windwaker_green;
-	Mesh land_mesh = { land_geo, land_material, ShaderManager::get_default(), glm::mat4(1.f) };	
-
-	std::cerr << "Generating Plateau Terrain" << std::endl;
-	Geometry *plateau_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, HEIGHT_MAP_MAX * 0.8f - 0.2f, HEIGHT_MAP_MAX, false);
-	Material plateau_material;
-	plateau_material.diffuse = plateau_material.ambient = color::bone_white;
-	Mesh plateau_mesh = { plateau_geo, plateau_material, ShaderManager::get_default(), glm::mat4(1.f) };
-
-	std::cerr << "Generating Sand Terrain" << std::endl;
-	Geometry *sand_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, 0.0f, BEACH_HEIGHT, true);
-	Material sand_material;
-	sand_material.diffuse = sand_material.ambient = color::windwaker_sand;
-	Mesh sand_mesh = { sand_geo, sand_material, ShaderManager::get_default(), glm::mat4(1.f) };
-
-	SceneModel *terrain_model = new SceneModel(scene);
-	terrain_model->add_mesh(land_mesh);
-	terrain_model->add_mesh(sand_mesh);
-	terrain_model->add_mesh(plateau_mesh);
-	SceneTransform *terrain_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(TERRAIN_SCALE, 1.f, TERRAIN_SCALE)));
-	terrain_scale->add_child(terrain_model);
-	root->add_child(terrain_scale);
-
-	// Beach Plane
+	// Curvy beach plane, named Bezier Beach Resort
 	Geometry *beach_geo = GeometryGenerator::generate_bezier_plane(ISLAND_SIZE*1.5f, 50, 150, 0.1f, 0);
-	Material beach_material = sand_material;
+	Material beach_material;
+	beach_material.diffuse = beach_material.ambient = color::windwaker_sand;
 	Mesh beach_mesh = { beach_geo, beach_material, ShaderManager::get_default(), glm::mat4(1.f) };
 	SceneModel *beach_model = new SceneModel(scene);
 	beach_model->add_mesh(beach_mesh);
@@ -214,105 +380,12 @@ void Greed::setup_scene()
 	beach_translate->add_child(beach_scale);
 	root->add_child(beach_translate);
 	desert_scene->root->add_child(beach_translate);
-
-	std::cerr << "Generating Forest" << std::endl;
-	glm::vec3 leaf_colors[] = {color::olive_green, color::olive_green, color::olive_green, color::autumn_orange, color::purple, color::bone_white, color::indian_red};
-	glm::vec3 branch_colors[] = { color::brown, color::wood_saddle, color::wood_sienna, color::wood_tan, color::wood_tan_light };
-	Material branch_material, leaf_material;
-	SceneGroup *forest = new SceneGroup(scene);
-	for (int i = 0; i < NUM_TREES; ++i) {
-		//SceneGroup *tree = tree_types[i % tree_types.size()];
-		leaf_material.diffuse = leaf_material.ambient = leaf_colors[(int)Util::random(0,7)];
-		branch_material.diffuse = branch_material.ambient = branch_colors[(int)Util::random(0, 5)];
-		bool animated = false;
-		if (i % (NUM_TREES / (int) (NUM_TREES*PERCENT_TREE_ANIM)) == 0)
-			animated = true;
-		if (i % 50 == 0)
-			std::cerr << "Tree " << i << std::endl;
-		float x, z;
-		do {
-			float angle = Util::random(0, 360);
-			float distance = Util::random(VILLAGE_DIAMETER*TERRAIN_SCALE / 3, FOREST_RADIUS);
-
-			x = glm::cos(glm::radians(angle)) * distance;
-			z = glm::sin(glm::radians(angle)) * distance;
-		} while (Util::within_rect(glm::vec2(x, z), glm::vec2(-PATH_WIDTH/2, FOREST_RADIUS), glm::vec2(PATH_WIDTH/2, 0)));
-		float y = Terrain::height_lookup(x, z, ISLAND_SIZE*2);
-		glm::vec3 location = {x, y, z};
-
-		SceneGroup *tree = Tree::generate_tree(scene, cylinder_geo, diamond_geo, 7, 1, 20.f, 2.f, branch_material, leaf_material, animated, location, 0);
-		
-		// THIS IS NASTY CODE:
-		((SceneModel *)(tree->children[0]))->meshes[0].to_world = glm::translate(glm::mat4(1.f), location) * glm::scale(glm::mat4(1.f), glm::vec3(TREE_SCALE));
-		if (animated)
-			((SceneModel *)((SceneAnimation *)(tree->children[1]))->children[0])->meshes[0].to_world = glm::translate(glm::mat4(1.f), location) * glm::scale(glm::mat4(1.f), glm::vec3(TREE_SCALE));
-		else
-			((SceneModel *)(tree->children[1]))->meshes[0].to_world = glm::translate(glm::mat4(1.f), location) * glm::scale(glm::mat4(1.f), glm::vec3(TREE_SCALE));
-		// END NASTY CODE
-
-		forest->add_child(tree);
-
-		//SceneTransform *tree_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), location));
-		//tree_translate->add_child(tree);
-		//root->add_child(tree_translate);
-	}
-	root->add_child(forest);
-	std::cerr << "Done." << std::endl;
-
-	// Village
-	SceneGroup *village = new SceneGroup(scene);
-	for (int i = 0; i < NUM_BUILDINGS; ++i)
-	{
-
-		std::cerr << "House " << i << std::endl;
-
-		float x, z;
-
-		float angle = ((350.f / (NUM_BUILDINGS)) * i) + 130.f; //Circles around, starting from the far side
-		float distance = VILLAGE_DIAMETER_TRUE / 3.f;
-
-		x = glm::cos(glm::radians(angle)) * distance;
-		z = glm::sin(glm::radians(angle)) * distance;
-
-		float y = Terrain::height_lookup(x, z, ISLAND_SIZE * 2);
-		glm::vec3 location = { x, y, z };
-
-		SceneModel *building = ShapeGrammar::generate_building(scene, 0);
-
-		SceneTransform *building_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), location));
-		building_translate->add_child(building);
-		village->add_child(building_translate);
-	}
-	root->add_child(village);
-	std::cerr << "Done." << std::endl;
-
-	// Small-scale showcase.
-	const GLfloat SMALL_ROT_SPEED = 0.3f;
-	SceneTransform *small_terrain_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(0.05f, 0.05f/10.f, 0.05f)));
-	SceneAnimation *small_terrain_anim = new SceneAnimation(scene, 0.f, FLT_MAX, 0.f, SMALL_ROT_SPEED, glm::vec3(0.f, 1.f, 0.f), glm::vec3(0.f, 0.f, 0.f));
-	SceneTransform *small_terrain_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(50.f, 175.f, -50.f)));
-	small_terrain_scale->add_child(terrain_model);
-	small_terrain_anim->add_child(small_terrain_scale);
-	small_terrain_translate->add_child(small_terrain_anim);
-	root->add_child(small_terrain_translate);
-
-	SceneGroup *small_tree_1 = Tree::generate_tree(scene, cylinder_geo, diamond_geo, 2, 0, 20.f, 2.f, branch_material, leaf_material, false, glm::vec3(0.f), 777);
-	SceneGroup *small_tree_2 = Tree::generate_tree(scene, cylinder_geo, diamond_geo, 3, 0, 20.f, 2.f, branch_material, leaf_material, false, glm::vec3(0.f), 777);
-	SceneGroup *small_tree_3 = Tree::generate_tree(scene, cylinder_geo, diamond_geo, 4, 0, 20.f, 2.f, branch_material, leaf_material, false, glm::vec3(0.f), 777);
-	SceneGroup *small_tree_4 = Tree::generate_tree(scene, cylinder_geo, diamond_geo, 5, 0, 20.f, 2.f, branch_material, leaf_material, false, glm::vec3(0.f), 777);
-	SceneGroup *small_tree_5 = Tree::generate_tree(scene, cylinder_geo, diamond_geo, 6, 0, 20.f, 2.f, branch_material, leaf_material, false, glm::vec3(0.f), 777);
-	SceneGroup *small_tree_6 = Tree::generate_tree(scene, cylinder_geo, diamond_geo, 7, 1, 20.f, 2.f, branch_material, leaf_material, false, glm::vec3(0.f), 777);
-	SceneGroup *small_trees[6] = { small_tree_1, small_tree_2, small_tree_3, small_tree_4, small_tree_5, small_tree_6 };
-	for (int i = 0; i < 6; ++i)
-	{
-		SceneTransform *small_tree_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(0.05f)));
-		SceneAnimation *small_tree_anim = new SceneAnimation(scene, 0.f, FLT_MAX, 0.f, SMALL_ROT_SPEED, glm::vec3(0.f, 1.f, 0.f), glm::vec3(0.f, 0.f, 0.f));
-		SceneTransform *small_tree_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(-50.f + (i * 5.f), 175.f, -50.f)));
-		small_tree_scale->add_child(small_trees[i]);
-		small_tree_anim->add_child(small_tree_scale);
-		small_tree_translate->add_child(small_tree_anim);
-		root->add_child(small_tree_translate);
-	}
+	
+	// Generate everything.
+	generate_map();
+	generate_forest();
+	generate_village();
+	generate_miniatures();
 }
 
 void Greed::go()
@@ -323,6 +396,8 @@ void Greed::go()
 	if (vr_on) GreedVR::init();
 
 	setup_shaders();
+	// Seed PRNG.
+	Util::seed(0);
 	setup_scene();
 
 	// Send height/width of window
@@ -408,7 +483,10 @@ void Greed::shadow_pass()
 	glClear(GL_DEPTH_BUFFER_BIT);
 	ss->use();
 	ss->light_pos = scene->light_pos;
-	ss->light_proj = scene->frustum_ortho();//glm::ortho(-ISLAND_SIZE, ISLAND_SIZE, -ISLAND_SIZE, ISLAND_SIZE, -ISLAND_SIZE, ISLAND_SIZE);
+	if (shadows_on)
+		ss->light_proj = scene->frustum_ortho();//glm::ortho(-ISLAND_SIZE, ISLAND_SIZE, -ISLAND_SIZE, ISLAND_SIZE, -ISLAND_SIZE, ISLAND_SIZE);
+	else
+		ss->light_proj = glm::ortho(-1.f, 1.f, -1.f, 1.f, 0.f, 0.1f);
 	// Render using scene graph.
 	glDisable(GL_CULL_FACE);
 	scene->pass(ss);
@@ -478,6 +556,8 @@ void Greed::vr_render()
 
 void Greed::handle_movement()
 {
+	const GLfloat EDGE_LEEWAY = 100.f;
+	const GLfloat MOVE_BOUNDS = ISLAND_SIZE + EDGE_LEEWAY;
 	const GLfloat EDGE_THRESH = 20.f;
 	const GLfloat BASE_CAM_SPEED = 2.f;
 	GLfloat cam_step = keys[GLFW_KEY_LEFT_SHIFT] ? 5*BASE_CAM_SPEED : BASE_CAM_SPEED;
@@ -494,38 +574,34 @@ void Greed::handle_movement()
 		displacement += cam_step * camera->cam_up;
 	glm::vec3 new_pos = camera->cam_pos + displacement;
 
-	// Fix height to be based on heightmap.
-	float new_height = Terrain::height_lookup(new_pos.x, new_pos.z, ISLAND_SIZE * 2);
-	if (new_pos.y - PLAYER_HEIGHT < new_height)
-		new_pos.y = new_height + PLAYER_HEIGHT;
-
 	// Check horizontal bounds.
-	if (new_pos.x < -ISLAND_SIZE || new_pos.x > ISLAND_SIZE || new_pos.z < -ISLAND_SIZE || new_pos.z > ISLAND_SIZE)
+	if (new_pos.x < -MOVE_BOUNDS || new_pos.x > MOVE_BOUNDS || new_pos.z < -MOVE_BOUNDS || new_pos.z > MOVE_BOUNDS)
 		return;
 
 	// Smoother edge movement.
-	if (new_pos.x < -ISLAND_SIZE + EDGE_THRESH) {
-		float diff = glm::abs(-ISLAND_SIZE - new_pos.x);
+	if (new_pos.x < -MOVE_BOUNDS + EDGE_THRESH) {
+		float diff = glm::abs(-MOVE_BOUNDS - new_pos.x);
 		displacement *= diff / EDGE_THRESH;
 	}
-	else if (new_pos.x > ISLAND_SIZE - EDGE_THRESH) {
-		float diff = glm::abs(ISLAND_SIZE - new_pos.x);
+	else if (new_pos.x > MOVE_BOUNDS - EDGE_THRESH) {
+		float diff = glm::abs(MOVE_BOUNDS - new_pos.x);
 		displacement *= diff / EDGE_THRESH;
 	}
-	if (new_pos.z < -ISLAND_SIZE + EDGE_THRESH) {
-		float diff = glm::abs(-ISLAND_SIZE - new_pos.z);
+	if (new_pos.z < -MOVE_BOUNDS + EDGE_THRESH) {
+		float diff = glm::abs(-MOVE_BOUNDS - new_pos.z);
 		displacement *= diff / EDGE_THRESH;
 	}
-	else if (new_pos.z > ISLAND_SIZE - EDGE_THRESH) {
-		float diff = glm::abs(ISLAND_SIZE - new_pos.z);
+	else if (new_pos.z > MOVE_BOUNDS - EDGE_THRESH) {
+		float diff = glm::abs(MOVE_BOUNDS - new_pos.z);
 		displacement *= diff / EDGE_THRESH;
 	}
 	new_pos = camera->cam_pos + displacement;
 
-	// Recheck height.
-	new_height = Terrain::height_lookup(new_pos.x, new_pos.z, ISLAND_SIZE * 2);
-	if (new_pos.y - PLAYER_HEIGHT < new_height)
-		new_pos.y = new_height + PLAYER_HEIGHT;
+	// Fix height.
+	float new_height = 0.f;
+	if (Util::within_rect(glm::vec2(new_pos.x, new_pos.z), glm::vec2(-ISLAND_SIZE, ISLAND_SIZE), glm::vec2(ISLAND_SIZE, -ISLAND_SIZE)))
+		new_height = Terrain::height_lookup(new_pos.x, new_pos.z, ISLAND_SIZE * 2);
+	new_pos.y = new_height + PLAYER_HEIGHT;
 
 	camera->cam_pos = new_pos;
 	camera->recalculate();
@@ -583,12 +659,6 @@ void Greed::key_callback(GLFWwindow* window, int key, int scancode, int action, 
 			// Close the window. This causes the program to also terminate.
 			glfwSetWindowShouldClose(window, GL_TRUE);
 			break;
-		case GLFW_KEY_V:
-			//vr_on = !vr_on;
-			break;
-		case GLFW_KEY_R:
-			camera->reset();
-			break;
 		case GLFW_KEY_Q:
 			debug_shadows = !debug_shadows;
 			break;
@@ -597,6 +667,18 @@ void Greed::key_callback(GLFWwindow* window, int key, int scancode, int action, 
 			break;
 		case GLFW_KEY_Z:
 			next_skybox();
+			break;
+		case GLFW_KEY_X:
+			shadows_on = !shadows_on;
+			break;
+		case GLFW_KEY_F:
+			generate_forest();
+			break;
+		case GLFW_KEY_M:
+			generate_map();
+			break;
+		case GLFW_KEY_V:
+			generate_village();
 			break;
 		default:
 			break;
