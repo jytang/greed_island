@@ -206,6 +206,19 @@ void Greed::setup_scenes()
 			s->root->add_child(controller_2_transform);
 		}
 	}
+
+	//For Testing Textures
+	Geometry *cube_geo = GeometryGenerator::generate_cube(1.f, true);
+	Material cube_material;
+	cube_material.diffuse = cube_material.ambient = color::ocean_blue;
+	Mesh cube_mesh = { cube_geo, cube_material, ShaderManager::get_default(), glm::mat4(1.f) };
+	SceneModel *cube_model = new SceneModel(scene);
+	cube_model->add_mesh(cube_mesh);
+	SceneTransform *cube_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(5.f)));
+	SceneTransform *cube_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 20.0f, 10.f)));
+	cube_scale->add_child(cube_model);
+	cube_translate->add_child(cube_scale);
+	scene->root->add_child(cube_translate);
 }
 
 void Greed::go()

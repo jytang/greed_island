@@ -41,8 +41,8 @@ std::vector<std::vector<GLfloat> > Terrain::generate_height_map(GLuint size, GLf
 	//Offset of Village on Island, Round Plateau.
 	float r_ratio_offset = 0.5; //Row <----Currnently, Code only works for when village is at center of island.
 	float c_ratio_offset = 0.5; //Col
-	unsigned int village_mid_r = size * r_ratio_offset;
-	unsigned int village_mid_c = size * c_ratio_offset;
+	unsigned int village_mid_r = (unsigned int) size * r_ratio_offset;
+	unsigned int village_mid_c = (unsigned int) size * c_ratio_offset;
 
 	unsigned int radius = village_diameter / 2;
 

@@ -15,16 +15,20 @@ struct DirLight {
 in vec3 frag_pos;
 in vec3 frag_normal;
 in vec4 frag_pos_light;
+in vec2 frag_tex_coord;
 
 out vec4 color;
 
 uniform sampler2D shadow_map;
+uniform sampler2D texture_map;
 uniform vec3 eye_pos;
 uniform Material material;
 uniform DirLight dir_light;
 uniform bool shadows_enabled;
+uniform bool texture_enabled;
 
 vec3 colorify(vec3 normal, vec3 view_dir, vec3 light_dir, vec3 light_intensity, float ambient_coeff);
+vec3 colorify_tex(vec3 normal, vec3 view_dir, vec3 light_dir, vec3 light_intensity, float ambient_coeff, vec3 tex_color);
 float calc_shadows(vec4 pos_from_light, vec3 light_dir);
 
 void main()
@@ -33,7 +37,14 @@ void main()
     vec3 view_dir = normalize(eye_pos - frag_pos);
 	vec3 light_dir = normalize(-dir_light.direction);
     vec3 light_intensity = dir_light.color;
-    vec3 result = colorify(normal, view_dir, light_dir, light_intensity, dir_light.ambient_coeff);
+	vec3 result;
+	if (texture_enabled){
+		vec3 tex_color = vec3(texture(texture_map, frag_tex_coord));
+		//vec3 tex_color = material.diffuse;
+		result = colorify_tex(normal, view_dir, light_dir, light_intensity, dir_light.ambient_coeff, tex_color);
+	}
+	else
+		result = colorify(normal, view_dir, light_dir, light_intensity, dir_light.ambient_coeff);
 
     color = vec4(result, 1.0f);
 }
@@ -78,6 +89,25 @@ vec3 colorify(vec3 normal, vec3 view_dir, vec3 light_dir, vec3 light_intensity, 
 
     // Ambient: c_a (ambient color) * k_a (coeff)
     vec3 ambient = material.ambient * ambient_coeff;
+
+	float shadow = 0;
+	if (shadows_enabled)
+		shadow = calc_shadows(frag_pos_light, light_dir);
+    return (1.0 - shadow) * (diffuse + specular) + ambient;
+}
+
+vec3 colorify_tex(vec3 normal, vec3 view_dir, vec3 light_dir, vec3 light_intensity, float ambient_coeff, vec3 tex_color)
+{
+    // Diffuse: c_d = c_l * k_d * dot(n, L)
+    vec3 diffuse = light_intensity * tex_color *
+        max(dot(normal, light_dir), 0.0);
+
+    // Specular: c_s = c_l * k_s * dot(n, h)^s
+    vec3 specular = light_intensity * tex_color *
+        pow(max(dot(normal, normalize(light_dir + view_dir)), 0.0), material.shininess);
+
+    // Ambient: c_a (ambient color) * k_a (coeff)
+    vec3 ambient = tex_color * ambient_coeff;
 
 	float shadow = 0;
 	if (shadows_enabled)

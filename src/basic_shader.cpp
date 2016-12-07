@@ -24,6 +24,7 @@ void BasicShader::draw(Geometry *g, glm::mat4 to_world)
 		glUniformMatrix4fv(glGetUniformLocation(shader_id, "light_matrix"), 1, GL_FALSE, &ss->light_matrix[0][0]);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, ss->shadow_map_tex);
+		glUniform1i(glGetUniformLocation(shader_id, "shadow_map"), 0);
 
 		// Basic lighting
 		glm::vec3 light_pos = ss->light_pos;
@@ -39,8 +40,18 @@ void BasicShader::draw(Geometry *g, glm::mat4 to_world)
 	glUniformMatrix4fv(glGetUniformLocation(shader_id, "view"), 1, GL_FALSE, &V[0][0]);
 	// Model matrix
 	glUniformMatrix4fv(glGetUniformLocation(shader_id, "model"), 1, GL_FALSE, &to_world[0][0]);
-
 	glUniformMatrix4fv(glGetUniformLocation(shader_id, "mesh_model"), 1, GL_FALSE, &mesh_model[0][0]);
+
+	glUniform1i(glGetUniformLocation(shader_id, "texture_enabled"), g->has_texture);
+
+	//Bind Texture
+	if (g->has_texture)
+	{
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, g->texture);
+		glUniform1i(glGetUniformLocation(shader_id, "texture_map"), 1);
+	}
+
 	// Bind geometry and draw
 	g->bind();
 	g->draw();
