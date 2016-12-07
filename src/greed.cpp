@@ -52,8 +52,11 @@ const GLfloat   BASE_CAM_SPEED = PLAYER_HEIGHT / 10.f;
 const GLfloat   EDGE_PAN_THRESH = 5.f;
 const GLfloat   EDGE_PAN_SPEED = 0.5f;
 
-SceneTransform *controller_1_translate;
-SceneTransform *controller_2_translate;
+const GLfloat	CONTROLLER_BALL_SCALE = 0.04f;
+const glm::vec3	CONTROLLER_ROD_SCALE = { 0.05f, 0.08f, 0.05f };
+
+SceneTransform *controller_1_transform;
+SceneTransform *controller_2_transform;
 
 Greed::Greed() {}
 
@@ -175,23 +178,33 @@ void Greed::setup_scenes()
 	fire_scene->in_house->add_child(island_scene->out_house);
 	fire_scene->root->add_child(fire_scene->in_house);
 
-	//Show Vive Controllers using Two Blue Spheres
+	//Show Vive Controllers using Two Blue Spheres and Ctlinders
 	if (vr_on)
 	{
 		Geometry *sphere_geo = GeometryGenerator::generate_sphere(1.f, 7);
 		Material sphere_material;
 		sphere_material.diffuse = sphere_material.ambient = color::ocean_blue;
 		Mesh sphere_mesh = { sphere_geo, sphere_material, ShaderManager::get_default() };
-		SceneModel *sphere_model = new SceneModel(scene);
-		sphere_model->add_mesh(sphere_mesh);
-		SceneTransform *sphere_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(1.f, 1.0f, 1.f)));
-		controller_1_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 0.f, 0.0f)));
-		controller_2_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 0.f, 0.0f)));
-		sphere_scale->add_child(sphere_model);
-		controller_1_translate->add_child(sphere_scale);
-		controller_2_translate->add_child(sphere_scale);
-		scene->root->add_child(controller_1_translate);
-		scene->root->add_child(controller_2_translate);
+		sphere_mesh.to_world = glm::translate(glm::mat4(1.f), glm::vec3(0.f, 0.f, -0.06f)) * glm::scale(glm::mat4(1.f), glm::vec3(CONTROLLER_BALL_SCALE));
+
+		Geometry *rod_geo = GeometryGenerator::generate_cylinder(0.25f, 2.f, 10, true); //Smoother Cylinder for Rod as VR Controllers
+		Material rod_material;
+		rod_material.diffuse = rod_material.ambient = color::black;
+		Mesh rod_mesh = { rod_geo, rod_material, ShaderManager::get_default() };
+		rod_mesh.to_world = glm::translate(glm::mat4(1.f), glm::vec3(0.f, 0.f, 0.06f)) * glm::rotate(glm::mat4(1.f), glm::pi<float>() / 2.f, glm::vec3(1.f, 0.f, 0.0f)) * glm::scale(glm::mat4(1.f), CONTROLLER_ROD_SCALE);
+		SceneModel *controller_model = new SceneModel(scene);
+		controller_model->add_mesh(sphere_mesh);
+		controller_model->add_mesh(rod_mesh);
+		controller_1_transform = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 0.f, 0.0f)));
+		controller_2_transform = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 0.f, 0.0f)));
+		controller_1_transform->add_child(controller_model);
+		controller_2_transform->add_child(controller_model);
+		
+		for (Scene * s : scenes)
+		{
+			s->root->add_child(controller_1_transform);
+			s->root->add_child(controller_2_transform);
+		}
 	}
 }
 
@@ -225,7 +238,7 @@ void Greed::go()
 		double curr_time = glfwGetTime();
 		if (curr_time - prev_ticks > 1.f)
 		{
-			//std::cerr << "FPS: " << frame << std::endl;
+			std::cerr << "FPS: " << frame << std::endl;
 			frame = 0;
 			prev_ticks = curr_time;
 		}
@@ -278,20 +291,9 @@ void Greed::go()
 		{
 
 			//Update Controller Positions
-			//vr_update_controllers();
-
-			//Update any objects relying on controller positions
-				//Including Controller's Spheres and Grabbed Objects
-
+			GreedVR::vr_update_controllers(scene, controller_1_transform, controller_2_transform, glm::translate(glm::mat4(1.0f), camera->cam_pos));
 			vr_render(); //Render Scene
 
-			/*// Mirror to the window //CURRENTLY DOESN"T WORK
-			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, GL_NONE);
-			glViewport(0, 0, width, height);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-			glBlitFramebuffer(0, 0, GreedVR::vars.framebufferWidth, GreedVR::vars.framebufferHeight, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
-			glBindFramebuffer(GL_READ_FRAMEBUFFER, GL_NONE);
-			*/
 		}
 		else {
 			scene->render();
@@ -362,28 +364,12 @@ void Greed::vr_render()
 		}
 	}
 
-	//Useless
-	glm::mat4 bodyToWorldMatrix = glm::mat4(1.0f);
-	glm::vec3 head_center = glm::vec3(0.f, 0.f, 0.f);
-
-	//Get Body Matrix (for Room Space)	
-	if (GreedVR::vars.trackedDevicePose[vr::k_unTrackedDeviceIndex_Hmd].bPoseIsValid)
-	{
-		bodyToWorldMatrix = GreedVR::ConvertSteamVRMatrixToMatrix4(GreedVR::vars.trackedDevicePose[vr::k_unTrackedDeviceIndex_Hmd].mDeviceToAbsoluteTracking);
-
-		head_center = glm::vec3(bodyToWorldMatrix * glm::vec4(0, 0, 0, 1));
-
-		//fprintf(stderr, "Printing for device %u: Center is %f\t%f\t%f\n", vr::k_unTrackedDeviceIndex_Hmd, center.x, center.y, center.z);
-	}	
-	
-
-
 	for (int eye = 0; eye < GreedVR::vars.numEyes; ++eye) {
 		glBindFramebuffer(GL_FRAMEBUFFER, GreedVR::vars.framebuffer[eye]);
 		glViewport(0, 0, GreedVR::vars.framebufferWidth, GreedVR::vars.framebufferHeight);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glm::mat4 proj = projectionMatrix[eye];
-		glm::mat4 head = glm::inverse(eyeToHead[eye]) * glm::inverse(headToBodyMatrix);
+		glm::mat4 head = glm::inverse(headToBodyMatrix * eyeToHead[eye]);
 
 		camera->cam_front = glm::mat3(glm::transpose(head)) * glm::vec3(0.f, 0.f, -1.f);
 		camera->cam_front.y = 0.f;
