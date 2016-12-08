@@ -8,6 +8,7 @@
 #include "scene_animation.h"
 #include "tree.h"
 #include "shape_grammar.h"
+#include "bounding_sphere.h"
 #include <cfloat>
 
 #include "util.h"
@@ -17,7 +18,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-bool vr_on = false;
+bool vr_on = true;
 
 /* global vars */
 vr_vars GreedVR::vars;
@@ -86,6 +87,7 @@ const glm::vec3	CONTROLLER_ROD_SCALE = { 0.05f, 0.08f, 0.05f };
 
 SceneTransform *controller_1_transform;
 SceneTransform *controller_2_transform;
+std::vector<BoundingSphere> interactable_objects;
 
 Greed::Greed() {}
 
@@ -300,6 +302,8 @@ void Greed::generate_miniatures()
 	small_terrain_anim->add_child(small_terrain_scale);
 	small_terrain_translate->add_child(small_terrain_anim);
 	root->add_child(small_terrain_translate);
+	BoundingSphere small_terrain_bounds = {small_terrain_translate, TERRAIN_SIZE * 0.05f, GRAB};
+	interactable_objects.push_back(small_terrain_bounds);
 
 	// Small trees
 	Material branch_material, leaf_material;
@@ -333,6 +337,8 @@ void Greed::generate_miniatures()
 	SceneTransform *small_forest_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(-4.f, HEIGHT_MAP_MAX-2.f, -2.f)));
 	small_forest_translate->add_child(small_forest);
 	root->add_child(small_forest_translate);
+	BoundingSphere small_forest_bounds = { small_forest_translate, SMALL_FOREST_RADIUS, GRAB };
+	interactable_objects.push_back(small_forest_bounds);
 	std::cerr << "Done." << std::endl;
 }
 
@@ -433,19 +439,19 @@ void Greed::setup_scene()
 		root->add_child(controller_2_transform);
 	}
 
-	/*
-	//For Testing Textures	
+	//For Testing Buttons
 	Material cube_material;
-	cube_material.diffuse = cube_material.ambient = color::ocean_blue;
+	cube_material.diffuse = cube_material.ambient = color::red;
 	Mesh cube_mesh = { cube_geo, cube_material, ShaderManager::get_default(), glm::mat4(1.f) };
 	SceneModel *cube_model = new SceneModel(scene);
 	cube_model->add_mesh(cube_mesh);
-	SceneTransform *cube_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(5.f)));
-	SceneTransform *cube_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 20.0f, 10.f)));
+	SceneTransform *cube_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(1.f)));
+	SceneTransform *cube_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, HEIGHT_MAP_MAX * 0.8f + 0.5f, 10.f)));
 	cube_scale->add_child(cube_model);
 	cube_translate->add_child(cube_scale);
 	root->add_child(cube_translate);
-	*/
+	BoundingSphere cube_bounds = { cube_translate, 1.f, GENERATE_VILLAGE };
+	interactable_objects.push_back(cube_bounds);
 }
 
 void Greed::go()
@@ -517,11 +523,11 @@ void Greed::go()
 
 		if (vr_on)
 		{
-
 			//Update Controller Positions
 			GreedVR::vr_update_controllers(scene, controller_1_transform, controller_2_transform, glm::translate(glm::mat4(1.0f), camera->cam_pos));
-			vr_render(); //Render Scene
-
+			GreedVR::vr_check_interaction(controller_1_transform, controller_2_transform, interactable_objects);
+			vr_interaction_check();
+			vr_render(); //Render Scene			
 		}
 		else {
 			scene->render();
@@ -674,10 +680,6 @@ void Greed::handle_movement_vr()
 	if (GreedVR::vars.hmd->IsInputFocusCapturedByAnotherProcess())
 		return;
 
-	std::vector<float> vertdataarray;
-	unsigned int controllerVertcount = 0;
-	int trackedControllerCount = 0;
-
 	for (vr::TrackedDeviceIndex_t unTrackedDevice = vr::k_unTrackedDeviceIndex_Hmd + 1; unTrackedDevice < vr::k_unMaxTrackedDeviceCount; ++unTrackedDevice)
 	{
 		//Preliminary Checks
@@ -685,7 +687,6 @@ void Greed::handle_movement_vr()
 			continue;
 		if (GreedVR::vars.hmd->GetTrackedDeviceClass(unTrackedDevice) != vr::TrackedDeviceClass_Controller)
 			continue;
-		trackedControllerCount += 1;
 		if (!GreedVR::vars.trackedDevicePose[unTrackedDevice].bPoseIsValid)
 			continue;
 
@@ -693,13 +694,13 @@ void Greed::handle_movement_vr()
 		vr::VRControllerState_t pControllerState;
 		if (!GreedVR::vars.hmd->GetControllerState(unTrackedDevice, &pControllerState, sizeof(pControllerState)))
 			continue;
-		
+
 		//Testing
 		/*
 		fprintf(stderr, "Controller Pressed: %llu\n", (unsigned long long) pControllerState.ulButtonPressed);
-		fprintf(stderr, "Controller Touched: %llu\n", (unsigned long long) pControllerState.ulButtonTouched);				
+		fprintf(stderr, "Controller Touched: %llu\n", (unsigned long long) pControllerState.ulButtonTouched);
 		fprintf(stderr, "Controller Test 1: %f\n", (float)pControllerState.rAxis[TRACKPAD].x);
-		fprintf(stderr, "Controller Test 1: %f\n", (float)pControllerState.rAxis[TRACKPAD].y);		
+		fprintf(stderr, "Controller Test 1: %f\n", (float)pControllerState.rAxis[TRACKPAD].y);
 		fprintf(stderr, "Controller Test 0: %f\n", (float)pControllerState.rAxis[TRIGGER].x);
 		*/
 		
@@ -709,7 +710,7 @@ void Greed::handle_movement_vr()
 		// Fix height to be based on heightmap.
 		float last_height = Terrain::height_lookup(camera->cam_pos.x, camera->cam_pos.z, ISLAND_SIZE * 2);
 
-		if (pControllerState.ulButtonPressed == TRACKPAD_ID)
+		if (pControllerState.ulButtonPressed == TRACKPAD_ID || pControllerState.ulButtonPressed == (TRACKPAD_ID + TRIGGER_ID))
 		{
 			//fprintf(stderr, "TRACKPAD PRESSED\n");
 			if (pControllerState.rAxis[TRACKPAD].y > 0.0f)
@@ -945,4 +946,37 @@ void Greed::scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 	// Only y is relevant here, -1 is down, +1 is up
 	camera->cam_pos = glm::vec3(glm::translate(glm::mat4(1.0f), trans_vec) * glm::vec4(camera->cam_pos, 1.0f));
 	camera->recalculate();
+}
+
+void Greed::vr_interaction_check()
+{
+	for (BoundingSphere obj : interactable_objects)
+	{
+		if (obj.check_interact)
+		{
+			fprintf(stderr, "INTERACTING\n");
+			switch (obj.interact_type)
+			{
+			case CHANGE_SCENE:
+				next_skybox();
+				break;
+			case TOGGLE_SHADOWS:
+				shadows_on = !shadows_on;
+				break;
+			case GENERATE_FOREST:
+				generate_forest();
+				break;
+			case GENERATE_TERRAIN:
+				generate_map();
+				break;
+			case GENERATE_VILLAGE:
+				generate_village();
+				fprintf(stderr, "INTERACT VILLAGE\n");
+				break;
+			default:
+				break;
+			}
+			obj.check_interact = false;
+		}
+	}
 }

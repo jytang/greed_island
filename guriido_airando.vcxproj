@@ -165,6 +165,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\basic_shader.h" />
+    <ClInclude Include="inc\bounding_sphere.h" />
     <ClInclude Include="inc\colors.h" />
     <ClInclude Include="inc\geometry.h" />
     <ClInclude Include="inc\global.h" />
@@ -190,6 +191,10 @@
     <ClInclude Include="inc\util.h" />
     <ClInclude Include="inc\greed_vr.h" />
     <ClInclude Include="inc\window.h" />
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="guriido_airando.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
