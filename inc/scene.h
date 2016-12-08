@@ -7,6 +7,7 @@
 #include "scene_group.h"
 #include "shader.h"
 #include "plane.h"
+#include "scene_trans_anim.h"
 
 class Scene
 {
@@ -18,6 +19,13 @@ public:
 	Plane frustum_planes[6];
 	glm::vec3 frustum_corners[8];
 	std::vector< std::vector<GLfloat> > height_map;
+
+	// portals
+	SceneGroup* in_house;
+	SceneTransAnim* out_house;
+	float in_height, out_height;
+	glm::vec2 in_area[2];
+	glm::vec2 in_point, out_point;
 
 	Scene();
 	~Scene();

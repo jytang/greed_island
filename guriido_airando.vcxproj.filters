@@ -92,6 +92,9 @@
     <ClCompile Include="src\space_scene.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\scene_trans_anim.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -200,6 +203,9 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="inc\space_scene.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\scene_trans_anim.h">
       <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>

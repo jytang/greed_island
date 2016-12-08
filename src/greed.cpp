@@ -91,7 +91,11 @@ void Greed::next_scene()
 			curr = (int) (it - scenes.begin());
 	}
 	next_skybox();
-	change_scene(scenes[(curr + 1) % scenes.size()]);
+	Scene *next = scenes[(curr + 1) % scenes.size()];
+	next->out_house->play_anim();
+	if (next == fire_scene)
+		island_scene->out_house->reset();
+	change_scene(next);
 }
 
 void Greed::setup_shaders()
@@ -133,6 +137,44 @@ void Greed::setup_scenes()
 		s->setup();
 	}
 
+	// Setup trigger houses. Set y to be based on appropriate heightmap.
+	desert_scene->out_height = Terrain::height_lookup(island_scene->in_point.x, island_scene->in_point.y, desert_scene->get_size()*2, desert_scene->height_map);
+	SceneTransform *height_adj = new SceneTransform(desert_scene, glm::translate(glm::mat4(1.f), glm::vec3(0.f, desert_scene->out_height - island_scene->in_height, 0.f)));
+	height_adj->add_child(island_scene->in_house);
+	desert_scene->out_house = new SceneTransAnim(desert_scene, glm::vec3(0.f), glm::vec3(0.f, -0.5f, 0.f), false);
+	desert_scene->out_house->add_child(height_adj);
+	desert_scene->root->add_child(desert_scene->out_house);
+
+	snow_scene->out_height = Terrain::height_lookup(desert_scene->in_point.x, desert_scene->in_point.y, snow_scene->get_size() * 2, snow_scene->height_map);
+	height_adj = new SceneTransform(snow_scene, glm::translate(glm::mat4(1.f), glm::vec3(0.f, snow_scene->out_height - desert_scene->in_height, 0.f)));
+	height_adj->add_child(desert_scene->in_house);
+	snow_scene->out_house = new SceneTransAnim(snow_scene, glm::vec3(0.f), glm::vec3(0.f, -0.5f, 0.f), false);
+	snow_scene->out_house->add_child(height_adj);
+	snow_scene->root->add_child(snow_scene->out_house);
+
+	space_scene->out_height = Terrain::height_lookup(snow_scene->in_point.x, snow_scene->in_point.y, space_scene->get_size() * 2, space_scene->height_map);
+	height_adj = new SceneTransform(space_scene, glm::translate(glm::mat4(1.f), glm::vec3(0.f, space_scene->out_height - snow_scene->in_height, 0.f)));
+	height_adj->add_child(snow_scene->in_house);
+	space_scene->out_house = new SceneTransAnim(space_scene, glm::vec3(0.f), glm::vec3(0.f, -0.5f, 0.f), false);
+	space_scene->out_house->add_child(height_adj);
+	space_scene->root->add_child(space_scene->out_house);
+
+	fire_scene->out_height = Terrain::height_lookup(space_scene->in_point.x, space_scene->in_point.y, fire_scene->get_size() * 2, fire_scene->height_map);
+	height_adj = new SceneTransform(fire_scene, glm::translate(glm::mat4(1.f), glm::vec3(0.f, fire_scene->out_height - space_scene->in_height, 0.f)));
+	height_adj->add_child(space_scene->in_house);
+	fire_scene->out_house = new SceneTransAnim(space_scene, glm::vec3(0.f), glm::vec3(0.f, -0.5f, 0.f), false);
+	fire_scene->out_house->add_child(height_adj);
+	fire_scene->root->add_child(fire_scene->out_house);
+
+	// Portal back to island
+	fire_scene->in_height = Terrain::height_lookup(island_scene->out_point.x, island_scene->out_point.y, fire_scene->get_size() * 2, fire_scene->height_map);
+	fire_scene->in_point = island_scene->out_point;
+	fire_scene->in_area[0] = glm::vec2(fire_scene->in_point.x - Global::TRIGGER_HALF_LEN, fire_scene->in_point.y + Global::TRIGGER_HALF_LEN);
+	fire_scene->in_area[1] = glm::vec2(fire_scene->in_point.x + Global::TRIGGER_HALF_LEN, fire_scene->in_point.y - Global::TRIGGER_HALF_LEN);
+	fire_scene->in_house = new SceneTransform(fire_scene, glm::translate(glm::mat4(1.f), glm::vec3(0.f, fire_scene->in_height - island_scene->out_height, 0.f)));
+	fire_scene->in_house->add_child(island_scene->out_house);
+	fire_scene->root->add_child(fire_scene->in_house);
+
 	//Show Vive Controllers using Two Blue Spheres
 	if (vr_on)
 	{
@@ -155,7 +197,7 @@ void Greed::setup_scenes()
 
 void Greed::go()
 {
-	window = Window::create_window(0, 0, "Greed Island");
+	window = Window::create_window(1280, 720, "Greed Island");
 	//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN); // Don't show cursor
 	setup_callbacks();
 	setup_opengl();
@@ -212,6 +254,11 @@ void Greed::go()
 				sun_step *= scene->light_pos.y < 0 ? 3 : 1;
 				scene->light_pos = glm::vec3(glm::rotate(glm::mat4(1.0f), sun_step, glm::vec3(0.f, 0.f, 1.f)) * glm::vec4(scene->light_pos, 1.0f));
 			}
+
+			// Change scene if in trigger area.
+			glm::vec2 position = { camera->cam_pos.x, camera->cam_pos.z };
+			if (Util::within_rect(position, scene->in_area[0], scene->in_area[1]))
+				next_scene();
 
 			move_prev_ticks = curr_time;
 		}
