@@ -10,8 +10,12 @@
 #define TOGGLE_SHADOWS 4
 #define CHANGE_SCENE 5
 
-struct BoundingSphere
+class BoundingSphere
 {
+public:
+	BoundingSphere(SceneTransform *translation_mat, float radius, int interact_type);
+	~BoundingSphere();
+
 	SceneTransform *translation_mat;
 	float radius;
 	int interact_type;

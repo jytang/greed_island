@@ -40,5 +40,5 @@ public:
 	static void ProcessVREvent(const vr::VREvent_t & event);
 	static glm::mat4 ConvertSteamVRMatrixToMatrix4(const vr::HmdMatrix34_t &matPose);
 	static void vr_update_controllers(Scene * scene, SceneTransform * controller_1_transform, SceneTransform * controller_2_transform, glm::mat4 cam_pos_mat);
-	static void vr_check_interaction(SceneTransform *controller_1_transform, SceneTransform *controller_2_transform, std::vector<BoundingSphere> interactable_objects);
+	static void vr_check_interaction(SceneTransform *controller_1_transform, SceneTransform *controller_2_transform, std::vector<BoundingSphere *> interactable_objects);
 };

@@ -8,6 +8,7 @@
 #include "shader.h"
 #include "plane.h"
 #include "scene_trans_anim.h"
+#include "bounding_sphere.h"
 
 class Scene
 {
@@ -19,6 +20,7 @@ public:
 	Plane frustum_planes[6];
 	glm::vec3 frustum_corners[8];
 	std::vector< std::vector<GLfloat> > height_map;
+	std::vector<BoundingSphere *> interactable_objects;
 
 	// portals
 	SceneGroup* in_house;

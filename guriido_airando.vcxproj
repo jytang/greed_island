@@ -135,6 +135,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\basic_shader.cpp" />
+    <ClCompile Include="src\bounding_sphere.cpp" />
     <ClCompile Include="src\desert_scene.cpp" />
     <ClCompile Include="src\fire_scene.cpp" />
     <ClCompile Include="src\geometry.cpp" />

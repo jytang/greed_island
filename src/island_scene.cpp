@@ -17,8 +17,8 @@ const GLfloat PLAYER_HEIGHT = Global::PLAYER_HEIGHT;
 const GLuint    HEIGHT_MAP_POWER = 8;
 const GLuint    HEIGHT_MAP_SIZE = (unsigned int)glm::pow(2, HEIGHT_MAP_POWER) + 1;
 const GLint     VILLAGE_DIAMETER = (int)(0.23f * HEIGHT_MAP_SIZE);
-const GLuint    TERRAIN_RESOLUTION = 400;
-const GLuint    NUM_TREES = 200;
+const GLuint    TERRAIN_RESOLUTION = 300;
+const GLuint    NUM_TREES = 100;
 const GLfloat   PERCENT_TREE_ANIM = 0.9f;
 const GLfloat   TREE_SCALE = 1.5f;
 const GLint		NUM_BUILDINGS = 5;
@@ -34,7 +34,7 @@ const GLfloat   BEACH_HEIGHT = ISLAND_SIZE / 60.f;
 const GLfloat   PATH_WIDTH = ISLAND_SIZE / 7.f;
 const GLfloat   FOREST_RADIUS = ISLAND_SIZE / 1.1f;
 const GLfloat   FOREST_INNER_CIRCLE = VILLAGE_DIAMETER_TRUE / 2 + ISLAND_SIZE / 10.f;
-const GLfloat   WATER_SCALE = ISLAND_SIZE * 4;
+const GLfloat   WATER_SCALE = ISLAND_SIZE * 6;
 
 // Camera and movement
 const GLint     CAM_OFFSET = ISLAND_SIZE / 30.f;
@@ -47,13 +47,13 @@ const GLfloat   HELI_SLOW_THRESH = 20.f;
 
 // Miniature Parameters
 const GLfloat SMALL_ROT_SPEED = 0.3f;
-const GLfloat SMALL_MAP_SCALE = 0.15f;
+const GLfloat SMALL_MAP_SCALE = 0.08f;//0.15f;
 const GLuint  NUM_SMALL_TREES = 6;
-const GLfloat SMALL_TREE_SCALE = 0.1f;
-const GLfloat SMALL_FOREST_RADIUS = 1.5f;
+const GLfloat SMALL_TREE_SCALE = 0.05f;//0.1f;
+const GLfloat SMALL_FOREST_RADIUS = 0.5f;//1.5f;
 const GLuint  NUM_SMALL_BUILDINGS = 5;
-const GLfloat SMALL_BUILDING_SCALE = 0.1f;
-const GLfloat SMALL_VILLAGE_RADIUS = 1.5f;
+const GLfloat SMALL_BUILDING_SCALE = 0.05f;//0.1f;
+const GLfloat SMALL_VILLAGE_RADIUS = 0.5f;//1.5f;
 
 SceneTransform *cube_translate;
 
@@ -297,29 +297,42 @@ void IslandScene::generate_miniatures()
 	generate_small_map();
 	SceneTransform *small_map_scale = new SceneTransform(this, glm::scale(glm::mat4(1.f), glm::vec3(SMALL_MAP_SCALE, SMALL_MAP_SCALE / 10.f, SMALL_MAP_SCALE)));
 	SceneAnimation *small_map_anim = new SceneAnimation(this, 0.f, FLT_MAX, 0.f, SMALL_ROT_SPEED, glm::vec3(0.f, 1.f, 0.f), glm::vec3(0.f, 0.f, 0.f));
-	SceneTransform *small_map_translate = new SceneTransform(this, glm::translate(glm::mat4(1.f), pivot_pt));
-	SceneTransform *small_map_rotate = new SceneTransform(this, glm::rotate(glm::mat4(1.f), building_positions[1], glm::vec3(0.f, 1.f, 0.f)));
+	//SceneTransform *small_map_translate = new SceneTransform(this, glm::translate(glm::mat4(1.f), pivot_pt));
+	//SceneTransform *small_map_rotate = new SceneTransform(this, glm::rotate(glm::mat4(1.f), building_positions[1], glm::vec3(0.f, 1.f, 0.f)));f
+	SceneTransform *small_map_translate = new SceneTransform(this, glm::translate(glm::mat4(1.f), glm::vec3(-8.f * glm::sin(building_positions[1]), HEIGHT_MAP_MAX - 2.f, -8.f * glm::cos(building_positions[1]))));
 	small_map_scale->add_child(small_map_model);
 	small_map_anim->add_child(small_map_scale);
 	small_map_translate->add_child(small_map_anim);
-	small_map_rotate->add_child(small_map_translate);
-	root->add_child(small_map_rotate);
+	//small_map_rotate->add_child(small_map_translate);
+	//root->add_child(small_map_rotate);
+	root->add_child(small_map_translate);
+	BoundingSphere *small_map_bounds = new BoundingSphere(small_map_translate, TERRAIN_SIZE * SMALL_MAP_SCALE * 0.5f, GRAB);
+	interactable_objects.push_back(small_map_bounds);
 
 	// Small trees
 	generate_small_forest();
-	SceneTransform *small_forest_translate = new SceneTransform(this, glm::translate(glm::mat4(1.f), pivot_pt));
-	SceneTransform *small_forest_rotate = new SceneTransform(this, glm::rotate(glm::mat4(1.f), building_positions[2], glm::vec3(0.f, 1.f, 0.f)));
+	//SceneTransform *small_forest_translate = new SceneTransform(this, glm::translate(glm::mat4(1.f), pivot_pt));
+	//SceneTransform *small_forest_rotate = new SceneTransform(this, glm::rotate(glm::mat4(1.f), building_positions[2], glm::vec3(0.f, 1.f, 0.f)));
+	SceneTransform *small_forest_translate = new SceneTransform(this, glm::translate(glm::mat4(1.f), glm::vec3(-8.f * glm::sin(building_positions[2]), HEIGHT_MAP_MAX - 2.f, -8.f * glm::cos(building_positions[2]))));
 	small_forest_translate->add_child(small_forest);
-	small_forest_rotate->add_child(small_forest_translate);
-	root->add_child(small_forest_rotate);
+	//small_forest_rotate->add_child(small_forest_translate);
+	//root->add_child(small_forest_rotate);
+	root->add_child(small_forest_translate);
+	BoundingSphere *small_forest_bounds = new BoundingSphere(small_forest_translate, SMALL_FOREST_RADIUS, GRAB);
+	interactable_objects.push_back(small_forest_bounds);
 
 	// Small village
 	generate_small_village();
-	SceneTransform *small_village_translate = new SceneTransform(this, glm::translate(glm::mat4(1.f), pivot_pt));
+	//SceneTransform *small_village_translate = new SceneTransform(this, glm::translate(glm::mat4(1.f), pivot_pt));
 	SceneTransform *small_village_rotate = new SceneTransform(this, glm::rotate(glm::mat4(1.f), building_positions[3], glm::vec3(0.f, 1.f, 0.f)));
-	small_village_translate->add_child(small_village);
-	small_village_rotate->add_child(small_village_translate);
-	root->add_child(small_village_rotate);
+	SceneTransform *small_village_translate = new SceneTransform(this, glm::translate(glm::mat4(1.f), glm::vec3(-8.f * glm::sin(building_positions[3]), HEIGHT_MAP_MAX - 2.f, -8.f * glm::cos(building_positions[3]))));
+	small_village_rotate->add_child(small_village);
+	small_village_translate->add_child(small_village_rotate);
+	//small_village_rotate->add_child(small_village_translate);
+	//root->add_child(small_village_rotate);
+	root->add_child(small_village_translate);
+	BoundingSphere *small_village_bounds = new BoundingSphere(small_village_translate, SMALL_VILLAGE_RADIUS, GRAB);
+	interactable_objects.push_back(small_village_bounds);
 
 	std::cerr << "OK." << std::endl;
 }
@@ -427,5 +440,7 @@ void IslandScene::handle_helicopter()
 	helicopter_angle += displacement;
 
 	camera->cam_pos = glm::vec3(x, y, z);
+	camera->cam_front = -camera->cam_pos;
+	//camera->cam_up = glm::cross(glm::vec3(glm::rotate(glm::mat4(1.f), glm::radians(helicopter_angle), glm::vec3(0.f, 1.f, 0.f)) * glm::vec4(0.f, 0.f, -1.f, 1.f)), camera->cam_front);
 	camera->recalculate();
 }

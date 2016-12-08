@@ -152,7 +152,7 @@ void GreedVR::vr_update_controllers(Scene *scene, SceneTransform * controller_1_
 	}
 }
 
-void GreedVR::vr_check_interaction(SceneTransform *controller_1_transform, SceneTransform *controller_2_transform, std::vector<BoundingSphere> interactable_objects)
+void GreedVR::vr_check_interaction(SceneTransform *controller_1_transform, SceneTransform *controller_2_transform, std::vector<BoundingSphere *> interactable_objects)
 {
 	// check if somebody else has input focus
 	if (GreedVR::vars.hmd->IsInputFocusCapturedByAnotherProcess())
@@ -201,21 +201,22 @@ void GreedVR::vr_check_interaction(SceneTransform *controller_1_transform, Scene
 				controller_transform = controller_2_transform;
 
 			glm::vec3 controller_center = glm::vec3(controller_transform->transformation * glm::vec4(0.f, 0.f, 0.06f, 1.f));
-			for (BoundingSphere obj : interactable_objects)
+			for (BoundingSphere *obj : interactable_objects)
 			{
-				glm::vec3 obj_center = glm::vec3(obj.translation_mat->transformation * glm::vec4(0.f, 0.f, 0.f, 1.f));
-				if (glm::abs(glm::distance(controller_center, obj_center)) <= obj.radius)
+				glm::vec3 obj_center = glm::vec3(obj->translation_mat->transformation * glm::vec4(0.f, 0.f, 0.f, 1.f));
+				if (glm::abs(glm::distance(controller_center, obj_center)) <= obj->radius)
 				{
-					if (obj.interact_type == GRAB)
+					if (obj->interact_type == GRAB)
 					{
-						grabbed_object = obj.translation_mat;
+						fprintf(stderr, "OBJECT GRABBED\n");
+						grabbed_object = obj->translation_mat;
 						grabbing_controller = controller_transform;
-						object_original_mat = obj.translation_mat->transformation;
+						object_original_mat = obj->translation_mat->transformation;
 					}
 					else
 					{
 						fprintf(stderr, "OBJECT INTERACTED\n");
-						obj.check_interact = true;
+						obj->check_interact = true;
 					}
 				}
 			}

@@ -21,7 +21,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-bool vr_on = true;
+bool vr_on = false;
 
 /* global vars */
 vr_vars GreedVR::vars;
@@ -46,7 +46,7 @@ glm::vec3 last_cursor_pos;
 
 const GLfloat PLAYER_HEIGHT = Global::PLAYER_HEIGHT;
 
-const GLfloat FAR_PLANE = 100.f * PLAYER_HEIGHT;
+const GLfloat FAR_PLANE = 50.f * PLAYER_HEIGHT;
 const GLfloat FOV = 45.f;
 
 const GLfloat   BASE_CAM_SPEED = PLAYER_HEIGHT / 10.f;
@@ -58,7 +58,6 @@ const glm::vec3	CONTROLLER_ROD_SCALE = { 0.05f, 0.08f, 0.05f };
 
 SceneTransform *controller_1_transform;
 SceneTransform *controller_2_transform;
-std::vector<BoundingSphere> interactable_objects;
 
 Greed::Greed() {}
 
@@ -208,22 +207,6 @@ void Greed::setup_scenes()
 			s->root->add_child(controller_2_transform);
 		}
 	}
-
-	//For Testing Buttons
-	Geometry *cube_geo = GeometryGenerator::generate_cube(1.f, true);
-	Material cube_material;
-	cube_material.diffuse = cube_material.ambient = color::red;
-	Mesh cube_mesh = { cube_geo, cube_material, ShaderManager::get_default(), glm::mat4(1.f) };
-	SceneModel *cube_model = new SceneModel(scene);
-	cube_model->add_mesh(cube_mesh);
-	SceneTransform *cube_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(1.f)));
-	float cube_height = Terrain::height_lookup(0.f, 10.f, scene->get_size() * 2, scene->height_map);
-	SceneTransform *cube_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, cube_height, 10.f)));
-	cube_scale->add_child(cube_model);
-	cube_translate->add_child(cube_scale);
-	scene->root->add_child(cube_translate);
-	BoundingSphere cube_bounds = { cube_translate, 1.f, GENERATE_VILLAGE };
-	interactable_objects.push_back(cube_bounds);
 }
 
 void Greed::go()
@@ -309,7 +292,7 @@ void Greed::go()
 		{
 			//Update Controller Positions
 			GreedVR::vr_update_controllers(scene, controller_1_transform, controller_2_transform, glm::translate(glm::mat4(1.0f), camera->cam_pos));
-			GreedVR::vr_check_interaction(controller_1_transform, controller_2_transform, interactable_objects);
+			GreedVR::vr_check_interaction(controller_1_transform, controller_2_transform, scene->interactable_objects);
 			vr_interaction_check();
 			vr_render(); //Render Scene			
 		}
@@ -340,8 +323,11 @@ void Greed::shadow_pass()
 	glClear(GL_DEPTH_BUFFER_BIT);
 	ss->use();
 	ss->light_pos = scene->light_pos;
-	if (shadows_on)
-		ss->light_proj = scene->frustum_ortho();//glm::ortho(-ISLAND_SIZE, ISLAND_SIZE, -ISLAND_SIZE, ISLAND_SIZE, -ISLAND_SIZE, ISLAND_SIZE);
+	if (shadows_on) {
+		GLfloat size = scene->get_size();
+		//ss->light_proj = glm::ortho(-size, size, -size, size, -50.f, 200.f);
+		ss->light_proj = scene->frustum_ortho();
+	}
 	else
 		ss->light_proj = glm::ortho(-1.f, 1.f, -1.f, 1.f, 0.f, 0.1f);
 	// Render using scene graph.
@@ -742,15 +728,15 @@ void Greed::scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 
 void Greed::vr_interaction_check()
 {
-	for (BoundingSphere obj : interactable_objects)
+	for (BoundingSphere *obj : scene->interactable_objects)
 	{
-		if (obj.check_interact)
+		if (obj->check_interact)
 		{
 			fprintf(stderr, "INTERACTING\n");
-			switch (obj.interact_type)
+			switch (obj->interact_type)
 			{
 			case CHANGE_SCENE:
-				next_skybox();
+				next_scene();
 				break;
 			case TOGGLE_SHADOWS:
 				shadows_on = !shadows_on;
@@ -777,7 +763,7 @@ void Greed::vr_interaction_check()
 			default:
 				break;
 			}
-			obj.check_interact = false;
+			obj->check_interact = false;
 		}
 	}
 }
