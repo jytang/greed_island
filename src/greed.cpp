@@ -21,7 +21,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-bool vr_on = false;
+bool vr_on = true;
 
 /* global vars */
 vr_vars GreedVR::vars;
@@ -567,13 +567,16 @@ void Greed::key_callback(GLFWwindow* window, int key, int scancode, int action, 
 			glfwSetWindowShouldClose(window, GL_TRUE);
 			break;
 		case GLFW_KEY_Q:
-			debug_shadows = !debug_shadows;
+			if (!vr_on)
+				debug_shadows = !debug_shadows;
 			break;
 		case GLFW_KEY_Z:
-			next_skybox();
+			if (!vr_on)
+				next_skybox();
 			break;
 		case GLFW_KEY_C:
-			next_scene();
+			if (!vr_on)
+				next_scene();
 			break;
 		case GLFW_KEY_X:
 			shadows_on = !shadows_on;
@@ -609,7 +612,7 @@ void Greed::key_callback(GLFWwindow* window, int key, int scancode, int action, 
 			god_mode = !god_mode;
 			break;
 		case GLFW_KEY_H:
-			if (scene == island_scene)
+			if (scene == island_scene && !vr_on)
 			{
 				helicopter_mode = !helicopter_mode;
 				((IslandScene *)scene)->helicopter_angle = 0;
@@ -627,6 +630,7 @@ void Greed::key_callback(GLFWwindow* window, int key, int scancode, int action, 
 
 void Greed::cursor_position_callback(GLFWwindow* window, double x_pos, double y_pos)
 {
+	if (vr_on) return;
 	int width, height;
 	glfwGetFramebufferSize(window, &width, &height);
 	glm::vec3 current_cursor_pos(x_pos, y_pos, 0);
@@ -725,6 +729,7 @@ void Greed::mouse_button_callback(GLFWwindow* window, int button, int action, in
 
 void Greed::scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
+	if (vr_on) return;
 	glm::vec3 trans_vec = (float)yoffset * glm::normalize(camera->cam_front);
 	// Only y is relevant here, -1 is down, +1 is up
 	camera->cam_pos = glm::vec3(glm::translate(glm::mat4(1.0f), trans_vec) * glm::vec4(camera->cam_pos, 1.0f));
