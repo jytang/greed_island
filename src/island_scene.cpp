@@ -18,7 +18,7 @@ const GLuint    HEIGHT_MAP_POWER = 8;
 const GLuint    HEIGHT_MAP_SIZE = (unsigned int)glm::pow(2, HEIGHT_MAP_POWER) + 1;
 const GLint     VILLAGE_DIAMETER = (int)(0.23f * HEIGHT_MAP_SIZE);
 const GLuint    TERRAIN_RESOLUTION = 300;
-const GLuint    NUM_TREES = 100;
+const GLuint    NUM_TREES = 10;
 const GLfloat   PERCENT_TREE_ANIM = 0.9f;
 const GLfloat   TREE_SCALE = 1.5f;
 const GLint		NUM_BUILDINGS = 5;
@@ -297,42 +297,35 @@ void IslandScene::generate_miniatures()
 	generate_small_map();
 	SceneTransform *small_map_scale = new SceneTransform(this, glm::scale(glm::mat4(1.f), glm::vec3(SMALL_MAP_SCALE, SMALL_MAP_SCALE / 10.f, SMALL_MAP_SCALE)));
 	SceneAnimation *small_map_anim = new SceneAnimation(this, 0.f, FLT_MAX, 0.f, SMALL_ROT_SPEED, glm::vec3(0.f, 1.f, 0.f), glm::vec3(0.f, 0.f, 0.f));
-	//SceneTransform *small_map_translate = new SceneTransform(this, glm::translate(glm::mat4(1.f), pivot_pt));
-	//SceneTransform *small_map_rotate = new SceneTransform(this, glm::rotate(glm::mat4(1.f), building_positions[1], glm::vec3(0.f, 1.f, 0.f)));f
 	SceneTransform *small_map_translate = new SceneTransform(this, glm::translate(glm::mat4(1.f), glm::vec3(-8.f * glm::sin(building_positions[1]), HEIGHT_MAP_MAX - 2.f, -8.f * glm::cos(building_positions[1]))));
 	small_map_scale->add_child(small_map_model);
 	small_map_anim->add_child(small_map_scale);
 	small_map_translate->add_child(small_map_anim);
-	//small_map_rotate->add_child(small_map_translate);
-	//root->add_child(small_map_rotate);
 	root->add_child(small_map_translate);
 	BoundingSphere *small_map_bounds = new BoundingSphere(small_map_translate, TERRAIN_SIZE * SMALL_MAP_SCALE * 0.5f, GRAB);
 	interactable_objects.push_back(small_map_bounds);
 
 	// Small trees
 	generate_small_forest();
-	//SceneTransform *small_forest_translate = new SceneTransform(this, glm::translate(glm::mat4(1.f), pivot_pt));
-	//SceneTransform *small_forest_rotate = new SceneTransform(this, glm::rotate(glm::mat4(1.f), building_positions[2], glm::vec3(0.f, 1.f, 0.f)));
-	SceneTransform *small_forest_translate = new SceneTransform(this, glm::translate(glm::mat4(1.f), glm::vec3(-8.f * glm::sin(building_positions[2]), HEIGHT_MAP_MAX - 2.f, -8.f * glm::cos(building_positions[2]))));
-	small_forest_translate->add_child(small_forest);
-	//small_forest_rotate->add_child(small_forest_translate);
-	//root->add_child(small_forest_rotate);
-	root->add_child(small_forest_translate);
-	BoundingSphere *small_forest_bounds = new BoundingSphere(small_forest_translate, SMALL_FOREST_RADIUS, GRAB);
-	interactable_objects.push_back(small_forest_bounds);
+	glm::mat4 small_forest_translate = glm::translate(glm::mat4(1.f), glm::vec3(-8.f * glm::sin(building_positions[2]), HEIGHT_MAP_MAX - 2.f, -8.f * glm::cos(building_positions[2])));
+	for (SceneNode *small_tree : small_forest->children)
+	{
+		((SceneTransform *)small_tree)->transformation = small_forest_translate * ((SceneTransform *)small_tree)->transformation;
+		BoundingSphere *small_tree_bounds = new BoundingSphere((SceneTransform *) small_tree, SMALL_TREE_SCALE * 3, GRAB);
+		interactable_objects.push_back(small_tree_bounds);
+	}
+	root->add_child(small_forest);
 
 	// Small village
 	generate_small_village();
-	//SceneTransform *small_village_translate = new SceneTransform(this, glm::translate(glm::mat4(1.f), pivot_pt));
-	SceneTransform *small_village_rotate = new SceneTransform(this, glm::rotate(glm::mat4(1.f), building_positions[3], glm::vec3(0.f, 1.f, 0.f)));
-	SceneTransform *small_village_translate = new SceneTransform(this, glm::translate(glm::mat4(1.f), glm::vec3(-8.f * glm::sin(building_positions[3]), HEIGHT_MAP_MAX - 2.f, -8.f * glm::cos(building_positions[3]))));
-	small_village_rotate->add_child(small_village);
-	small_village_translate->add_child(small_village_rotate);
-	//small_village_rotate->add_child(small_village_translate);
-	//root->add_child(small_village_rotate);
-	root->add_child(small_village_translate);
-	BoundingSphere *small_village_bounds = new BoundingSphere(small_village_translate, SMALL_VILLAGE_RADIUS, GRAB);
-	interactable_objects.push_back(small_village_bounds);
+	glm::mat4 small_village_translate = glm::translate(glm::mat4(1.f), glm::vec3(-8.f * glm::sin(building_positions[3]), HEIGHT_MAP_MAX - 2.f, -8.f * glm::cos(building_positions[3])));
+	for (SceneNode *small_building : small_village->children)
+	{
+		((SceneTransform *)small_building)->transformation = small_village_translate * ((SceneTransform *)small_building)->transformation;
+		BoundingSphere *small_building_bounds = new BoundingSphere((SceneTransform *)small_building, SMALL_BUILDING_SCALE * 5, GRAB);
+		interactable_objects.push_back(small_building_bounds);
+	}
+	root->add_child(small_village);
 
 	std::cerr << "OK." << std::endl;
 }

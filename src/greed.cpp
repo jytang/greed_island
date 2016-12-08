@@ -21,7 +21,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-bool vr_on = false;
+bool vr_on = true;
 
 /* global vars */
 vr_vars GreedVR::vars;
@@ -46,7 +46,7 @@ glm::vec3 last_cursor_pos;
 
 const GLfloat PLAYER_HEIGHT = Global::PLAYER_HEIGHT;
 
-const GLfloat FAR_PLANE = 50.f * PLAYER_HEIGHT;
+const GLfloat FAR_PLANE = 150.f * PLAYER_HEIGHT;
 const GLfloat FOV = 45.f;
 
 const GLfloat   BASE_CAM_SPEED = PLAYER_HEIGHT / 10.f;
@@ -452,7 +452,8 @@ void Greed::handle_movement_vr()
 		fprintf(stderr, "Controller Test 0: %f\n", (float)pControllerState.rAxis[TRIGGER].x);
 		*/
 
-		GLfloat cam_step = keys[GLFW_KEY_LEFT_SHIFT] ? 3 * BASE_CAM_SPEED : BASE_CAM_SPEED;
+		//GLfloat cam_step = keys[GLFW_KEY_LEFT_SHIFT] ? 3 * BASE_CAM_SPEED : BASE_CAM_SPEED;
+		GLfloat cam_step = BASE_CAM_SPEED * 0.7f;
 		glm::vec3 displacement(0.f);
 
 		if (pControllerState.ulButtonPressed == TRACKPAD_ID || pControllerState.ulButtonPressed == (TRACKPAD_ID + TRIGGER_ID))
