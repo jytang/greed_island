@@ -488,16 +488,17 @@ Geometry * GeometryGenerator::generate_bezier_plane(GLfloat radius, GLuint num_c
 	for (int i = 0; i < bez_plane->vertices.size(); ++i)
 		bez_plane->indices.push_back(i);
 
-	if (texture_type == SAND)
+	bez_plane->tex_coords.push_back(glm::vec2(0.5f, 0.f));
+	for (int i = 1; i < bez_plane->vertices.size(); i += 2)
 	{
-		bez_plane->tex_coords.push_back(glm::vec2(0.5f, 0.f));
-		for (int i = 1; i < bez_plane->vertices.size(); i += 2)
-		{
-			bez_plane->tex_coords.push_back(glm::vec2(0.f, 1.f));
-			bez_plane->tex_coords.push_back(glm::vec2(1.f, 1.f));
-		}
+		bez_plane->tex_coords.push_back(glm::vec2(0.f, 1.f));
+		bez_plane->tex_coords.push_back(glm::vec2(1.f, 1.f));
+	}
+
+	if (texture_type == SAND)
 		bez_plane->attach_texture("assets/textures/SandWW2.dds");
-	}		
+	else if (texture_type == OBSIDIAN)
+		bez_plane->attach_texture("assets/textures/Obsidian.png");
 
 	bez_plane->populate_buffers();
 	geometries.push_back(bez_plane);

@@ -11,7 +11,7 @@ const GLfloat PLAYER_HEIGHT = Global::PLAYER_HEIGHT;
 const GLuint    HEIGHT_MAP_POWER = 8;
 const GLuint    HEIGHT_MAP_SIZE = (unsigned int)glm::pow(2, HEIGHT_MAP_POWER) + 1;
 const GLint     VILLAGE_DIAMETER = 120;
-const GLuint    TERRAIN_RESOLUTION = 200;
+const GLuint    TERRAIN_RESOLUTION = 400;
 
 const GLfloat   SIZE = 80.f * PLAYER_HEIGHT;
 const GLfloat   WATER_SCALE = SIZE * 4;
