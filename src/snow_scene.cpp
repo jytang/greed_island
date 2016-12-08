@@ -15,7 +15,7 @@ const GLuint    HEIGHT_MAP_SIZE = (unsigned int)glm::pow(2, HEIGHT_MAP_POWER) + 
 const GLint     VILLAGE_DIAMETER = 1;
 const GLuint    TERRAIN_RESOLUTION = 200;
 
-const GLuint    NUM_TREES = 100;
+const GLuint    NUM_TREES = 5;
 const GLfloat   PERCENT_TREE_ANIM = 0.9f;
 const GLfloat   TREE_SCALE = 1.5f;
 
