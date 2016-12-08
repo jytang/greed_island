@@ -36,6 +36,36 @@ void SnowScene::setup()
 
 	generate_planes();
 	generate_map();
+
+	Geometry *cube_geo = GeometryGenerator::generate_cube(1.f, true);
+	Material cube_mat;
+	cube_mat.diffuse = cube_mat.ambient = color::red;
+	Mesh cube_mesh = { cube_geo, cube_mat, ShaderManager::get_default(), glm::mat4(1.f) };
+	SceneModel *cube_model = new SceneModel(this);
+	cube_model->add_mesh(cube_mesh);
+	SceneTransform *cube_scale = new SceneTransform(this, glm::scale(glm::mat4(1.f), glm::vec3(0.1f*PLAYER_HEIGHT)));
+	cube_scale->add_child(cube_model);
+	SceneTransform *cube_translate = new SceneTransform(this, glm::translate(glm::mat4(1.f), glm::vec3(0.f, 0.2f*PLAYER_HEIGHT, 0.f)));
+	cube_translate->add_child(cube_scale);
+
+	// Make entry portal.
+	float x = -10.f;
+	float z = 30.f;
+	float y = Terrain::height_lookup(x, z, SIZE * 2, height_map);
+	glm::vec3 location = { x, y, z };
+	SceneModel *building = ShapeGrammar::generate_building(this, true, 0);
+	SceneTransform *building_rotate = new SceneTransform(this, glm::rotate(glm::mat4(1.f), glm::radians(-87.f), glm::vec3(0.f, 1.f, 0.f)));
+	SceneTransform *building_translate = new SceneTransform(this, glm::translate(glm::mat4(1.f), location));
+	building_rotate->add_child(building);
+	building_rotate->add_child(cube_translate);
+	building_translate->add_child(building_rotate);
+	in_house = building_translate;
+	in_height = y;
+	in_area[0] = glm::vec2(x - Global::TRIGGER_HALF_LEN, z + Global::TRIGGER_HALF_LEN);
+	in_area[1] = glm::vec2(x + Global::TRIGGER_HALF_LEN, z - Global::TRIGGER_HALF_LEN);
+	in_point = glm::vec2(x, z);
+
+	root->add_child(in_house);
 }
 
 void SnowScene::generate_planes()

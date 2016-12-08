@@ -148,6 +148,7 @@
     <ClCompile Include="src\scene_group.cpp" />
     <ClCompile Include="src\scene_model.cpp" />
     <ClCompile Include="src\scene_transform.cpp" />
+    <ClCompile Include="src\scene_trans_anim.cpp" />
     <ClCompile Include="src\shader.cpp" />
     <ClCompile Include="src\shader_manager.cpp" />
     <ClCompile Include="src\shadow_shader.cpp" />
@@ -188,6 +189,7 @@
     <ClInclude Include="inc\scene_model.h" />
     <ClInclude Include="inc\scene_node.h" />
     <ClInclude Include="inc\scene_transform.h" />
+    <ClInclude Include="inc\scene_trans_anim.h" />
     <ClInclude Include="inc\shader.h" />
     <ClInclude Include="inc\shader_manager.h" />
     <ClInclude Include="inc\shadow_shader.h" />

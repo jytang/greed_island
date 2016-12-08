@@ -55,6 +55,8 @@ const GLuint  NUM_SMALL_BUILDINGS = 5;
 const GLfloat SMALL_BUILDING_SCALE = 0.1f;
 const GLfloat SMALL_VILLAGE_RADIUS = 1.5f;
 
+SceneTransform *cube_translate;
+
 GLfloat IslandScene::get_size()
 {
 	return ISLAND_SIZE;
@@ -219,9 +221,15 @@ void IslandScene::generate_village()
 	{
 		village = new SceneGroup(this);
 		root->add_child(village);
+		out_house = new SceneTransAnim(this, glm::vec3(0.f), glm::vec3(0.f, -0.5f, 0.f), false);
+		root->add_child(out_house);
+
+		cube_translate = new SceneTransform(this, glm::translate(glm::mat4(1.f), glm::vec3(0.f, 0.2f*PLAYER_HEIGHT, 0.f)));
 	}
 	else {
 		village->remove_all();
+		out_house->remove_all();
+		cube_translate->remove_all();
 	}
 
 	for (int i = 0; i < NUM_BUILDINGS; ++i)
@@ -242,7 +250,36 @@ void IslandScene::generate_village()
 		SceneTransform *building_translate = new SceneTransform(this, glm::translate(glm::mat4(1.f), location));
 		building_rotate->add_child(building);
 		building_translate->add_child(building_rotate);
-		village->add_child(building_translate);
+
+		Material cube_mat;
+		cube_mat.diffuse = cube_mat.ambient = color::red;
+		Mesh cube_mesh = { cube_geo, cube_mat, ShaderManager::get_default(), glm::mat4(1.f) };
+		SceneModel *cube_model = new SceneModel(this);
+		cube_model->add_mesh(cube_mesh);
+		SceneTransform *cube_scale = new SceneTransform(this, glm::scale(glm::mat4(1.f), glm::vec3(0.1f*PLAYER_HEIGHT)));
+		cube_scale->add_child(cube_model);
+		cube_translate->add_child(cube_scale);
+
+		if (i == 0)
+		{
+			building_rotate->add_child(cube_translate);
+			out_house->add_child(building_translate);
+			out_height = y;
+			out_point = glm::vec2(x, z);
+		}
+		else if (i == NUM_BUILDINGS - 1)
+		{
+			building_rotate->add_child(cube_translate);
+			in_house = building_translate;
+			in_height = y;
+			in_area[0] = glm::vec2(x-Global::TRIGGER_HALF_LEN, z+ Global::TRIGGER_HALF_LEN);
+			in_area[1] = glm::vec2(x+ Global::TRIGGER_HALF_LEN, z- Global::TRIGGER_HALF_LEN);
+			in_point = glm::vec2(x, z);
+			village->add_child(building_translate);
+		}
+		else {
+			village->add_child(building_translate);
+		}
 	}
 	std::cerr << "OK." << std::endl;
 }
