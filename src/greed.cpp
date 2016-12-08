@@ -98,6 +98,8 @@ void Greed::next_scene()
 	next->out_house->play_anim();
 	if (next == fire_scene)
 		island_scene->out_house->reset();
+	if (next == island_scene)
+		island_scene->generate_other();
 	change_scene(next);
 }
 
@@ -735,7 +737,7 @@ void Greed::vr_interaction_check()
 	{
 		if (obj->check_interact)
 		{
-			fprintf(stderr, "INTERACTING\n");
+			//fprintf(stderr, "INTERACTING\n");
 			switch (obj->interact_type)
 			{
 			case CHANGE_SCENE:
@@ -761,7 +763,7 @@ void Greed::vr_interaction_check()
 				{
 					((IslandScene*)scene)->generate_village();
 				}
-				fprintf(stderr, "INTERACT VILLAGE\n");
+				//fprintf(stderr, "INTERACT VILLAGE\n");
 				break;
 			default:
 				break;

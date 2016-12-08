@@ -34,6 +34,7 @@ public:
 	void generate_small_map();
 	void generate_small_forest();
 	void generate_small_village();
+	void generate_other();
 
 	void setup();
 	GLfloat get_size();
