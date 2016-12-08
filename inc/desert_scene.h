@@ -3,6 +3,8 @@
 class DesertScene :
 	public Scene
 {
+private:
+	SceneTransform *map;
 public:
 	void generate_planes();
 	void generate_map();

@@ -5,23 +5,29 @@
 #include "terrain.h"
 #include "geometry_generator.h"
 #include "shape_grammar.h"
+#include "tree.h"
+#include "scene_animation.h"
 
 const GLfloat PLAYER_HEIGHT = Global::PLAYER_HEIGHT;
 
 const GLuint    HEIGHT_MAP_POWER = 8;
 const GLuint    HEIGHT_MAP_SIZE = (unsigned int)glm::pow(2, HEIGHT_MAP_POWER) + 1;
-const GLint     VILLAGE_DIAMETER = (int)(0.f * HEIGHT_MAP_SIZE);
+const GLint     VILLAGE_DIAMETER = 1;
 const GLuint    TERRAIN_RESOLUTION = 200;
 
+const GLuint    NUM_TREES = 100;
+const GLfloat   PERCENT_TREE_ANIM = 0.9f;
+const GLfloat   TREE_SCALE = 1.5f;
+
 const GLfloat   SIZE = 30.f * PLAYER_HEIGHT;
-const GLfloat   WATER_SCALE = SIZE * 4;
-const GLfloat   HEIGHT_MAP_MAX = 10.f * PLAYER_HEIGHT;
-const GLfloat   HEIGHT_RANDOMNESS_SCALE = HEIGHT_MAP_MAX;
+const GLfloat   HEIGHT_MAP_MAX = 0.f;
+const GLfloat   HEIGHT_RANDOMNESS_SCALE = HEIGHT_MAP_MAX * 5.f;
 const GLfloat	TERRAIN_SMOOTHNESS = 2.0f;
-const GLfloat   TERRAIN_SIZE = SIZE / 5.f;
-const GLfloat   TERRAIN_SCALE = SIZE / (TERRAIN_SIZE / 2);
-const GLfloat	VILLAGE_DIAMETER_TRUE = ((float)VILLAGE_DIAMETER / HEIGHT_MAP_SIZE) * TERRAIN_SIZE * TERRAIN_SCALE;
-const GLfloat   BEACH_HEIGHT = SIZE / 60.f;
+const GLfloat   TERRAIN_SIZE = SIZE;
+const GLfloat   TERRAIN_SCALE = 2.f;
+
+const GLfloat   FOREST_RADIUS = 50.f;
+const GLfloat   FOREST_INNER_CIRCLE = 37.f;
 
 GLfloat SnowScene::get_size()
 {
@@ -37,6 +43,7 @@ void SnowScene::setup()
 
 	generate_planes();
 	generate_map();
+	generate_forest();
 
 	Geometry *cube_geo = GeometryGenerator::generate_cube(1.f, true);
 	Material cube_mat;
@@ -92,12 +99,19 @@ void SnowScene::generate_map()
 {
 	std::cerr << "Generating Map...";
 
-	SceneTransform *map = new SceneTransform(this, glm::scale(glm::mat4(1.f), glm::vec3(TERRAIN_SCALE, 1.f, TERRAIN_SCALE)));
-	root->add_child(map);
+	if (!map)
+	{
+		map = new SceneTransform(this, glm::scale(glm::mat4(1.f), glm::vec3(TERRAIN_SCALE, 1.f, TERRAIN_SCALE)));
+		root->add_child(map);
+	}
+	else
+	{
+		map->remove_all();
+	}
 
 	height_map = Terrain::generate_height_map(HEIGHT_MAP_SIZE, HEIGHT_MAP_MAX, VILLAGE_DIAMETER, HEIGHT_RANDOMNESS_SCALE, false, true, TERRAIN_SMOOTHNESS, 0);
 
-	Geometry *sand_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, -HEIGHT_MAP_MAX, HEIGHT_MAP_MAX, false, SAND, height_map);
+	Geometry *sand_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, -100.f, 100.f, false, SNOW, height_map);
 	Material sand_material;
 	sand_material.diffuse = sand_material.ambient = color::windwaker_sand;
 	Mesh sand_mesh = { sand_geo, sand_material, ShaderManager::get_default(), glm::mat4(1.f) };
@@ -105,5 +119,60 @@ void SnowScene::generate_map()
 	SceneModel *terrain_model = new SceneModel(this);
 	terrain_model->add_mesh(sand_mesh);
 	map->add_child(terrain_model);
+	std::cerr << "OK." << std::endl;
+}
+void SnowScene::generate_forest()
+{
+	std::cerr << "Generating Forest...";
+
+	if (!forest)
+	{
+		forest = new SceneGroup(this);
+		root->add_child(forest);
+	}
+	else
+	{
+		forest->remove_all();
+	}
+
+	Geometry *cylinder_geo = GeometryGenerator::generate_cylinder(0.25f, 2.f, 3, false);
+	Geometry *diamond_geo = GeometryGenerator::generate_sphere(2.f, 3);
+
+	glm::vec3 leaf_colors[] = { color::bone_white};
+	glm::vec3 branch_colors[] = { color::brown, color::wood_saddle, color::wood_sienna, color::wood_tan, color::wood_tan_light };
+	Material branch_material, leaf_material;
+	float angle = 0.0f;
+	for (int i = 0; i < NUM_TREES; ++i)
+	{
+		if (i % 49 == 0)
+			std::cerr << " . ";
+
+		// Randomise colours, animation, location.
+		leaf_material.diffuse = leaf_material.ambient = leaf_colors[0];
+		branch_material.diffuse = branch_material.ambient = branch_colors[(int)Util::random(0, 5)];
+		bool animated = false;
+		if (i % (NUM_TREES / (int)(NUM_TREES*PERCENT_TREE_ANIM)) == 0)
+			animated = true;
+		float x, z;
+
+		angle += 360.f / NUM_TREES;
+		float distance = Util::random(FOREST_INNER_CIRCLE, FOREST_RADIUS);
+
+		x = glm::cos(glm::radians(angle)) * distance;
+		z = glm::sin(glm::radians(angle)) * distance;
+
+		float y = Terrain::height_lookup(x, z, SIZE * 2, height_map);
+		glm::vec3 location = { x, y, z };
+
+		// Ugly code below.
+		SceneGroup *tree = Tree::generate_tree(this, cylinder_geo, diamond_geo, 7, 1, 20.f, 2.f, branch_material, leaf_material, animated, location, 0);
+		((SceneModel *)(tree->children[0]))->meshes[0].to_world = glm::translate(glm::mat4(1.f), location) * glm::scale(glm::mat4(1.f), glm::vec3(TREE_SCALE));
+		if (animated)
+			((SceneModel *)((SceneAnimation *)(tree->children[1]))->children[0])->meshes[0].to_world = glm::translate(glm::mat4(1.f), location) * glm::scale(glm::mat4(1.f), glm::vec3(TREE_SCALE));
+		else
+			((SceneModel *)(tree->children[1]))->meshes[0].to_world = glm::translate(glm::mat4(1.f), location) * glm::scale(glm::mat4(1.f), glm::vec3(TREE_SCALE));
+		// Phew.
+		forest->add_child(tree);
+	}
 	std::cerr << "OK." << std::endl;
 }

@@ -424,6 +424,11 @@ Geometry * GeometryGenerator::generate_terrain(GLfloat size, GLint num_points_si
 		terrain->attach_texture("assets/textures/SandWW2.dds");
 	else if (texture_type == SAND_TWO)
 		terrain->attach_texture("assets/textures/Sandy2.png");
+	else if (texture_type == SNOW)
+		terrain->attach_texture("assets/textures/Snow4.tga");
+	else if (texture_type == OBSIDIAN)
+		terrain->attach_texture("assets/textures/Obsidian2.jpg");
+
 	terrain->populate_buffers();
 	geometries.push_back(terrain);
 
