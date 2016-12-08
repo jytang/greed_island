@@ -11,6 +11,7 @@
 #include "snow_scene.h"
 #include "space_scene.h"
 #include "fire_scene.h"
+#include "bounding_sphere.h"
 #include <cfloat>
 
 #include "util.h"
@@ -20,7 +21,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-bool vr_on = false;
+bool vr_on = true;
 
 /* global vars */
 vr_vars GreedVR::vars;
@@ -57,6 +58,7 @@ const glm::vec3	CONTROLLER_ROD_SCALE = { 0.05f, 0.08f, 0.05f };
 
 SceneTransform *controller_1_transform;
 SceneTransform *controller_2_transform;
+std::vector<BoundingSphere> interactable_objects;
 
 Greed::Greed() {}
 
@@ -207,20 +209,21 @@ void Greed::setup_scenes()
 		}
 	}
 
-	/*
-	//For Testing Textures	
+	//For Testing Buttons
 	Geometry *cube_geo = GeometryGenerator::generate_cube(1.f, true);
 	Material cube_material;
-	cube_material.diffuse = cube_material.ambient = color::ocean_blue;
+	cube_material.diffuse = cube_material.ambient = color::red;
 	Mesh cube_mesh = { cube_geo, cube_material, ShaderManager::get_default(), glm::mat4(1.f) };
 	SceneModel *cube_model = new SceneModel(scene);
 	cube_model->add_mesh(cube_mesh);
-	SceneTransform *cube_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(5.f)));
-	SceneTransform *cube_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 20.0f, 10.f)));
+	SceneTransform *cube_scale = new SceneTransform(scene, glm::scale(glm::mat4(1.f), glm::vec3(1.f)));
+	float cube_height = Terrain::height_lookup(0.f, 10.f, scene->get_size() * 2, scene->height_map);
+	SceneTransform *cube_translate = new SceneTransform(scene, glm::translate(glm::mat4(1.f), glm::vec3(0.0f, cube_height, 10.f)));
 	cube_scale->add_child(cube_model);
 	cube_translate->add_child(cube_scale);
 	scene->root->add_child(cube_translate);
-	*/
+	BoundingSphere cube_bounds = { cube_translate, 1.f, GENERATE_VILLAGE };
+	interactable_objects.push_back(cube_bounds);
 }
 
 void Greed::go()
@@ -304,11 +307,11 @@ void Greed::go()
 
 		if (vr_on)
 		{
-
 			//Update Controller Positions
 			GreedVR::vr_update_controllers(scene, controller_1_transform, controller_2_transform, glm::translate(glm::mat4(1.0f), camera->cam_pos));
-			vr_render(); //Render Scene
-
+			GreedVR::vr_check_interaction(controller_1_transform, controller_2_transform, interactable_objects);
+			vr_interaction_check();
+			vr_render(); //Render Scene			
 		}
 		else {
 			scene->render();
@@ -438,10 +441,6 @@ void Greed::handle_movement_vr()
 	if (GreedVR::vars.hmd->IsInputFocusCapturedByAnotherProcess())
 		return;
 
-	std::vector<float> vertdataarray;
-	unsigned int controllerVertcount = 0;
-	int trackedControllerCount = 0;
-
 	for (vr::TrackedDeviceIndex_t unTrackedDevice = vr::k_unTrackedDeviceIndex_Hmd + 1; unTrackedDevice < vr::k_unMaxTrackedDeviceCount; ++unTrackedDevice)
 	{
 		//Preliminary Checks
@@ -449,7 +448,6 @@ void Greed::handle_movement_vr()
 			continue;
 		if (GreedVR::vars.hmd->GetTrackedDeviceClass(unTrackedDevice) != vr::TrackedDeviceClass_Controller)
 			continue;
-		trackedControllerCount += 1;
 		if (!GreedVR::vars.trackedDevicePose[unTrackedDevice].bPoseIsValid)
 			continue;
 
@@ -470,7 +468,7 @@ void Greed::handle_movement_vr()
 		GLfloat cam_step = keys[GLFW_KEY_LEFT_SHIFT] ? 3 * BASE_CAM_SPEED : BASE_CAM_SPEED;
 		glm::vec3 displacement(0.f);
 
-		if (pControllerState.ulButtonPressed == TRACKPAD_ID)
+		if (pControllerState.ulButtonPressed == TRACKPAD_ID || pControllerState.ulButtonPressed == (TRACKPAD_ID + TRIGGER_ID))
 		{
 			//fprintf(stderr, "TRACKPAD PRESSED\n");
 			if (pControllerState.rAxis[TRACKPAD].y > 0.0f)
@@ -700,4 +698,46 @@ void Greed::scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 	// Only y is relevant here, -1 is down, +1 is up
 	camera->cam_pos = glm::vec3(glm::translate(glm::mat4(1.0f), trans_vec) * glm::vec4(camera->cam_pos, 1.0f));
 	camera->recalculate();
+}
+
+void Greed::vr_interaction_check()
+{
+	for (BoundingSphere obj : interactable_objects)
+	{
+		if (obj.check_interact)
+		{
+			fprintf(stderr, "INTERACTING\n");
+			switch (obj.interact_type)
+			{
+			case CHANGE_SCENE:
+				next_skybox();
+				break;
+			case TOGGLE_SHADOWS:
+				shadows_on = !shadows_on;
+				break;
+			case GENERATE_FOREST:
+				if (scene == island_scene)
+				{
+					((IslandScene*) scene)->generate_forest();
+				}
+				break;
+			case GENERATE_TERRAIN:
+				if (scene == island_scene)
+				{
+					((IslandScene*)scene)->generate_map();
+				}
+				break;
+			case GENERATE_VILLAGE:
+				if (scene == island_scene)
+				{
+					((IslandScene*)scene)->generate_village();
+				}
+				fprintf(stderr, "INTERACT VILLAGE\n");
+				break;
+			default:
+				break;
+			}
+			obj.check_interact = false;
+		}
+	}
 }

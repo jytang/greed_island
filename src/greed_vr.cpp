@@ -1,4 +1,11 @@
 #include "greed_vr.h"
+#include "util.h"
+
+bool trigger_pressed = false;
+SceneTransform *grabbed_object = nullptr;
+SceneTransform *grabbing_controller = nullptr;
+int current_controller = 0;
+glm::mat4 object_original_mat = glm::mat4(1.f);
 
 void GreedVR::init()
 {
@@ -145,3 +152,83 @@ void GreedVR::vr_update_controllers(Scene *scene, SceneTransform * controller_1_
 	}
 }
 
+void GreedVR::vr_check_interaction(SceneTransform *controller_1_transform, SceneTransform *controller_2_transform, std::vector<BoundingSphere> interactable_objects)
+{
+	// check if somebody else has input focus
+	if (GreedVR::vars.hmd->IsInputFocusCapturedByAnotherProcess())
+		return;
+
+	int trackedControllerCount = 0;
+
+	for (vr::TrackedDeviceIndex_t unTrackedDevice = vr::k_unTrackedDeviceIndex_Hmd + 1; unTrackedDevice < vr::k_unMaxTrackedDeviceCount; ++unTrackedDevice)
+	{
+		//Preliminary Checks
+		if (!GreedVR::vars.hmd->IsTrackedDeviceConnected(unTrackedDevice))
+			continue;
+		if (GreedVR::vars.hmd->GetTrackedDeviceClass(unTrackedDevice) != vr::TrackedDeviceClass_Controller)
+			continue;
+		trackedControllerCount += 1;
+		if (!GreedVR::vars.trackedDevicePose[unTrackedDevice].bPoseIsValid)
+			continue;
+
+		//Get Controller State
+		vr::VRControllerState_t pControllerState;
+		if (!GreedVR::vars.hmd->GetControllerState(unTrackedDevice, &pControllerState, sizeof(pControllerState)))
+			continue;
+
+		if (pControllerState.ulButtonPressed == TRIGGER_ID || pControllerState.ulButtonPressed == (TRACKPAD_ID + TRIGGER_ID))
+		{
+			//Checks if trigger already being pressed down
+			if (trigger_pressed && grabbed_object != nullptr)
+			{
+				grabbed_object->transformation = grabbing_controller->transformation;
+				continue;
+			}	
+			else if (trigger_pressed && current_controller == trackedControllerCount)
+			{
+				continue;
+			}
+			else
+			{
+				trigger_pressed = true;
+				current_controller = trackedControllerCount;
+			}				
+
+			SceneTransform *controller_transform;
+			if (trackedControllerCount == 1)
+				controller_transform = controller_1_transform;
+			else
+				controller_transform = controller_2_transform;
+
+			glm::vec3 controller_center = glm::vec3(controller_transform->transformation * glm::vec4(0.f, 0.f, 0.06f, 1.f));
+			for (BoundingSphere obj : interactable_objects)
+			{
+				glm::vec3 obj_center = glm::vec3(obj.translation_mat->transformation * glm::vec4(0.f, 0.f, 0.f, 1.f));
+				if (glm::abs(glm::distance(controller_center, obj_center)) <= obj.radius)
+				{
+					if (obj.interact_type == GRAB)
+					{
+						grabbed_object = obj.translation_mat;
+						grabbing_controller = controller_transform;
+						object_original_mat = obj.translation_mat->transformation;
+					}
+					else
+					{
+						fprintf(stderr, "OBJECT INTERACTED\n");
+						obj.check_interact = true;
+					}
+				}
+			}
+		}
+		else if (trigger_pressed && current_controller == trackedControllerCount)
+		{
+			trigger_pressed = false;
+			if (grabbed_object != nullptr)
+			{
+				//grabbed_object->transformation = object_original_mat;
+				grabbed_object = nullptr;
+				grabbing_controller = nullptr;
+			}			
+		}
+	}
+}

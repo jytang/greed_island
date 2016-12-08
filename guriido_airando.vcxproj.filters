@@ -214,5 +214,8 @@
     <ClInclude Include="inc\scene_trans_anim.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="inc\bounding_sphere.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

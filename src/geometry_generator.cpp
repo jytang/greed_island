@@ -83,7 +83,6 @@ Geometry * GeometryGenerator::generate_cube(GLfloat scale, bool has_normals)
 		cube->indices.push_back(i);
 
 	cube->has_normals = has_normals;
-	//cube->attach_texture("test");
 	cube->populate_buffers();
 	geometries.push_back(cube);
 	return cube;
