@@ -4,5 +4,5 @@
 
 namespace Global {
 	const GLfloat PLAYER_HEIGHT = 1.7f;
-	const GLfloat TRIGGER_HALF_LEN = PLAYER_HEIGHT / 4;
+	const GLfloat TRIGGER_HALF_LEN = PLAYER_HEIGHT / 3;
 }

@@ -422,6 +422,8 @@ Geometry * GeometryGenerator::generate_terrain(GLfloat size, GLint num_points_si
 		terrain->attach_texture("assets/textures/StoneWW.png");
 	else if (texture_type == SAND)
 		terrain->attach_texture("assets/textures/SandWW2.dds");
+	else if (texture_type == SAND_TWO)
+		terrain->attach_texture("assets/textures/Sandy2.png");
 	terrain->populate_buffers();
 	geometries.push_back(terrain);
 
