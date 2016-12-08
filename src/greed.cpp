@@ -46,7 +46,7 @@ glm::vec3 last_cursor_pos;
 
 const GLfloat PLAYER_HEIGHT = Global::PLAYER_HEIGHT;
 
-const GLfloat FAR_PLANE = 150.f * PLAYER_HEIGHT;
+const GLfloat FAR_PLANE = (vr_on ? 200.f : 50.f) * PLAYER_HEIGHT;
 const GLfloat FOV = 45.f;
 
 const GLfloat   BASE_CAM_SPEED = PLAYER_HEIGHT / 10.f;
@@ -326,9 +326,14 @@ void Greed::shadow_pass()
 	ss->use();
 	ss->light_pos = scene->light_pos;
 	if (shadows_on) {
-		GLfloat size = scene->get_size();
-		//ss->light_proj = glm::ortho(-size, size, -size, size, -50.f, 200.f);
-		ss->light_proj = scene->frustum_ortho();
+		if (vr_on)
+		{
+			GLfloat size = scene->get_size();
+			ss->light_proj = glm::ortho(-size, size, -size, size, -50.f, 200.f);
+		}
+		else {
+			ss->light_proj = scene->frustum_ortho();
+		}
 	}
 	else
 		ss->light_proj = glm::ortho(-1.f, 1.f, -1.f, 1.f, 0.f, 0.1f);
