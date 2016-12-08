@@ -10,12 +10,12 @@ const GLfloat PLAYER_HEIGHT = Global::PLAYER_HEIGHT;
 
 const GLuint    HEIGHT_MAP_POWER = 8;
 const GLuint    HEIGHT_MAP_SIZE = (unsigned int)glm::pow(2, HEIGHT_MAP_POWER) + 1;
-const GLint     VILLAGE_DIAMETER = 20.f;
+const GLint     VILLAGE_DIAMETER = 20;
 const GLuint    TERRAIN_RESOLUTION = 200;
 
 const GLfloat   SIZE = 30.f * PLAYER_HEIGHT;
-const GLfloat   HEIGHT_MAP_MAX = -100.f * PLAYER_HEIGHT;
-const GLfloat   HEIGHT_RANDOMNESS_SCALE = 20.f;
+const GLfloat   HEIGHT_MAP_MAX = -25.f * PLAYER_HEIGHT;
+const GLfloat   HEIGHT_RANDOMNESS_SCALE = 10.f;
 const GLfloat	TERRAIN_SMOOTHNESS = 2.0f;
 const GLfloat   TERRAIN_SIZE = SIZE;
 const GLfloat   TERRAIN_SCALE = 2.f;
@@ -65,10 +65,12 @@ void FireScene::generate_map()
 
 	height_map = Terrain::generate_height_map(HEIGHT_MAP_SIZE, HEIGHT_MAP_MAX, VILLAGE_DIAMETER, HEIGHT_RANDOMNESS_SCALE, false, true, TERRAIN_SMOOTHNESS, 0);
 	
-	Geometry *sand_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, -100.f, 100.f, false, SAND, height_map);
+	Geometry *sand_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, -20.f, 100.f, false, OBSIDIAN, height_map);
 	Material sand_material;
 	sand_material.diffuse = sand_material.ambient = color::windwaker_sand;
 	Mesh sand_mesh = { sand_geo, sand_material, ShaderManager::get_default(), glm::mat4(1.f) };
+
+	height_map = Terrain::generate_height_map(HEIGHT_MAP_SIZE, 0.f, 1, 0.f, false, true, TERRAIN_SMOOTHNESS, 0); //Creates Illusion of Hole, but you can walk above it
 
 	SceneModel *terrain_model = new SceneModel(this);
 	terrain_model->add_mesh(sand_mesh);
