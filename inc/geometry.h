@@ -16,7 +16,7 @@ public:
 	std::vector<GLuint> indices;	
 	GLenum draw_type = GL_TRIANGLES;
 	GLint wrap_type = GL_REPEAT;
-	GLint filter_type = GL_LINEAR;
+	GLint filter_type = GL_NEAREST_MIPMAP_LINEAR;
 
 	Geometry();
 	~Geometry();

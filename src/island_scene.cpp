@@ -18,7 +18,7 @@ const GLuint    HEIGHT_MAP_POWER = 8;
 const GLuint    HEIGHT_MAP_SIZE = (unsigned int)glm::pow(2, HEIGHT_MAP_POWER) + 1;
 const GLint     VILLAGE_DIAMETER = (int)(0.23f * HEIGHT_MAP_SIZE);
 const GLuint    TERRAIN_RESOLUTION = 300;
-const GLuint    NUM_TREES = 10;
+const GLuint    NUM_TREES = 5;
 const GLfloat   PERCENT_TREE_ANIM = 0.9f;
 const GLfloat   TREE_SCALE = 1.5f;
 const GLint		NUM_BUILDINGS = 5;
@@ -86,6 +86,7 @@ void IslandScene::setup()
 	generate_forest();
 	generate_village();
 	generate_miniatures();
+	//generate_other();
 }
 
 void IslandScene::generate_planes()
@@ -145,7 +146,7 @@ void IslandScene::generate_map()
 	Mesh land_mesh = { land_geo, land_material, ShaderManager::get_default(), glm::mat4(1.f) };
 
 	// Plateau/village
-	plateau_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, HEIGHT_MAP_MAX * 0.8f, HEIGHT_MAP_MAX, false, ROCK, height_map);
+	plateau_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, HEIGHT_MAP_MAX * 0.8f, HEIGHT_MAP_MAX, false, STONE, height_map);
 	Material plateau_material;
 	plateau_material.diffuse = plateau_material.ambient = color::bone_white;
 	Mesh plateau_mesh = { plateau_geo, plateau_material, ShaderManager::get_default(), glm::mat4(1.f) };
@@ -400,9 +401,8 @@ void IslandScene::generate_small_village()
 	for (int i = 0; i < NUM_SMALL_BUILDINGS; ++i)
 	{
 		SceneModel *building = ShapeGrammar::generate_building(this, false, 0);
-		SceneTransform *small_building_scale = new SceneTransform(this, glm::scale(glm::mat4(1.f), glm::vec3(SMALL_BUILDING_SCALE)));
-		// Display in a half-circle arc.
-		float angle = glm::radians(180.f / NUM_SMALL_BUILDINGS * i);
+		SceneTransform *small_building_scale = new SceneTransform(this, glm::scale(glm::mat4(1.f), glm::vec3(SMALL_BUILDING_SCALE)));		
+		float angle = glm::radians(360.f / NUM_SMALL_BUILDINGS * i);
 		SceneTransform *small_building_rot = new SceneTransform(this, glm::rotate(glm::mat4(1.f), glm::radians(-90.f + glm::degrees(angle)), glm::vec3(0.f, 1.f, 0.f)));
 		float x = SMALL_VILLAGE_RADIUS*glm::cos(angle);
 		float z = -SMALL_VILLAGE_RADIUS*glm::sin(angle);
@@ -437,4 +437,25 @@ void IslandScene::handle_helicopter()
 	camera->cam_front = -camera->cam_pos;
 	//camera->cam_up = glm::cross(glm::vec3(glm::rotate(glm::mat4(1.f), glm::radians(helicopter_angle), glm::vec3(0.f, 1.f, 0.f)) * glm::vec4(0.f, 0.f, -1.f, 1.f)), camera->cam_front);
 	camera->recalculate();
+}
+
+void IslandScene::generate_other()
+{
+	Geometry *sword_geo = GeometryGenerator::generate_sword();
+	Material sword_mat;
+	sword_mat.diffuse = sword_mat.ambient = color::bone_white;
+	Mesh sword_mesh = { sword_geo, sword_mat, ShaderManager::get_default(), glm::mat4(1.f) };
+	SceneModel *sword_model = new SceneModel(this);
+	sword_model->add_mesh(sword_mesh);
+	SceneTransform *sword_scale = new SceneTransform(this, glm::scale(glm::mat4(1.f), glm::vec3(0.6f)));
+	SceneTransform *sword_rotate1 = new SceneTransform(this, glm::rotate(glm::mat4(1.f), glm::radians(-90.f), glm::vec3(1.f, 0.f, 0.f)));
+	SceneTransform *sword_rotate2 = new SceneTransform(this, glm::rotate(glm::mat4(1.f), glm::radians(90.f), glm::vec3(0.f, 0.f, 1.f)));
+	SceneTransform *sword_translate = new SceneTransform(this, glm::translate(glm::mat4(1.f), glm::vec3(0.f, HEIGHT_MAP_MAX - 2.f, 0.f)));
+	sword_scale->add_child(sword_model);
+	sword_rotate1->add_child(sword_scale);
+	sword_rotate2->add_child(sword_rotate1);
+	sword_translate->add_child(sword_rotate2);
+	root->add_child(sword_translate);
+	BoundingSphere *sword_bounds = new BoundingSphere(sword_translate, 0.5f, GRAB);
+	interactable_objects.push_back(sword_bounds);
 }

@@ -95,7 +95,7 @@ void SpaceScene::generate_map()
 
 	height_map = Terrain::generate_height_map(HEIGHT_MAP_SIZE, 0.f, VILLAGE_DIAMETER, HEIGHT_RANDOMNESS_SCALE, false, false, TERRAIN_SMOOTHNESS, 0);
 	
-	Geometry *sand_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, -HEIGHT_MAP_MAX, HEIGHT_MAP_MAX, false, SPACE, height_map);
+	Geometry *sand_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, -HEIGHT_MAP_MAX, HEIGHT_MAP_MAX, false, ROCK, height_map);
 	Material sand_material;
 	sand_material.diffuse = sand_material.ambient = color::windwaker_sand;
 	Mesh sand_mesh = { sand_geo, sand_material, ShaderManager::get_default(), glm::mat4(1.f) };

@@ -11,7 +11,7 @@ const GLfloat PLAYER_HEIGHT = Global::PLAYER_HEIGHT;
 const GLuint    HEIGHT_MAP_POWER = 8;
 const GLuint    HEIGHT_MAP_SIZE = (unsigned int)glm::pow(2, HEIGHT_MAP_POWER) + 1;
 const GLint     VILLAGE_DIAMETER = 1;
-const GLuint    TERRAIN_RESOLUTION = 300;
+const GLuint    TERRAIN_RESOLUTION = 200;
 
 const GLfloat   SIZE = 50.f * PLAYER_HEIGHT;
 const GLfloat   HEIGHT_MAP_MAX = -20.f * PLAYER_HEIGHT;

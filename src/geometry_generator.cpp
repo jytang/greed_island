@@ -418,7 +418,7 @@ Geometry * GeometryGenerator::generate_terrain(GLfloat size, GLint num_points_si
 
 	if(texture_type == GRASS)
 		terrain->attach_texture("assets/textures/GrassWW2.dds");
-	else if (texture_type == ROCK)
+	else if (texture_type == STONE)
 		terrain->attach_texture("assets/textures/StoneWW.png");
 	else if (texture_type == SAND)
 		terrain->attach_texture("assets/textures/SandWW2.dds");
@@ -428,8 +428,10 @@ Geometry * GeometryGenerator::generate_terrain(GLfloat size, GLint num_points_si
 		terrain->attach_texture("assets/textures/Snow4.tga");
 	else if (texture_type == OBSIDIAN)
 		terrain->attach_texture("assets/textures/Obsidian.png");
-	else if (texture_type == SPACE)
+	else if (texture_type == SPACE) //Higher Quality, but causes alot of aliasing
 		terrain->attach_texture("assets/textures/Space.png");
+	else if (texture_type == ROCK)
+		terrain->attach_texture("assets/textures/Rock.png");
 
 	terrain->populate_buffers();
 	geometries.push_back(terrain);
@@ -500,6 +502,238 @@ Geometry * GeometryGenerator::generate_bezier_plane(GLfloat radius, GLuint num_c
 	bez_plane->populate_buffers();
 	geometries.push_back(bez_plane);
 	return bez_plane;
+}
+
+Geometry *GeometryGenerator::generate_sword()
+{
+	Geometry *sword = new Geometry();
+
+	float curr_height;
+
+	//Make Handle
+	float offset = -0.1f;
+	float handle_height = 0.3f;
+	float handle_width = 0.1f;
+	glm::vec3 v0 = { handle_width / 2.f, handle_height / 2.f + offset, handle_width / 3.f };
+	glm::vec3 v1 = { -handle_width / 2.f, handle_height / 2.f + offset, handle_width / 3.f };
+	glm::vec3 v2 = { handle_width / 2.f, handle_height / 2.f + offset, -handle_width / 3.f };
+	glm::vec3 v3 = { -handle_width / 2.f, handle_height / 2.f + offset, -handle_width / 3.f };
+	glm::vec3 v4 = { handle_width / 2.f, -handle_height / 2.f + offset, handle_width / 3.f };
+	glm::vec3 v5 = { -handle_width / 2.f, -handle_height / 2.f + offset, handle_width / 3.f };
+	glm::vec3 v6 = { handle_width / 2.f, -handle_height / 2.f + offset, -handle_width / 3.f };
+	glm::vec3 v7 = { -handle_width / 2.f, -handle_height / 2.f + offset, -handle_width / 3.f };
+
+	sword->vertices.push_back(v0);
+	sword->vertices.push_back(v2);
+	sword->vertices.push_back(v1);
+	sword->vertices.push_back(v1);
+	sword->vertices.push_back(v2);
+	sword->vertices.push_back(v3);
+
+	sword->vertices.push_back(v2);
+	sword->vertices.push_back(v6);
+	sword->vertices.push_back(v3);
+	sword->vertices.push_back(v3);
+	sword->vertices.push_back(v6);
+	sword->vertices.push_back(v7);
+
+	sword->vertices.push_back(v1);
+	sword->vertices.push_back(v3);
+	sword->vertices.push_back(v5);
+	sword->vertices.push_back(v3);
+	sword->vertices.push_back(v7);
+	sword->vertices.push_back(v5);
+
+	sword->vertices.push_back(v0);
+	sword->vertices.push_back(v4);
+	sword->vertices.push_back(v2);
+	sword->vertices.push_back(v2);
+	sword->vertices.push_back(v4);
+	sword->vertices.push_back(v6);
+
+	sword->vertices.push_back(v1);
+	sword->vertices.push_back(v5);
+	sword->vertices.push_back(v0);
+	sword->vertices.push_back(v0);
+	sword->vertices.push_back(v5);
+	sword->vertices.push_back(v4);
+
+	sword->vertices.push_back(v5);
+	sword->vertices.push_back(v7);
+	sword->vertices.push_back(v4);
+	sword->vertices.push_back(v4);
+	sword->vertices.push_back(v7);
+	sword->vertices.push_back(v6);
+
+	for (int i = 0; i < 6; ++i)
+		sword->normals.push_back(glm::vec3(0.f, 1.f, 0.f));
+	for (int i = 0; i < 6; ++i)
+		sword->normals.push_back(glm::vec3(0.f, 0.f, -1.f));
+	for (int i = 0; i < 6; ++i)
+		sword->normals.push_back(glm::vec3(-1.f, 0.f, 0.f));
+	for (int i = 0; i < 6; ++i)
+		sword->normals.push_back(glm::vec3(1.f, 0.f, 0.f));
+	for (int i = 0; i < 6; ++i)
+		sword->normals.push_back(glm::vec3(0.f, 0.f, 1.f));
+	for (int i = 0; i < 6; ++i)
+		sword->normals.push_back(glm::vec3(0.f, -1.f, 0.f));
+
+	//Make Hilt(?)
+	curr_height = handle_height / 2.f + offset;
+	float hilt_height = 0.1f;
+	float hilt_width = 0.5f;
+	v0 = { hilt_width / 2.f, curr_height + hilt_height, handle_width / 3.f };
+	v1 = { -hilt_width / 2.f, curr_height + hilt_height, handle_width / 3.f };
+	v2 = { hilt_width / 2.f, curr_height + hilt_height, -handle_width / 3.f };
+	v3 = { -hilt_width / 2.f, curr_height + hilt_height, -handle_width / 3.f };
+	v4 = { hilt_width / 2.f, curr_height, handle_width / 3.f };
+	v5 = { -hilt_width / 2.f, curr_height, handle_width / 3.f };
+	v6 = { hilt_width / 2.f, curr_height, -handle_width / 3.f };
+	v7 = { -hilt_width / 2.f, curr_height, -handle_width / 3.f };
+
+	sword->vertices.push_back(v0);
+	sword->vertices.push_back(v2);
+	sword->vertices.push_back(v1);
+	sword->vertices.push_back(v1);
+	sword->vertices.push_back(v2);
+	sword->vertices.push_back(v3);
+
+	sword->vertices.push_back(v2);
+	sword->vertices.push_back(v6);
+	sword->vertices.push_back(v3);
+	sword->vertices.push_back(v3);
+	sword->vertices.push_back(v6);
+	sword->vertices.push_back(v7);
+
+	sword->vertices.push_back(v1);
+	sword->vertices.push_back(v3);
+	sword->vertices.push_back(v5);
+	sword->vertices.push_back(v3);
+	sword->vertices.push_back(v7);
+	sword->vertices.push_back(v5);
+
+	sword->vertices.push_back(v0);
+	sword->vertices.push_back(v4);
+	sword->vertices.push_back(v2);
+	sword->vertices.push_back(v2);
+	sword->vertices.push_back(v4);
+	sword->vertices.push_back(v6);
+
+	sword->vertices.push_back(v1);
+	sword->vertices.push_back(v5);
+	sword->vertices.push_back(v0);
+	sword->vertices.push_back(v0);
+	sword->vertices.push_back(v5);
+	sword->vertices.push_back(v4);
+
+	sword->vertices.push_back(v5);
+	sword->vertices.push_back(v7);
+	sword->vertices.push_back(v4);
+	sword->vertices.push_back(v4);
+	sword->vertices.push_back(v7);
+	sword->vertices.push_back(v6);
+
+	for (int i = 0; i < 6; ++i)
+		sword->normals.push_back(glm::vec3(0.f, 1.f, 0.f));
+	for (int i = 0; i < 6; ++i)
+		sword->normals.push_back(glm::vec3(0.f, 0.f, -1.f));
+	for (int i = 0; i < 6; ++i)
+		sword->normals.push_back(glm::vec3(-1.f, 0.f, 0.f));
+	for (int i = 0; i < 6; ++i)
+		sword->normals.push_back(glm::vec3(1.f, 0.f, 0.f));
+	for (int i = 0; i < 6; ++i)
+		sword->normals.push_back(glm::vec3(0.f, 0.f, 1.f));
+	for (int i = 0; i < 6; ++i)
+		sword->normals.push_back(glm::vec3(0.f, -1.f, 0.f));
+
+	//Make Blade
+	curr_height = curr_height + hilt_height;
+	float blade_height = 1.2f;
+	float blade_width = 0.15f;
+	v0 = { blade_width / 2.f, curr_height + blade_height, 0};
+	v1 = { 0, curr_height + blade_height, handle_width / 3.f };
+	v2 = { 0, curr_height + blade_height, -handle_width / 3.f };
+	v3 = { -blade_width / 2.f, curr_height + blade_height, 0 };
+	v4 = { blade_width / 2.f, curr_height, 0 };
+	v5 = { 0, curr_height, handle_width / 3.f };
+	v6 = { 0, curr_height, -handle_width / 3.f };
+	v7 = { -blade_width / 2.f, curr_height, 0 };
+
+	sword->vertices.push_back(v2);
+	sword->vertices.push_back(v6);
+	sword->vertices.push_back(v3);
+	sword->vertices.push_back(v3);
+	sword->vertices.push_back(v6);
+	sword->vertices.push_back(v7);
+
+	sword->vertices.push_back(v1);
+	sword->vertices.push_back(v3);
+	sword->vertices.push_back(v5);
+	sword->vertices.push_back(v3);
+	sword->vertices.push_back(v7);
+	sword->vertices.push_back(v5);
+
+	sword->vertices.push_back(v0);
+	sword->vertices.push_back(v4);
+	sword->vertices.push_back(v2);
+	sword->vertices.push_back(v2);
+	sword->vertices.push_back(v4);
+	sword->vertices.push_back(v6);
+
+	sword->vertices.push_back(v1);
+	sword->vertices.push_back(v5);
+	sword->vertices.push_back(v0);
+	sword->vertices.push_back(v0);
+	sword->vertices.push_back(v5);
+	sword->vertices.push_back(v4);
+
+	for (int i = 0; i < 6; ++i)
+		sword->normals.push_back(glm::vec3(-blade_width / 4.f, 0, -handle_width / 6.f));
+	for (int i = 0; i < 6; ++i)
+		sword->normals.push_back(glm::vec3(-blade_width / 4.f, 0, handle_width / 6.f));
+	for (int i = 0; i < 6; ++i)
+		sword->normals.push_back(glm::vec3(blade_width / 4.f, 0, -handle_width / 6.f));
+	for (int i = 0; i < 6; ++i)
+		sword->normals.push_back(glm::vec3(blade_width / 4.f, 0, handle_width / 6.f));
+
+	//Make Tip
+	curr_height = curr_height + blade_height;
+	float tip_height = 0.1f;
+	v0 = { blade_width / 2.f, curr_height, 0 };
+	v1 = { 0, curr_height, handle_width / 3.f };
+	v2 = { 0, curr_height, -handle_width / 3.f };
+	v3 = { -blade_width / 2.f, curr_height, 0 };
+	v4 = { 0, curr_height + tip_height, 0 }; //Tip
+
+	sword->vertices.push_back(v0);
+	sword->vertices.push_back(v4);
+	sword->vertices.push_back(v1);
+	sword->vertices.push_back(v1);
+	sword->vertices.push_back(v4);
+	sword->vertices.push_back(v3);
+	sword->vertices.push_back(v3);
+	sword->vertices.push_back(v4);
+	sword->vertices.push_back(v2);
+	sword->vertices.push_back(v2);
+	sword->vertices.push_back(v4);
+	sword->vertices.push_back(v0);
+
+	for (int i = 0; i < 3; ++i)
+		sword->normals.push_back(glm::vec3(blade_width / 4.f, curr_height / 2.f, handle_width / 6.f));
+	for (int i = 0; i < 3; ++i)
+		sword->normals.push_back(glm::vec3(-blade_width / 4.f, curr_height / 2.f, handle_width / 6.f));
+	for (int i = 0; i < 3; ++i)
+		sword->normals.push_back(glm::vec3(-blade_width / 4.f, curr_height / 2.f, -handle_width / 6.f));
+	for (int i = 0; i < 3; ++i)
+		sword->normals.push_back(glm::vec3(blade_width / 4.f, curr_height / 2.f, -handle_width / 6.f));
+
+	// Indices
+	for (int i = 0; i < sword->vertices.size(); ++i)
+		sword->indices.push_back(i);
+
+	sword->populate_buffers();
+	geometries.push_back(sword);
+	return sword;
 }
 
 
