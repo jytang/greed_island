@@ -1,6 +1,6 @@
 #include "window.h"
 
-const bool FULLSCREEN = true;
+const bool FULLSCREEN = false;
 
 GLFWwindow* Window::create_window(int width, int height, const char *window_title)
 {
