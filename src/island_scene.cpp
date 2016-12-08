@@ -27,6 +27,7 @@ const GLint		NUM_BUILDINGS = 5;
 const GLfloat   ISLAND_SIZE = 30.f * PLAYER_HEIGHT;
 const GLfloat   HEIGHT_MAP_MAX = 10.f * PLAYER_HEIGHT;
 const GLfloat   HEIGHT_RANDOMNESS_SCALE = HEIGHT_MAP_MAX;
+const GLfloat	TERRAIN_SMOOTHNESS = 1.2f;
 const GLfloat   TERRAIN_SIZE = ISLAND_SIZE / 5.f;
 const GLfloat   TERRAIN_SCALE = ISLAND_SIZE / (TERRAIN_SIZE / 2);
 const GLfloat	VILLAGE_DIAMETER_TRUE = ((float)VILLAGE_DIAMETER / HEIGHT_MAP_SIZE) * TERRAIN_SIZE * TERRAIN_SCALE;
@@ -37,7 +38,7 @@ const GLfloat   FOREST_INNER_CIRCLE = VILLAGE_DIAMETER_TRUE / 2 + ISLAND_SIZE / 
 const GLfloat   WATER_SCALE = ISLAND_SIZE * 6;
 
 // Camera and movement
-const GLint     CAM_OFFSET = ISLAND_SIZE / 30.f;
+const GLint     CAM_OFFSET = (int) ISLAND_SIZE / 30.f;
 const GLfloat   EDGE_LEEWAY = ISLAND_SIZE / 6.f;
 const GLfloat   MOVE_BOUNDS = ISLAND_SIZE + EDGE_LEEWAY;
 const GLfloat   EDGE_THRESH = ISLAND_SIZE / 30.f;
@@ -131,7 +132,7 @@ void IslandScene::generate_map()
 		map->remove_all();
 	}
 
-	height_map = Terrain::generate_height_map(HEIGHT_MAP_SIZE, HEIGHT_MAP_MAX, VILLAGE_DIAMETER, HEIGHT_RANDOMNESS_SCALE, true, 0);
+	height_map = Terrain::generate_height_map(HEIGHT_MAP_SIZE, HEIGHT_MAP_MAX, VILLAGE_DIAMETER, HEIGHT_RANDOMNESS_SCALE, true, false, TERRAIN_SMOOTHNESS, 0);
 	float cam_height = Terrain::height_lookup(0.f, ISLAND_SIZE - CAM_OFFSET, ISLAND_SIZE * 2, height_map);
 	camera->cam_pos.y = cam_height + PLAYER_HEIGHT;
 	camera->recalculate();
@@ -224,7 +225,7 @@ void IslandScene::generate_village()
 		out_house = new SceneTransAnim(this, glm::vec3(0.f), glm::vec3(0.f, -0.5f, 0.f), false);
 		root->add_child(out_house);
 
-		cube_translate = new SceneTransform(this, glm::translate(glm::mat4(1.f), glm::vec3(0.f, 0.2f*PLAYER_HEIGHT, 0.f)));
+		cube_translate = new SceneTransform(this, glm::translate(glm::mat4(1.f), glm::vec3(0.f, 0.8f*PLAYER_HEIGHT, 0.f)));
 	}
 	else {
 		village->remove_all();
@@ -256,7 +257,7 @@ void IslandScene::generate_village()
 		Mesh cube_mesh = { cube_geo, cube_mat, ShaderManager::get_default(), glm::mat4(1.f) };
 		SceneModel *cube_model = new SceneModel(this);
 		cube_model->add_mesh(cube_mesh);
-		SceneTransform *cube_scale = new SceneTransform(this, glm::scale(glm::mat4(1.f), glm::vec3(0.1f*PLAYER_HEIGHT)));
+		SceneTransform *cube_scale = new SceneTransform(this, glm::scale(glm::mat4(1.f), glm::vec3(0.4f*PLAYER_HEIGHT)));
 		cube_scale->add_child(cube_model);
 		cube_translate->add_child(cube_scale);
 
@@ -375,7 +376,7 @@ void IslandScene::generate_small_forest()
 	leaf_material.shadows = false;
 	for (int i = 0; i < NUM_SMALL_TREES; ++i)
 	{
-		SceneGroup *small_tree = Tree::generate_tree(this, cylinder_geo, diamond_geo, 2 + i, 0, 20.f, 2.f, branch_material, leaf_material, false, glm::vec3(0.f), seed);
+		SceneGroup *small_tree = Tree::generate_tree(this, cylinder_geo, diamond_geo, 2 + i, 0, 20.f, 2.f, branch_material, leaf_material, false, glm::vec3(0.f), (int) seed);
 		SceneTransform *small_tree_scale = new SceneTransform(this, glm::scale(glm::mat4(1.f), glm::vec3(SMALL_TREE_SCALE)));
 		SceneAnimation *small_tree_anim = new SceneAnimation(this, 0.f, FLT_MAX, 0.f, SMALL_ROT_SPEED, glm::vec3(0.f, 1.f, 0.f), glm::vec3(0.f, 0.f, 0.f));
 		// Display in a half-circle arc.

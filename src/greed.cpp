@@ -21,7 +21,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-bool vr_on = true;
+bool vr_on = false;
 
 /* global vars */
 vr_vars GreedVR::vars;
@@ -591,6 +591,8 @@ void Greed::key_callback(GLFWwindow* window, int key, int scancode, int action, 
 				((IslandScene *)scene)->generate_map();
 				((IslandScene *)scene)->generate_small_map();
 			}
+			else if (scene == desert_scene)
+				((DesertScene *)scene)->generate_map();
 			break;
 		case GLFW_KEY_V:
 			if (scene == island_scene)

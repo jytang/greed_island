@@ -14,6 +14,7 @@
 #define SAND 2
 #define ROCK 3
 #define WATER 4
+#define SAND_TWO 5
 
 class GeometryGenerator
 {

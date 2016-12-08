@@ -1,10 +1,16 @@
 #include "terrain.h"
 #include "util.h"
 
-std::vector<std::vector<GLfloat> > Terrain::generate_height_map(GLuint size, GLfloat max_height, GLint village_diameter, GLfloat scale, bool ramp, GLuint seed = 0)
+float smoothness = 1.2f; //Previously called roughness. higher is smoother, lower is rougher
+bool allow_below_ground = false;
+
+std::vector<std::vector<GLfloat> > Terrain::generate_height_map(GLuint size, GLfloat max_height, GLint village_diameter, GLfloat scale, bool ramp, bool allow_dips, float smooth_value, GLuint seed = 0)
 {
 	std::vector<std::vector<GLfloat> > height_map;
 	unsigned int middle = ((size - 1) / 2); //Size is always odd
+
+	smoothness = smooth_value;
+	allow_below_ground = allow_dips;
 	
 	//All points initialized at -1
 	for (unsigned int i = 0; i < size; i++)
@@ -35,20 +41,17 @@ std::vector<std::vector<GLfloat> > Terrain::generate_height_map(GLuint size, GLf
 		height_map[i][size - 1] = 0;
 	}
 
-	//Set Plateau! MaxHeight defined, and will be a fixed circle using VillageDiamteter
-	//TODO: Later, for now center will just be the highest point;
-
 	//Offset of Village on Island, Round Plateau.
 	float r_ratio_offset = 0.5; //Row <----Currnently, Code only works for when village is at center of island.
 	float c_ratio_offset = 0.5; //Col
-	unsigned int village_mid_r = (unsigned int) size * r_ratio_offset;
-	unsigned int village_mid_c = (unsigned int) size * c_ratio_offset;
+	unsigned int village_mid_r = (unsigned int) (size * r_ratio_offset);
+	unsigned int village_mid_c = (unsigned int) (size * c_ratio_offset);
 
 	unsigned int radius = village_diameter / 2;
 
-	for (unsigned int r = village_mid_r - radius; r < village_mid_r + radius; r++) 
+	for (unsigned int r = village_mid_r - radius; r <= village_mid_r + radius; r++) 
 	{
-		for (unsigned int c = village_mid_c - radius; c < village_mid_c + radius; c++) 
+		for (unsigned int c = village_mid_c - radius; c <= village_mid_c + radius; c++) 
 		{
 			float dist = glm::distance(glm::vec2(r, c), glm::vec2(village_mid_r, village_mid_c));
 			//fprintf(stderr, "Dist: %f\n", dist);
@@ -154,11 +157,7 @@ void Terrain::diamond_square(unsigned int step, unsigned int size, float scale, 
 		}
 	}
 
-	// (((float)(rand() % 101) / 100.f) * 2 - 1) *
-
-	float roughness = 1.2f; //higher is smoother, lower is rougher
-
-	scale *= (float)glm::pow(2.f, -roughness);
+	scale *= (float)glm::pow(2.f, -smoothness);
 
 	diamond_square(step / 2, size, scale, height_map);
 }
@@ -207,7 +206,7 @@ void Terrain::diamond_step(unsigned int x, unsigned int y, unsigned int step, un
 	float sum = (a + b + c + d);
 
 	height_map[x][y] = (sum / num) +(r * scale);
-	if (height_map[x][y] < 0)
+	if (!allow_below_ground && height_map[x][y] < 0)
 		height_map[x][y] = 0;
 }
 
@@ -249,16 +248,12 @@ void Terrain::square_step(unsigned int x, unsigned int y, unsigned int step, uns
 	if (x == 0 || y == 0 || x == size - 1 || y == size - 1)
 		num = 3.0f;
 		
-
-	//fprintf(stderr, "Using: %.2f, %.2f, %.2f, %.2f and %.2f\n", a, b, c, d, num);
-
-	//float r = ((float)(rand() % 101) / 100.f);
 	float r = Util::random(0.f, 1.f);
 
 	float sum = (a + b + c + d);
 
 	height_map[x][y] = (sum / num) +(r * scale);
-	if (height_map[x][y] < 0)
+	if (!allow_below_ground && height_map[x][y] < 0)
 		height_map[x][y] = 0;
 }
 
