@@ -20,8 +20,6 @@ const GLfloat	TERRAIN_SMOOTHNESS = 1.8f;
 const GLfloat   TERRAIN_SIZE = SIZE;
 const GLfloat   TERRAIN_SCALE = 2.f;
 
-SceneTransform *map;
-
 GLfloat DesertScene::get_size()
 {
 	return SIZE;
@@ -100,6 +98,7 @@ void DesertScene::generate_map()
 	{
 		map->remove_all();
 	}
+
 
 	height_map = Terrain::generate_height_map(HEIGHT_MAP_SIZE, HEIGHT_MAP_MAX, VILLAGE_DIAMETER, HEIGHT_RANDOMNESS_SCALE, false, true, TERRAIN_SMOOTHNESS, 0);
 
