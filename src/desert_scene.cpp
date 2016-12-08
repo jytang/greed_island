@@ -71,7 +71,7 @@ void DesertScene::setup()
 void DesertScene::generate_planes()
 {
 	// Infinite water plane stretching to the horizon
-	Geometry *plane_geo = GeometryGenerator::generate_plane(1.f);
+	Geometry *plane_geo = GeometryGenerator::generate_plane(1.f, WATER);
 	Material water_material;
 	water_material.diffuse = water_material.ambient = color::ocean_blue;
 	water_material.shadows = false;
@@ -85,7 +85,7 @@ void DesertScene::generate_planes()
 	root->add_child(water_translate);
 
 	// Curvy beach plane, named Bezier Beach Resort
-	Geometry *beach_geo = GeometryGenerator::generate_bezier_plane(SIZE*1.5f, 50, 150, 0.1f, 0);
+	Geometry *beach_geo = GeometryGenerator::generate_bezier_plane(SIZE*1.5f, 50, 150, 0.1f, SAND, 0);
 	Material beach_material;
 	beach_material.diffuse = beach_material.ambient = color::windwaker_sand;
 	beach_material.shadows = false;
@@ -110,19 +110,19 @@ void DesertScene::generate_map()
 
 	// Mainland
 	// Second Parameter Below is Resolution^2 of Island, LOWER TO RUN FASTER
-	Geometry *land_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, BEACH_HEIGHT, HEIGHT_MAP_MAX * 0.8f, false, height_map);
+	Geometry *land_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, BEACH_HEIGHT, HEIGHT_MAP_MAX * 0.8f, false, SAND, height_map);
 	Material land_material;
 	land_material.diffuse = land_material.ambient = color::windwaker_green;
 	Mesh land_mesh = { land_geo, land_material, ShaderManager::get_default(), glm::mat4(1.f) };
 
 	// Plateau/village
-	Geometry *plateau_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, HEIGHT_MAP_MAX * 0.8f, HEIGHT_MAP_MAX, false, height_map);
+	Geometry *plateau_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, HEIGHT_MAP_MAX * 0.8f, HEIGHT_MAP_MAX, false, SAND, height_map);
 	Material plateau_material;
 	plateau_material.diffuse = plateau_material.ambient = color::bone_white;
 	Mesh plateau_mesh = { plateau_geo, plateau_material, ShaderManager::get_default(), glm::mat4(1.f) };
 
 	// Beachfront
-	Geometry *sand_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, 0.0f, BEACH_HEIGHT, true, height_map);
+	Geometry *sand_geo = GeometryGenerator::generate_terrain(TERRAIN_SIZE, TERRAIN_RESOLUTION, 0.0f, BEACH_HEIGHT, true, SAND, height_map);
 	Material sand_material;
 	sand_material.diffuse = sand_material.ambient = color::windwaker_sand;
 	Mesh sand_mesh = { sand_geo, sand_material, ShaderManager::get_default(), glm::mat4(1.f) };

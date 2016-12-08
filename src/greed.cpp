@@ -21,7 +21,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-bool vr_on = true;
+bool vr_on = false;
 
 /* global vars */
 vr_vars GreedVR::vars;
