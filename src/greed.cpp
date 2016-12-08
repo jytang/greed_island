@@ -21,7 +21,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-bool vr_on = false;
+bool vr_on = true;
 
 /* global vars */
 vr_vars GreedVR::vars;
@@ -46,7 +46,7 @@ glm::vec3 last_cursor_pos;
 
 const GLfloat PLAYER_HEIGHT = Global::PLAYER_HEIGHT;
 
-const GLfloat FAR_PLANE = 200.f * PLAYER_HEIGHT;
+const GLfloat FAR_PLANE = 100.f * PLAYER_HEIGHT;
 const GLfloat FOV = 45.f;
 
 const GLfloat   BASE_CAM_SPEED = PLAYER_HEIGHT / 10.f;
@@ -84,7 +84,6 @@ void Greed::next_skybox()
 void Greed::change_scene(Scene * s)
 {
 	scene = s;
-	camera = s->camera;
 }
 
 void Greed::next_scene()
@@ -128,6 +127,7 @@ void Greed::setup_scenes()
 
 	// Initial scene and cam.
 	change_scene(island_scene);
+	camera = island_scene->camera;
 
 	// Skybox
 	Material default_material;
@@ -366,8 +366,8 @@ void Greed::vr_render()
 	const vr::HmdMatrix34_t headMatrix = GreedVR::vars.trackedDevicePose[vr::k_unTrackedDeviceIndex_Hmd].mDeviceToAbsoluteTracking;
 	const vr::HmdMatrix34_t& ltMatrix = GreedVR::vars.hmd->GetEyeToHeadTransform(vr::Eye_Left);
 	const vr::HmdMatrix34_t& rtMatrix = GreedVR::vars.hmd->GetEyeToHeadTransform(vr::Eye_Right);
-	const vr::HmdMatrix44_t& ltProj = GreedVR::vars.hmd->GetProjectionMatrix(vr::Eye_Left, 0.01f, 1000.f, vr::API_OpenGL);
-	const vr::HmdMatrix44_t& rtProj = GreedVR::vars.hmd->GetProjectionMatrix(vr::Eye_Right, 0.01f, 1000.f, vr::API_OpenGL);
+	const vr::HmdMatrix44_t& ltProj = GreedVR::vars.hmd->GetProjectionMatrix(vr::Eye_Left, 0.01f, FAR_PLANE, vr::API_OpenGL);
+	const vr::HmdMatrix44_t& rtProj = GreedVR::vars.hmd->GetProjectionMatrix(vr::Eye_Right, 0.01f, FAR_PLANE, vr::API_OpenGL);
 	for (int r = 0; r < 3; ++r) {
 		for (int c = 0; c < 4; ++c) {
 			eyeToHead[0][c][r] = ltMatrix.m[r][c];
@@ -392,10 +392,11 @@ void Greed::vr_render()
 		camera->cam_front = glm::mat3(glm::transpose(head)) * glm::vec3(0.f, 0.f, -1.f);
 		camera->cam_front.y = 0.f;
 
-		scene->P = proj;		
+		// Objects will use the projection matrix of the scene that is passed it. This bypasses that limitation.
+		for (Scene * s : scenes)
+			s->P = proj;
 		camera->V = head * glm::inverse(glm::translate(glm::mat4(1.0f), camera->cam_pos));
 		scene->render();
-
 
 		const vr::Texture_t tex = { reinterpret_cast<void*>(intptr_t(GreedVR::vars.colorRenderTarget[eye])), vr::API_OpenGL, vr::ColorSpace_Gamma };
 		vr::VRCompositor()->Submit(vr::EVREye(eye), &tex);
@@ -481,7 +482,43 @@ void Greed::handle_movement_vr()
 			}
 		}
 
-		scene->displace_cam(displacement);
+		const GLfloat   SIZE = scene->get_size(); // Base on current scene size.
+		const GLfloat   EDGE_LEEWAY = SIZE / 6.f;
+		const GLfloat   MOVE_BOUNDS = SIZE + EDGE_LEEWAY;
+		const GLfloat   EDGE_THRESH = SIZE / 30.f;
+
+		glm::vec3 new_pos = camera->cam_pos + displacement;
+		// Check horizontal bounds.
+		if (new_pos.x < -MOVE_BOUNDS || new_pos.x > MOVE_BOUNDS || new_pos.z < -MOVE_BOUNDS || new_pos.z > MOVE_BOUNDS)
+			return;
+
+		// Smoother edge movement.
+		if (new_pos.x < -MOVE_BOUNDS + EDGE_THRESH) {
+			float diff = glm::abs(-MOVE_BOUNDS - new_pos.x);
+			displacement *= diff / EDGE_THRESH;
+		}
+		else if (new_pos.x > MOVE_BOUNDS - EDGE_THRESH) {
+			float diff = glm::abs(MOVE_BOUNDS - new_pos.x);
+			displacement *= diff / EDGE_THRESH;
+		}
+		if (new_pos.z < -MOVE_BOUNDS + EDGE_THRESH) {
+			float diff = glm::abs(-MOVE_BOUNDS - new_pos.z);
+			displacement *= diff / EDGE_THRESH;
+		}
+		else if (new_pos.z > MOVE_BOUNDS - EDGE_THRESH) {
+			float diff = glm::abs(MOVE_BOUNDS - new_pos.z);
+			displacement *= diff / EDGE_THRESH;
+		}
+		new_pos = camera->cam_pos + displacement;
+
+		// Fix height.
+		float new_height = 0.f;
+		if (Util::within_rect(glm::vec2(new_pos.x, new_pos.z), glm::vec2(-SIZE, SIZE), glm::vec2(SIZE, -SIZE)))
+			new_height = Terrain::height_lookup(new_pos.x, new_pos.z, SIZE * 2, scene->height_map);
+		new_pos.y = new_height;
+
+		camera->cam_pos = new_pos;
+		camera->recalculate();
 	}
 }
 
@@ -542,6 +579,9 @@ void Greed::key_callback(GLFWwindow* window, int key, int scancode, int action, 
 			break;
 		case GLFW_KEY_Q:
 			debug_shadows = !debug_shadows;
+			break;
+		case GLFW_KEY_Z:
+			next_skybox();
 			break;
 		case GLFW_KEY_C:
 			next_scene();
